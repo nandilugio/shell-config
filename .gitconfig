@@ -1,0 +1,81 @@
+[user]
+  name =
+  email =
+
+[core]
+  editor = vim
+  excludesfile = ~/.gitignore_global
+  pager = less -FRSX
+
+[web]
+  browser = google-chrome
+
+[color]
+  ui = auto
+
+[push]
+  default = current
+
+[branch]
+  autosetuprebase = always
+  #mergeoptions = --no-ff
+
+[alias]
+  a = add --all
+  b = branch
+  bm = branch -m
+  bt = branch --track
+  c = commit
+  ca = !git add --all . && git commit -a 
+  cam = commit -am 
+  cm = commit -m
+  co = checkout
+  cob = checkout -b
+  cp = cherry-pick
+  d = diff
+  ds = diff --staged
+  f = fetch
+  ff = flow feature
+  ffco = flow feature checkout
+  fff = flow feature finish
+  ffp = flow feature publish
+  ffs = flow feature start
+  fh = flow hotfix
+  fhf = flow hotfix finish
+  fhs = flow hotfix start
+  l = log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s%Cblue %Cgreen(%cr) %Cblue[%cn]%Creset' --decorate
+  l1 = log -1 --pretty=%B
+  ll = log --graph --abbrev-commit --pretty=format:'%C(yellow)%h%Creset%Cred%d%Creset %s %Cgreen(%cr) %Cblue[%an]%Creset' --
+  mum = merge upstream/master
+  pl = pull --rebase
+  ps = push
+  r = rebase
+  ra = rebase --abort
+  rc = !git add --all . && git rebase --continue
+  ri = rebase -i
+  riod = rebase -i origin/develop
+  rod = !git fetch && git rebase origin/develop
+  rs = reset
+  rsh = reset HEAD
+  rsh1 = reset HEAD^
+  rsh2 = reset HEAD^^
+  s = status
+  sh = show
+  shf = show --pretty='' --name-only
+  sl = diff-tree --name-status -r HEAD 
+  st = stash  
+  sta = !git add --all . && git stash  
+  std = stash drop
+  stl = stash list
+  stp = stash pop
+  sts = stash save 
+  stu = stash save --keep-index
+  wip = !git add --all . && git commit -m \"wip [ci skip]\"
+  dewip = ![ \"$(git log -1 --pretty=%B)\" = \"wip [ci skip]\" ] && git reset HEAD^ && git add --all .
+  remove-merged-branches = !git branch --merged | grep -v \"\\*\" | grep -v master | grep -v develop | xargs -n 1 git branch -d
+
+[filter "lfs"]
+	clean = git-lfs clean %f
+	smudge = git-lfs smudge %f
+	required = true
+
