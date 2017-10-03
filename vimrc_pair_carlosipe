@@ -1,0 +1,103 @@
+" Basics
+let mapleader = " "
+imap jk <Esc>l
+
+
+" Edit & reload .vimr
+nnoremap <leader>. :e $MYVIMRC<cr>
+nnoremap <leader>r. :w<cr>:source $MYVIMRC<cr>
+"
+nnoremap <leader>ev :vsplit $MYVIMRC<cr>
+
+
+" Buffers
+set hidden " Hide buffers when not displayed. This allow to switch between buffers without saving
+nnoremap <c-s-right> :bn<cr>
+nnoremap <c-k> :bn<cr>
+nnoremap <c-l> :bn<cr>
+nnoremap <c-s-left> :bp<cr>
+nnoremap <c-j> :bp<cr>
+nnoremap <c-h> :bp<cr>
+nnoremap <leader>t :enew<cr>
+nnoremap <leader>q :bd<cr>
+nnoremap <leader>sudo :w !sudo tee %<cr>
+"
+nnoremap <Leader>s :update<CR>
+nnoremap <Leader>x :x<CR>
+nnoremap <Leader>q :bd<CR>
+
+
+" Clear search
+nnoremap <leader>/ :let @/ = "" <cr>
+
+
+" Text indentantion
+filetype indent plugin on
+set expandtab
+set autoindent
+set shiftwidth=2
+"set tabstop=2
+"set softtabstop=2
+"set smartindent
+
+
+" Swap and backups
+set noswapfile
+set nobackup
+set nowritebackup
+
+
+" Misc
+set nowrap
+set number
+set autoread
+set hlsearch
+set incsearch
+"
+set cursorline
+
+
+" Colorscheme
+colorscheme railscasts
+
+
+" utf-8 default encoding
+set enc=utf-8
+map <Leader><Tab> :bn<CR>
+
+
+" Finding files
+set wildmode=list:longest
+
+
+" FZF (https://github.com/junegunn/fzf.vim)
+nnoremap <Leader><Leader> :FZF<CR>
+nnoremap <Leader>p :FZF<CR>
+
+
+" Vim Airline (https://github.com/vim-airline/vim-airline)
+set laststatus=2
+let g:airline#extensions#tabline#enabled = 1
+
+
+" The Silver Searcher
+if executable('ag')
+  " Use ag over grep
+  set grepprg=ag\ --nogroup\ --nocolor
+
+  " Use ag in CtrlP for listing files. Lightning fast and respects .gitignore
+  " let g:ctrlp_user_command = 'ag %s -l --nocolor -g ""'
+
+  " ag is fast enough that CtrlP doesn't need to cache
+  " let g:ctrlp_use_caching = 0
+endif
+
+
+" VimPlug (https://github.com/junegunn/vim-plug)
+" Reload .vimrc and :PlugInstall to install plugins.
+call plug#begin('~/.vim/plugged')
+Plug 'vim-airline/vim-airline'
+Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+Plug 'elixir-lang/vim-elixir'
+call plug#end()
+
