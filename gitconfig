@@ -1,7 +1,3 @@
-[user]
-  name =
-  email =
-
 [core]
   editor = vim
   excludesfile = ~/.gitignore_global
@@ -73,9 +69,3 @@
   wip = !git add --all . && git commit -m \"wip [ci skip]\"
   dewip = ![ \"$(git log -1 --pretty=%B)\" = \"wip [ci skip]\" ] && git reset HEAD^ && git add --all .
   remove-merged-branches = !git branch --merged | grep -v \"\\*\" | grep -v master | grep -v develop | xargs -n 1 git branch -d
-
-[filter "lfs"]
-	clean = git-lfs clean %f
-	smudge = git-lfs smudge %f
-	required = true
-
