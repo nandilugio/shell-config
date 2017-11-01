@@ -4,7 +4,7 @@ nmap \ <leader>
 
 " Edit & reload .vimrc
 nnoremap <leader>, :e $MYVIMRC<cr>
-nnoremap <leader>r, :w<cr>:source $MYVIMRC<cr>
+nnoremap <leader>r, :source $MYVIMRC<cr>
 
 " Buffers
 set hidden " Hide buffers when not displayed. This allow to switch between buffers without saving
@@ -16,6 +16,9 @@ nnoremap <leader>t :enew<cr>
 nnoremap <Leader>w :w<CR>
 nnoremap <leader>q :bd<cr>
 nnoremap <leader>sudo :w !sudo tee %<cr>
+
+" Clipboard
+set clipboard=unnamed " Global clipboard
 
 " Swap and backups
 set noswapfile
@@ -41,6 +44,11 @@ set shiftwidth=2
 "set tabstop=2
 "set softtabstop=2
 "set smartindent
+
+" Text editing
+
+" Remove trailing space
+nnoremap <silent> <leader>dt :let _s=@/ <Bar> :%s/\s\+$//e <Bar> :let @/=_s <Bar> :nohl <Bar> :unlet _s <CR>
 
 " Misc
 set enc=utf-8
