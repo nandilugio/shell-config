@@ -8,13 +8,11 @@ nnoremap <leader>r, :source $MYVIMRC<cr>
 
 " Buffers
 set hidden " Hide buffers when not displayed. This allow to switch between buffers without saving
-nnoremap <c-k> :bn<cr>
-nnoremap <c-l> :bn<cr>
-nnoremap <c-j> :bp<cr>
-nnoremap <c-h> :bp<cr>
-nnoremap <leader>t :enew<cr>
-nnoremap <Leader>w :w<CR>
-nnoremap <leader>q :bd<cr>
+nnoremap <c-right> :bn<cr>
+nnoremap <c-left> :bp<cr>
+nnoremap <c-t> :enew<cr>
+nnoremap <c-s> :w<CR>
+nnoremap <c-w> :bd<cr>
 nnoremap <leader>sudo :w !sudo tee %<cr>
 
 " Clipboard

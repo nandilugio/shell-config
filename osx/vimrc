@@ -1,0 +1,11 @@
+" Clear Ctrl+ left and right arrows mappings
+map <esc>[1;5D <c-left>
+map <esc>[1;5C <c-right>
+map <esc>[1;5A <c-up>
+map <esc>[1;5B <c-down>
+map! <esc>[1;5D <c-left>
+map! <esc>[1;5C <c-right>
+map! <esc>[1;5A <c-up>
+map! <esc>[1;5B <c-down>
+
+source ~/dotfiles/vimrc
