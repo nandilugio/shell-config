@@ -23,6 +23,7 @@
   bt = branch --track
   c = commit
   ca = !git add --all . && git commit -a 
+  caa = !git add --all . && git commit -a --amend 
   cam = commit -am 
   cm = commit -m
   co = checkout
