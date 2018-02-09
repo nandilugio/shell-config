@@ -137,6 +137,11 @@ mode "resize" {
         #bindsym semicolon resize grow width 5 px or 5 ppt
 
         # same bindings, but for the arrow keys
+        bindsym Left resize shrink width 5 px or 5 ppt
+        bindsym Down resize grow height 5 px or 5 ppt
+        bindsym Up resize shrink height 5 px or 5 ppt
+        bindsym Right resize grow width 5 px or 5 ppt
+        
         bindsym $mod+Left resize shrink width 5 px or 5 ppt
         bindsym $mod+Down resize grow height 5 px or 5 ppt
         bindsym $mod+Up resize shrink height 5 px or 5 ppt
@@ -171,5 +176,6 @@ bindsym XF86MonBrightnessDown exec brightness -
 # Lock/Suspend
 bindsym $mod+Shift+l exec "i3lock -fec 000000 && systemctl suspend"
 bindsym XF86Sleep exec "i3lock -fec 000000 && systemctl suspend"
+bindsym $mod+l exec "i3lock -fec 000000"
 
 
