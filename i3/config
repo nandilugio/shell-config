@@ -178,4 +178,7 @@ bindsym $mod+Shift+l exec "i3lock -fec 000000 && systemctl suspend"
 bindsym XF86Sleep exec "i3lock -fec 000000 && systemctl suspend"
 bindsym $mod+l exec "i3lock -fec 000000"
 
+# Mouse behaviour
+focus_follows_mouse no
+mouse_warping none
 
