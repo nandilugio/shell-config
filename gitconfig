@@ -62,12 +62,12 @@
   sl = diff-tree --name-status -r HEAD 
   st = stash  
   sta = !git add --all . && git stash  
-  stap = stash apply --index
+  stap = stash apply
   std = stash drop
   stl = stash list
-  stp = stash pop --index
+  stp = stash pop
   sts = stash show 
-  stu = stash save --keep-index
+  stu = stash save
   wip = !git add --all . && git commit -m \"wip [ci skip]\"
   dewip = ![ \"$(git log -1 --pretty=%B)\" = \"wip [ci skip]\" ] && git reset HEAD^ && git add --all .
   remove-merged-branches = !git branch --merged | grep -v \"\\*\" | grep -v master | grep -v develop | xargs -n 1 git branch -d
