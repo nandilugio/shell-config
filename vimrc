@@ -39,11 +39,12 @@ filetype indent plugin on
 set expandtab
 set autoindent
 set shiftwidth=2
-"set tabstop=2
+set tabstop=2
 "set softtabstop=2
 "set smartindent
 
 " Text editing
+set backspace=indent,eol,start
 
 " Remove trailing space
 nnoremap <silent> <leader>dt :let _s=@/ <Bar> :%s/\s\+$//e <Bar> :let @/=_s <Bar> :nohl <Bar> :unlet _s <CR>
