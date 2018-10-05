@@ -17,7 +17,8 @@
   #mergeoptions = --no-ff
 
 [alias]
-  a = add --all
+  a = add
+  aa = add --all
   b = branch
   bm = branch -m
   bt = branch --track
@@ -50,17 +51,36 @@
   ra = rebase --abort
   rc = !git add --all . && git rebase --continue
   ri = rebase -i
+  ri1 = rebase -i HEAD~1
+  ri2 = rebase -i HEAD~2
+  ri3 = rebase -i HEAD~3
+  ri4 = rebase -i HEAD~4
+  ri5 = rebase -i HEAD~5
+  ri6 = rebase -i HEAD~6
+  ri7 = rebase -i HEAD~7
+  ri8 = rebase -i HEAD~8
+  ri9 = rebase -i HEAD~9
+  ri10 = rebase -i HEAD~10
   riod = rebase -i origin/develop
   rod = !git fetch && git rebase origin/develop
   rs = reset
   rsh = reset HEAD
-  rsh1 = reset HEAD^
-  rsh2 = reset HEAD^^
+  rsh1 = reset HEAD~1
+  rsh2 = reset HEAD~2
+  rsh3 = reset HEAD~3
+  rsh4 = reset HEAD~4
+  rsh5 = reset HEAD~5
+  rsh6 = reset HEAD~6
+  rsh7 = reset HEAD~7
+  rsh8 = reset HEAD~8
+  rsh9 = reset HEAD~9
+  rsh10 = reset HEAD~10
   s = status
   sh = show
   shf = show --pretty='' --name-only
   sl = diff-tree --name-status -r HEAD 
-  st = stash  
+  st = stash
+  stm = stash save
   sta = !git add --all . && git stash  
   stap = stash apply
   std = stash drop

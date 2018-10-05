@@ -8,11 +8,11 @@ nnoremap <leader>r, :source $MYVIMRC<cr>
 
 " Buffers
 set hidden " Hide buffers when not displayed. This allow to switch between buffers without saving
-nnoremap <c-right> :bn<cr>
-nnoremap <c-left> :bp<cr>
-nnoremap <c-t> :enew<cr>
-nnoremap <c-s> :w<CR>
-nnoremap <c-w> :bd<cr>
+nnoremap <leader><pagedown> :bn<cr>
+nnoremap <leader><pageup> :bp<cr>
+nnoremap <leader>t :enew<cr>
+nnoremap <leader>s :w<CR>
+nnoremap <leader>w :bd<cr>
 nnoremap <leader>sudo :w !sudo tee %<cr>
 
 " Clipboard
@@ -29,9 +29,11 @@ set incsearch
 nnoremap <leader>/ :let @/ = "" <cr> 
 
 " Display
+colorscheme desert
 set number
 "set relativenumber 
-set nowrap
+"set nowrap
+set wrap linebreak nolist
 "set cursorline
 
 " Text indentation
@@ -40,7 +42,7 @@ set expandtab
 set autoindent
 set shiftwidth=2
 set tabstop=2
-"set softtabstop=2
+set softtabstop=2
 "set smartindent
 
 " Text editing
@@ -52,6 +54,7 @@ nnoremap <silent> <leader>dt :let _s=@/ <Bar> :%s/\s\+$//e <Bar> :let @/=_s <Bar
 " Misc
 set enc=utf-8
 set autoread
+set pastetoggle=<F1>
 "set textwidth=0
 "set history=1000 
 "set backspace=indent,eol,start
@@ -88,6 +91,7 @@ call plug#begin('~/.vim/plugged')
 "Plug 'Xuyuanp/nerdtree-git-plugin'
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'vim-airline/vim-airline'
+Plug 'vim-ruby/vim-ruby'
 "Plug 'ervandew/supertab'
 Plug 'elixir-lang/vim-elixir'
 "Plug 'kchmck/vim-coffee-script'
