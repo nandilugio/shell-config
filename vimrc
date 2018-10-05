@@ -1,3 +1,25 @@
+" This mappings fix some weird keyboard behaviors.
+" To test mappings: Insert mode, <C-v>, type whatever is wrongly being
+" interpreted. Literal escape sequence will be typed. A leading ^[ means
+" <ESC>.
+"
+" "Note that although escape sequences vary between terminals, conflicts (i.e.
+" an escape sequence that corresponds to different keys in different
+" terminals) are rare, so there's no particular need to try to apply the
+" mappings only on a particular terminal type."
+"
+" See: https://unix.stackexchange.com/questions/1709/how-to-fix-ctrl-arrows-in-vim
+"
+" Fixes for Linux + Gnome terminal
+map <ESC>[1;5D <C-Left>
+map <ESC>[1;5C <C-Right>
+map! <ESC>[1;5D <C-Left>
+map! <ESC>[1;5C <C-Right>
+map <ESC>[5;5~ <C-PageUp>
+map <ESC>[6;5~ <C-PageDown>
+map! <ESC>[5;5~ <C-PageUp>
+map! <ESC>[6;5~ <C-PageDown>
+
 " Basics
 let mapleader = " "
 nmap \ <leader>
@@ -8,12 +30,25 @@ nnoremap <leader>r, :source $MYVIMRC<cr>
 
 " Buffers
 set hidden " Hide buffers when not displayed. This allow to switch between buffers without saving
-nnoremap <leader><pagedown> :bn<cr>
-nnoremap <leader><pageup> :bp<cr>
-nnoremap <leader>t :enew<cr>
-nnoremap <leader>s :w<CR>
-nnoremap <leader>w :bd<cr>
-nnoremap <leader>sudo :w !sudo tee %<cr>
+nmap <leader>sudo :w !sudo tee %<cr>
+
+nmap <leader><Left> :bp<cr>
+nmap <leader><Right> :bn<cr>
+nmap <leader><PageUp> :bp<cr>
+nmap <leader><PageDown> :bn<cr>
+nmap <leader>t :enew<cr>
+nmap <leader>w :bd<cr>
+nmap <leader>s :w<CR>
+
+nmap <C-Left> :bp<cr>
+nmap <C-Right> :bn<cr>
+nmap <C-PageUp> :bp<cr>
+nmap <C-PageDown> :bn<cr>
+nmap <C-t> :enew<cr>
+nmap <C-w> :bd<cr>
+" nmap <C-s> :w<CR>
+" <C-s> is trapped by the OS's terminal driver (use <C-s> to 'unfreeze' the terminal ;p).
+" See: https://unix.stackexchange.com/questions/12107/how-to-unfreeze-after-accidentally-pressing-ctrl-s-in-a-terminal
 
 " Clipboard
 set clipboard=unnamed " Global clipboard
