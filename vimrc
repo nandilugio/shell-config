@@ -71,6 +71,9 @@ set number
 set wrap linebreak nolist
 "set cursorline
 
+" Mouse
+set mouse=a
+
 " Text indentation
 filetype indent plugin on
 set expandtab
@@ -78,7 +81,6 @@ set autoindent
 set shiftwidth=2
 set tabstop=2
 set softtabstop=2
-"set smartindent
 
 " Text editing
 set backspace=indent,eol,start
