@@ -1,6 +1,12 @@
 # Environment config
 Or what others call _dotfiles_.
 
+## Config for gnome shell
+
+```sh
+gsettings set org.gnome.shell.app-switcher current-workspace-only true
+```
+
 ## Keys setup in Mac OSX
 
 ...to be as compatible to my Linux i3 setup as possible, without much of a hassle.
