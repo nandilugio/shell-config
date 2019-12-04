@@ -1,6 +1,6 @@
 #!/bin/bash
 
-test_command=$1
+test_command="$@"
 test_command_md5=$(echo $test_command | md5sum)
 test_command_short_md5=${test_command_md5:0:6}
 

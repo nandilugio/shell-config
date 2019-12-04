@@ -1,0 +1,11 @@
+#!/bin/bash
+
+wait_s=1
+command="$@"
+
+while true; do
+  $command
+  echo -e "\n########## Repeating '$command' in ${wait_s}s... ##########\n"
+  sleep $wait_s
+done
+
