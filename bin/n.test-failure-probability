@@ -6,25 +6,25 @@ test_command_short_md5=${test_command_md5:0:6}
 
 now=$(date +%y%m%d_%H%M%S)
 
-touch test_exit_codes.log test_failures.log current_test_output.log
-truncate -s0 test_exit_codes.log test_failures.log current_test_output.log
+touch n.test_exit_codes.log n.test_failures.log n.test_current_output.log
+truncate -s0 n.test_exit_codes.log n.test_failures.log n.test_current_output.log
 
 echo -e "\nMD5 for experiment (test command): $test_command_md5 ($test_command_short_md5)"
-echo -e "Tail -f test_exit_codes.log and/or test_failures.log to more closelly follow tests.\n"
+echo -e "Tail -f n.test_exit_codes.log and/or n.test_failures.log to more closelly follow tests.\n"
 
 test_number=1
 while true; do
   echo -e "\n#################### Test run number $test_number for $test_command_short_md5 ####################\n"
 
-  $test_command 2>&1 | tee current_test_output.log
+  $test_command 2>&1 | tee n.test_current_output.log
   exit_code=${PIPESTATUS[0]}
   
-  echo $exit_code >>test_exit_codes.log
+  echo $exit_code >>n.test_exit_codes.log
   
   if [[ "$exit_code" != 0 ]]; then
-    cat current_test_output.log >>test_failures.log
+    cat n.test_current_output.log >>n.test_failures.log
   fi
-  rm current_test_output.log
+  rm n.test_current_output.log
 
   echo -e "\nTest $test_number for $test_command_short_md5 finalized with exit code $exit_code\n"
 
@@ -40,21 +40,21 @@ while true; do
   test_number=$(( test_number + 1 ))
 done
 
-total_test_count=$(cat test_exit_codes.log | wc -l)
-failed_test_count=$(grep -v 0 test_exit_codes.log | wc -l)
+total_test_count=$(cat n.test_exit_codes.log | wc -l)
+failed_test_count=$(grep -v 0 n.test_exit_codes.log | wc -l)
 failure_frequency_pct=$(( failed_test_count * 100 / total_test_count ))%
 
-echo -e "\nSummary for experiment $test_command_short_md5:\n" | tee -a test_exit_codes.log
-echo -e "Tests performed:   $total_test_count" | tee -a test_exit_codes.log
-echo -e "Failed:            $failed_test_count" | tee -a test_exit_codes.log
-echo -e "Failure frequency: $failure_frequency_pct" | tee -a test_exit_codes.log
+echo -e "\nSummary for experiment $test_command_short_md5:\n" | tee -a n.test_exit_codes.log
+echo -e "Tests performed:   $total_test_count" | tee -a n.test_exit_codes.log
+echo -e "Failed:            $failed_test_count" | tee -a n.test_exit_codes.log
+echo -e "Failure frequency: $failure_frequency_pct" | tee -a n.test_exit_codes.log
 
-out_file_prefix=test_at_${now}_for_${test_command_short_md5}
-exit_codes_filename=${out_file_prefix}_exit_codes.txt
+out_file_prefix=n.test_at_${now}_for_${test_command_short_md5}
+exit_codes_filename=${out_file_prefix}_exit_codes.log
 failures_log_filename=${out_file_prefix}_failures.log
 
 echo -e "\nMoving results to $exit_codes_filename and $failures_log_filename."
-cp test_exit_codes.log $exit_codes_filename
-cp test_failures.log $failures_log_filename
-rm -f test_exit_codes.log test_failures.log current_test_output.log
+cp n.test_exit_codes.log $exit_codes_filename
+cp n.test_failures.log $failures_log_filename
+rm -f n.test_exit_codes.log n.test_failures.log n.test_current_output.log
 
