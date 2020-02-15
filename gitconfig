@@ -12,9 +12,20 @@
 [push]
   default = current
 
+[pull]
+  default = current
+  rebase = true
+
 [branch]
-  autosetuprebase = always
-  #mergeoptions = --no-ff
+  #autosetuprebase = always
+  mergeoptions = --no-ff
+
+[diff]
+  tool = vimdiff
+
+[merge]
+  tool = vimdiff
+  conflictstyle = diff3
 
 [alias]
   a = add
@@ -33,14 +44,6 @@
   d = diff
   ds = diff --staged
   f = fetch
-  ff = flow feature
-  ffco = flow feature checkout
-  fff = flow feature finish
-  ffp = flow feature publish
-  ffs = flow feature start
-  fh = flow hotfix
-  fhf = flow hotfix finish
-  fhs = flow hotfix start
   l = log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s%Cblue %Cgreen(%cr) %Cblue[%cn]%Creset' --decorate
   l1 = log -1 --pretty=%B
   ll = log --graph --abbrev-commit --pretty=format:'%C(yellow)%h%Creset%Cred%d%Creset %s %Cgreen(%cr) %Cblue[%an]%Creset' --
@@ -60,7 +63,6 @@
   ri7 = rebase -i HEAD~7
   ri8 = rebase -i HEAD~8
   ri9 = rebase -i HEAD~9
-  ri10 = rebase -i HEAD~10
   riod = rebase -i origin/develop
   rod = !git fetch && git rebase origin/develop
   rs = reset
@@ -74,7 +76,6 @@
   rsh7 = reset HEAD~7
   rsh8 = reset HEAD~8
   rsh9 = reset HEAD~9
-  rsh10 = reset HEAD~10
   s = status
   sh = show
   shf = show --pretty='' --name-only
