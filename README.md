@@ -1,29 +1,37 @@
 # Environment config
 Or what others call _dotfiles_.
 
-## Config for gnome shell
+## Linux
+
+### Config for gnome shell
 
 ```sh
 gsettings set org.gnome.shell.app-switcher current-workspace-only true
 ```
 
-## Keys setup in Mac OSX
+## Mac OS X
+
+### SSH and Keychain
+
+https://apple.stackexchange.com/questions/48502/how-can-i-permanently-add-my-ssh-private-key-to-keychain-so-it-is-automatically
+
+### Keys setup
 
 ...to be as compatible to my Linux i3 setup as possible, without much of a hassle.
 
-### System
+#### System
 - Swap Cmd and Opt
 - Defaults keybindings
 - Remap Spotlight so it's in center key (old Option/Meta, now Cmd)
 
-### iTerm
+#### iTerm
 - Clear _all_ general keybindings (including nav shortcuts, etc.)
 - In profile > keys:
   - Both Option/Meta keys to send `Esc+` (for `termux`)
   - Load preset: Natural text editing
   - Remove `M-left` and `M-right`, now conflicting with `tmux` mappings
 
-### Spectacle
+#### Spectacle
 Remember now Option/Meta, in the center, is Command. We want Spectacle in that center key (M below).
 Unmap everything, then map:
 - * Half: `S-M-*`

@@ -44,11 +44,13 @@
   d = diff
   ds = diff --staged
   f = fetch
-  l = log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s%Cblue %Cgreen(%cr) %Cblue[%cn]%Creset' --decorate
+  l = log --oneline
+  lo = log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s%Cblue %Cgreen(%cr) %Cblue[%cn]%Creset' --decorate
+  ll = log --graph --oneline
+  llo = log --graph --abbrev-commit --pretty=format:'%C(yellow)%h%Creset%Cred%d%Creset %s %Cgreen(%cr) %Cblue[%an]%Creset' --
   l1 = log -1 --pretty=%B
-  ll = log --graph --abbrev-commit --pretty=format:'%C(yellow)%h%Creset%Cred%d%Creset %s %Cgreen(%cr) %Cblue[%an]%Creset' --
   mum = merge upstream/master
-  pl = pull --rebase
+  pl = pull
   ps = push
   r = rebase
   ra = rebase --abort
