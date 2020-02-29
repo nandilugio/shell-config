@@ -19,10 +19,10 @@ compctl -K _complete_invoke + -f invoke inv
 # vim: set ft=sh :
 
 # Rbenv
-eval "$(rbenv init -)"
+#eval "$(rbenv init -)"
 
 # Me
 PATH=~/bin:$PATH
+PS1=$PS1$'\n'"%# "  # Newline after prompt
 alias g=git
 
-PS1=$PS1$'\n'"%# "
