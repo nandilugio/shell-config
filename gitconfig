@@ -1,3 +1,6 @@
+[include]
+    path = ~/.gitconfig_host
+
 [core]
   editor = vim
   excludesfile = ~/.gitignore_global
