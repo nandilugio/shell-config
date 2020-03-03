@@ -55,6 +55,7 @@
   mum = merge upstream/master
   pl = pull
   ps = push
+  psf = push --force-with-lease
   r = rebase
   ra = rebase --abort
   rc = !git add --all . && git rebase --continue
