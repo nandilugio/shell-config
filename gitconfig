@@ -28,18 +28,25 @@
 
 [merge]
   tool = vimdiff
-  conflictstyle = diff3
+  conflictstyle = diff3  # for vimdiff
+  #tool = smerge
+
+[mergetool "smerge"]
+	cmd = smerge mergetool \"$BASE\" \"$LOCAL\" \"$REMOTE\" -o \"$MERGED\"
+	trustExitCode = true
 
 [alias]
   a = add
   aa = add --all
   b = branch
+  ba = branch --all
   bm = branch -m
   bt = branch --track
   c = commit
   ca = !git add --all . && git commit -a 
   caa = !git add --all . && git commit -a --amend 
-  cam = commit -am 
+  cam = !git add --all . && git commit -am 
+  caam = !git add --all . && git commit -a --amend -m
   cm = commit -m
   co = checkout
   cob = checkout -b
@@ -47,15 +54,18 @@
   d = diff
   ds = diff --staged
   f = fetch
-  l = log --oneline
+  l = log --oneline --first-parent
   lo = log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s%Cblue %Cgreen(%cr) %Cblue[%cn]%Creset' --decorate
   ll = log --graph --oneline
   llo = log --graph --abbrev-commit --pretty=format:'%C(yellow)%h%Creset%Cred%d%Creset %s %Cgreen(%cr) %Cblue[%an]%Creset' --
   l1 = log -1 --pretty=%B
+  m = merge
+  ma = merge --abort
+  mc = !git add --all . && git merge --continue
   mum = merge upstream/master
+  p = push
+  pf = push --force-with-lease
   pl = pull
-  ps = push
-  psf = push --force-with-lease
   r = rebase
   ra = rebase --abort
   rc = !git add --all . && git rebase --continue
@@ -70,7 +80,10 @@
   ri8 = rebase -i HEAD~8
   ri9 = rebase -i HEAD~9
   riod = rebase -i origin/develop
+  riom = rebase -i origin/master
+  rl = reflog
   rod = !git fetch && git rebase origin/develop
+  rom = !git fetch && git rebase origin/master
   rs = reset
   rsh = reset HEAD
   rsh1 = reset HEAD~1
