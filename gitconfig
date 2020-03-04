@@ -53,8 +53,11 @@
   cp = cherry-pick
   d = diff
   ds = diff --staged
+  dt = difftool
+  dts = difftool --staged
   f = fetch
-  l = log --oneline --first-parent
+  l = log --oneline
+  lfp = log --oneline --first-parent
   lo = log --pretty=format:'%C(yellow)%h%Cred%d %Creset%s%Cblue %Cgreen(%cr) %Cblue[%cn]%Creset' --decorate
   ll = log --graph --oneline
   llo = log --graph --abbrev-commit --pretty=format:'%C(yellow)%h%Creset%Cred%d%Creset %s %Cgreen(%cr) %Cblue[%an]%Creset' --
@@ -62,6 +65,7 @@
   m = merge
   ma = merge --abort
   mc = !git add --all . && git merge --continue
+  mt = mergetool
   mum = merge upstream/master
   p = push
   pf = push --force-with-lease
