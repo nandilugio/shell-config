@@ -1,6 +1,9 @@
 # Python
 PATH=~/Library/Python/2.7/bin:$PATH
 
+# Pipx (more generic?)
+PATH=~/.local/bin:$PATH
+
 # Pyenv
 export PATH="$HOME/.pyenv/bin:$PATH"
 eval "$(pyenv init -)"
