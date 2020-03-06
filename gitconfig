@@ -23,6 +23,9 @@
   #autosetuprebase = always
   mergeoptions = --no-ff
 
+[rerere]
+	enabled = true
+
 [diff]
   tool = vimdiff
 
@@ -67,9 +70,9 @@
   mc = !git add --all . && git merge --continue
   mt = mergetool
   mum = merge upstream/master
-  p = push
-  pf = push --force-with-lease
   pl = pull
+  ps = push
+  psf = push --force-with-lease
   r = rebase
   ra = rebase --abort
   rc = !git add --all . && git rebase --continue
