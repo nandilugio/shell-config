@@ -1,3 +1,6 @@
+# Update!
+pushd ~/shell-config; git pull; popd
+
 # Python
 PATH=~/Library/Python/2.7/bin:$PATH
 
