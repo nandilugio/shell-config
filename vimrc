@@ -84,6 +84,7 @@ set softtabstop=2
 
 " Text editing
 set backspace=indent,eol,start
+inoremap <C-d> <Del>
 
 " Remove trailing space
 nnoremap <silent> <leader>dt :let _s=@/ <Bar> :%s/\s\+$//e <Bar> :let @/=_s <Bar> :nohl <Bar> :unlet _s <CR>
