@@ -1,6 +1,9 @@
 [include]
     path = ~/.gitconfig_host
 
+[user]
+	useConfigOnly = true
+
 [core]
   editor = vim
   excludesfile = ~/.gitignore_global
@@ -28,6 +31,7 @@
 
 [diff]
   tool = vimdiff
+  noprefix = true
 
 [merge]
   tool = vimdiff
