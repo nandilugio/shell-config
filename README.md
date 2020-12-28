@@ -15,6 +15,10 @@ gsettings set org.gnome.shell.app-switcher current-workspace-only true
 
 https://apple.stackexchange.com/questions/48502/how-can-i-permanently-add-my-ssh-private-key-to-keychain-so-it-is-automatically
 
+### iterm & tmux
+
+/bin/sh -c 'PATH=/usr/local/bin:$PATH ~/bin/n.tmux-new-terminal-window'
+
 ### Keys setup
 
 ...to be as compatible to my Linux i3 setup as possible, without much of a hassle.
