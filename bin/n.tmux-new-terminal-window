@@ -1,4 +1,4 @@
 #!/bin/bash
 
-~/bin/tmux-kill-detached.sh
+~/bin/n.tmux-kill-detached
 tmux
