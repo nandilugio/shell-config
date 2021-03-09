@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ "$(uname)" == "Darwin" ]; then
+  open -a "RubyMine.app" "$@"
+else
+  echo "FIXME: Only implemented for Mac right now"
+fi
+

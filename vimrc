@@ -84,7 +84,7 @@ set softtabstop=2
 
 " Text editing
 set backspace=indent,eol,start
-inoremap <C-d> <Del>
+"inoremap <C-d> <Del> "this makes Del works if it maps to Ctrl-D
 
 " Remove trailing space
 nnoremap <silent> <leader>dt :let _s=@/ <Bar> :%s/\s\+$//e <Bar> :let @/=_s <Bar> :nohl <Bar> :unlet _s <CR>

@@ -120,6 +120,9 @@
   stp = stash pop
   sts = stash show 
   stu = stash save
+
   wip = !git add --all . && git commit -m \"wip [ci skip]\"
   dewip = ![ \"$(git log -1 --pretty=%B)\" = \"wip [ci skip]\" ] && git reset HEAD^ && git add --all .
+  touched = !git status -u --porcelain | sed -E 's/^.+ +//'
+
   remove-merged-branches = !git branch --merged | grep -v \"\\*\" | grep -v master | grep -v develop | xargs -n 1 git branch -d

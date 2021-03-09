@@ -1,10 +1,12 @@
+\set QUIET on
 begin; set statement_timeout to 5000; commit;
 \x auto
-\timing on
-\pset null '[∅]'
+-- \timing on -- measures locally, includes network request
+\pset null '-∅-'
 \set VERBOSITY verbose
 \set HISTCONTROL ignoredups
 \set PROMPT1 '>>> ':PROMPT1
 \set PROMPT2 '>>> ':PROMPT2
 -- \set PROMPT3 '>>> ':PROMPT3
-
+\setenv LESS -X
+\set QUIET off

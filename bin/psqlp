@@ -1,0 +1,3 @@
+#!/bin/bash
+
+psql $(security find-generic-password -s db -a $1 -w)

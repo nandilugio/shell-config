@@ -1,5 +1,8 @@
+.DS_Store
+
 .idea/
 .vscode/
-*.nando.*
+.pryrc
 
+*.nando.*
 n.test_*.log

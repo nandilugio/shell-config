@@ -11,6 +11,11 @@ gsettings set org.gnome.shell.app-switcher current-workspace-only true
 
 ## Mac OS X
 
+```
+defaults write com.apple.Finder AppleShowAllFiles true
+killall Finder
+```
+
 ### SSH and Keychain
 
 https://apple.stackexchange.com/questions/48502/how-can-i-permanently-add-my-ssh-private-key-to-keychain-so-it-is-automatically
@@ -21,7 +26,9 @@ https://apple.stackexchange.com/questions/48502/how-can-i-permanently-add-my-ssh
 
 ### Keys setup
 
-...to be as compatible to my Linux i3 setup as possible, without much of a hassle.
+https://stackoverflow.com/questions/33270381/delete-forward-character-iterm2-osx
+
+Then, to be as compatible to my Linux i3 setup as possible, without much of a hassle:
 
 #### System
 - Swap Cmd and Opt
