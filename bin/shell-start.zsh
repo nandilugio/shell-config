@@ -25,14 +25,14 @@
 ## vim: set ft=sh :
 
 # Rbenv
-eval "$(rbenv init -)"
+#eval "$(rbenv init -)"
 
 # FZF
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 export FZF_DEFAULT_COMMAND="find . -type f -not -path '*/\.git/*'"
 
 # Perl (and therefore pgtap, etc.)
-PATH=$PATH:"/usr/local/Cellar/perl/5.32.0/bin"
+#PATH=$PATH:"/usr/local/Cellar/perl/5.32.0/bin"
 
 # Me
 PATH=~/bin:$PATH
