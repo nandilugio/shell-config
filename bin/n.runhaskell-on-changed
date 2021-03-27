@@ -1,4 +1,4 @@
 #!/bin/bash
 
-ls *.hs | entr -pcs 'echo "Running $0..."; stack runhaskell $0; retval=$?; echo "Done."; exit $retval'
+ls *.hs | entr -pcs 'echo "Running $0..."; time stack runhaskell $0'
 
