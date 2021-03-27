@@ -1,0 +1,7 @@
+[user]
+  name = Fernando Stecconi
+
+[alias]
+  profile-pers = config user.email ""
+  profile-bu = config user.email ""
+
