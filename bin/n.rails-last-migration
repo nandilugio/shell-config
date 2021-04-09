@@ -1,0 +1,2 @@
+#!/bin/bash
+find db/migrate -type f | sort | tail -n1

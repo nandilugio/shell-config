@@ -1,0 +1,2 @@
+#!/bin/bash
+sed 's/\\040/ /g' ~/.psql_history | less +G
