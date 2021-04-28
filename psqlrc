@@ -1,5 +1,5 @@
 \set QUIET on
-begin; set statement_timeout to 5000; commit;
+begin; set statement_timeout to 30000; commit;
 \x auto
 -- \timing on -- measures locally, includes network request
 \pset null ' ∅'

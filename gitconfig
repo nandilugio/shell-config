@@ -31,7 +31,7 @@
 
 [diff]
   tool = vimdiff
-  noprefix = true
+  #noprefix = true  # Breaks stash-index alias since it reverse-applies a temp stash patch. Added --no-prefix to diff aliases.
 
 [merge]
   tool = vimdiff
@@ -58,8 +58,8 @@
   co = checkout
   cob = checkout -b
   cp = cherry-pick
-  d = diff
-  ds = diff --staged
+  d = diff --no-prefix
+  ds = diff --no-prefix --staged
   dt = difftool
   dts = difftool --staged
   f = fetch
@@ -113,17 +113,28 @@
   sl = diff-tree --name-status -r HEAD 
   st = stash
   stm = stash save
+  stu = stash save
+  # TODO: both above the same?
   sta = !git add --all . && git stash  
   stap = stash apply
   std = stash drop
   stl = stash list
   stp = stash pop
-  sts = stash show 
-  stu = stash save
+  sts = stash-staged
+  stsh = stash show 
 
   wip = !git add --all . && git commit -m \"wip [ci skip]\"
   dewip = ![ \"$(git log -1 --pretty=%B)\" = \"wip [ci skip]\" ] && git reset HEAD^ && git add --all .
-  touched = !git status -u --porcelain | sed -E 's/^.+ +//'
-  files-last-commit = d --name-only HEAD HEAD~1
+  f-dirty = !git status -u --porcelain | sed -E 's/^.+ +//'
+  f-last-commit = d --name-only HEAD~1
+  f-branch = d --name-only origin/master
+
+  stash-staged = "!f() { \
+      ! git diff --cached --exit-code --quiet && \
+      git stash push --quiet --keep-index -m \"temp for stash-index\" && \
+      git stash push \"$@\" && \
+      git stash pop --quiet stash@{1} && \
+      git stash show -p | git apply -R; }; f"
+
 
   remove-merged-branches = !git branch --merged | grep -v \"\\*\" | grep -v master | grep -v develop | xargs -n 1 git branch -d
