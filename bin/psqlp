@@ -1,3 +1,6 @@
 #!/bin/bash
 
-psql $(security find-generic-password -s db -a $1 -w)
+target=$1
+shift
+
+psql $(security find-generic-password -s db -a $target -w) "$@"

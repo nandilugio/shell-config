@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+# NOTE: in mac requires `brew install md5sha1sum bash`
 
 test_command="$@"
 test_command_md5=$(echo $test_command | md5sum)
