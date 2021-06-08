@@ -1,3 +1,22 @@
+" === CHEATSHEET of things I tend to forget :p  ================================
+"
+" == Navigation ==
+" {, }      Prev, next paragraph
+" %         Matching brace/parenthesis/bracket
+" H, M, L   Go to screen's top, middle, bottom (Hi, Mid, Lo?)
+"
+" == Scrolling ==
+" zz, zt, zb    Zcroll current line the center, top, bottom
+" C- y, e       Scroll 1 line up, down
+" 
+" == Select, search & replace ==
+" *, #        Search word under cursor (up, down)
+" va[, vi[    Select around, inside barackets (or parens, braces) (d, etc. too)
+" :%s//...    An empty search pattern will match highlighted results
+" : in visual Will give you `:'<,'>` allowing you to `s///` or `norm` after it
+"
+" ==============================================================================
+
 " This mappings fix some weird keyboard behaviors.
 " To test mappings: Insert mode, <C-v>, type whatever is wrongly being
 " interpreted. Literal escape sequence will be typed. A leading ^[ means
@@ -30,6 +49,7 @@ nnoremap <leader>r, :source $MYVIMRC<cr>
 
 " Buffers
 set hidden " Hide buffers when not displayed. This allow to switch between buffers without saving
+" Sudo save! (and make me a sandwich)
 nmap <leader>sudo :w !sudo tee %<cr>
 
 nmap <leader><Left> :bp<cr>
@@ -61,7 +81,7 @@ set nowritebackup
 " Search
 set hlsearch
 set incsearch
-nnoremap <leader>/ :let @/ = "" <cr> 
+nnoremap <leader>/ :nohl<cr>
 
 " Display
 colorscheme desert
