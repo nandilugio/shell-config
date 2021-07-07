@@ -52,9 +52,10 @@
   c = commit
   ca = !git add --all . && git commit -a 
   caa = !git add --all . && git commit -a --amend 
+  caane = !git add --all . && git commit -a --amend --no-edit
+  cm = commit -m
   cam = !git add --all . && git commit -am 
   caam = !git add --all . && git commit -a --amend -m
-  cm = commit -m
   co = checkout
   cob = checkout -b
   cp = cherry-pick
