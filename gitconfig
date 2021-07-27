@@ -126,9 +126,9 @@
 
   wip = !git add --all . && git commit -m \"wip [ci skip]\"
   dewip = ![ \"$(git log -1 --pretty=%B)\" = \"wip [ci skip]\" ] && git reset HEAD^ && git add --all .
-  f-dirty = !git status -u --porcelain | sed -E 's/^.+ +//'
-  f-last-commit = d --name-only HEAD~1
-  f-branch = d --name-only origin/master
+  f-dirty = !git status -u --porcelain | sed -E 's/^ ?[^ ]+ +//' | xargs -I% ls -d "%" 2>/dev/null
+  f-last-commit = !git d --name-only HEAD~1 | xargs -I% ls -d "%" 2>/dev/null
+  f-branch = !git d --name-only origin/master | xargs -I% ls -d "%" 2>/dev/null
 
   stash-staged = "!f() { \
       ! git diff --cached --exit-code --quiet && \

@@ -10,7 +10,7 @@
 " C- y, e       Scroll 1 line up, down
 " 
 " == Select, search & replace ==
-" *, #        Search word under cursor (up, down)
+" *, #        Search word under cursor (down, up)
 " va[, vi[    Select around, inside barackets (or parens, braces) (d, etc. too)
 " :%s//...    An empty search pattern will match highlighted results
 " : in visual Will give you `:'<,'>` allowing you to `s///` or `norm` after it
@@ -72,6 +72,8 @@ nmap <C-w> :bd<cr>
 
 " Clipboard
 set clipboard=unnamed " Global clipboard
+nnoremap <F2> :set invpaste<CR>
+"set pastetoggle=<F2>
 
 " Swap and backups
 set noswapfile

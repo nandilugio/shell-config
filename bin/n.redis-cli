@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Minimal redis client.
+# Usage: eg. `n.redis-cli localhost 6379`
+
+rlwrap -S '> ' nc "$@"
+

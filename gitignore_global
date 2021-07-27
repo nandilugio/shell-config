@@ -4,5 +4,4 @@
 .vscode/
 .pryrc
 
-*.nando.*
 n.test_*.log
