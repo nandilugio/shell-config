@@ -5,7 +5,7 @@ begin; set statement_timeout to 60000; commit;
 \pset null ' ∅'
 \set VERBOSITY verbose
 \set HISTCONTROL ignoredups
---\set HISTFILE ~/.psql/history- :DBNAME
+\set HISTFILE ~/.psql_history_ :DBNAME
 \set PROMPT1 '>>> ':PROMPT1
 \set PROMPT2 '>>> ':PROMPT2
 -- \set PROMPT3 '>>> ':PROMPT3

@@ -1,0 +1,55 @@
+# Auto-loaded things ###########################################################
+
+begin
+  require 'pry-byebug'
+  ::Pry.commands.alias_command 'cc', 'continue'
+  ::Pry.commands.alias_command 'ss', 'step'
+  ::Pry.commands.alias_command 'nn', 'next'
+  ::Pry.commands.alias_command 'ff', 'finish'
+rescue LoadError
+  puts "Skipping pry-byebug"
+end
+
+begin
+  require 'rails/console/app'
+  extend ::Rails::ConsoleMethods
+rescue LoadError
+  puts "Skipping rails"
+end
+
+# Load-on-request things #######################################################
+
+def n__load_url_helpers
+  include ::Rails.application.routes.url_helpers
+  default_url_options[:host] = "localhost:4000"
+  puts 'Set default_url_options[:host] = "localhost:4000"'
+end
+
+def n__load_factory_bot
+  include ::FactoryBot::Syntax::Methods
+  puts "\n/!\\ Warning: Current rails env is #{Rails.env}, not test!\n\n" unless Rails.env.test?
+end
+
+# ActiveRecord helpers #########################################################
+
+def n__ar_connection
+  ::ActiveRecord::Base.connection
+end
+
+def n__ar_connection_raw
+  ::ActiveRecord::Base.connection.raw_connection
+end
+
+def n__ar_exec_query(*args)
+  ::ActiveRecord::Base.connection.exec_query(*args)
+end
+
+def n__ar_exec_update(*args)
+  ::ActiveRecord::Base.connection.exec_update(*args)
+end
+
+def n__ar_reset_transaction
+  ::ActiveRecord::Base.connection.rollback_db_transaction
+  ::ActiveRecord::Base.connection.begin_db_transaction
+end
+
