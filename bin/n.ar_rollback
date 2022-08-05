@@ -1,0 +1,65 @@
+#!/bin/bash
+set -euo pipefail
+
+# Reverts DB changes from a Rails dev env to the strucutre.sql state in the
+# specified Git reference (defaults to HEAD).
+# 
+# Requirements
+# - Migra: https://github.com/djrobstep/migra
+# - git, psql and pg_dump
+#
+# Params as ENV vars:
+# - DEV_DATABASE_URL: DB to be reverted. Also, stripping the DB name, it's used to create a DB using the recovered structure.sql and diff it.
+#
+# CLI params:
+# - $1: Git reference to pull structure.sql from. Defaults to HEAD.
+
+
+if [ "$#" == 0 ]; then
+  git_ref=HEAD
+elif [ "$#" == 1 ]; then
+  git_ref="$1"
+else
+  echo 'Invalid args count. See usage in script source. Exiting.'
+  exit 1
+fi
+
+timestamp=$(date -u +%Y%m%d%H%M%S)
+tmp_database_url="${DEV_DATABASE_URL}_${git_ref}_${timestamp}"
+tmp_database_name=`basename "$tmp_database_url"`
+tmp_file=$(mktemp /tmp/ar_rollback.XXXXXX)
+
+echo
+echo "Diffing database to structure.sql at git ref: $git_ref"
+echo "Will diff and apply to database at:           $DEV_DATABASE_URL"
+echo "Will create temp database at:                 $tmp_database_url"
+echo "Diff script on temp file at:                  $tmp_file"
+echo
+read -s -n 1 -p "Press any key to continue..."
+echo
+
+git checkout $git_ref db/structure.sql
+psql $DEV_DATABASE_URL -c "create database $tmp_database_name"
+psql $tmp_database_url < db/structure.sql
+migra $DEV_DATABASE_URL $tmp_database_url > "${tmp_file}" --unsafe || true
+echo
+
+if [ -s "$tmp_file" ]
+then
+  cat $tmp_file
+  echo
+  read -p "Run rollback(y?)" -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]];
+  then
+    psql $DEV_DATABASE_URL -f $tmp_file
+    echo 'drop table schema_migrations' | psql $DEV_DATABASE_URL
+    pg_dump $tmp_database_url --table schema_migrations | psql $DEV_DATABASE_URL
+  else
+    echo "Rollback cancelled";
+  fi
+else
+  echo "Nothing to do"
+fi
+echo
+

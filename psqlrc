@@ -1,5 +1,5 @@
 \set QUIET on
-begin; set statement_timeout to 60000; commit;
+--begin; set statement_timeout to 60000; commit;
 \x auto
 \timing on
 \pset null ' ∅'

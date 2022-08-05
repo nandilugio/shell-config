@@ -1,7 +1,6 @@
 .DS_Store
-
+.envrc
+.pryrc
 .idea/
 .vscode/
-.pryrc
-
 n.test_*.log

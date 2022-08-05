@@ -1,0 +1,53 @@
+#!/bin/bash
+
+show_usage() {
+  echo "Extracts local user's commits for the specified time period (defaults to last month) from GIT repos." >&2
+  echo "Usage: $0 [-s <star-date>] [-e <end-date>] repo [ repo ... ]" >&2
+}
+
+# Process flag options
+while getopts "s:e:h" option; do
+  case $option in
+  s)
+    start_date=$OPTARG
+    ;;
+  e)
+    end_date=$OPTARG
+    ;;
+  h)
+    show_usage && exit 0
+    ;;
+  \?)
+    show_usage && exit 1
+    ;;
+  esac
+done
+shift $((OPTIND-1))  # Shift opts processed by getopts
+ 
+# Process positional args
+repo_dirs=("$@")
+[ ${#repo_dirs[@]} -eq 0 ] && show_usage && exit 1
+
+# Defaults
+start_date=${start_date:-$(date -v-28d +'%Y-%m-01')}
+end_date=${end_date:-$(date +'%Y-%m-01')}
+
+echo "Extracting commits between '$start_date' and '$end_date' for '${repo_dirs[@]}'..." >&2
+
+for repo_dir in "${repo_dirs[@]}"; do
+  echo "Processing '$repo_dir' repo..." >&2
+  git_dir=${repo_dir}/.git
+  [ ! -d "$git_dir" ] && echo "Directory doesn't look like a git repo (no $git_dir present)." >&2 && exit 2
+
+  pushd $repo_dir
+
+  author_email=$(git config user.email)
+  author_name=$(git config user.name)
+  echo "Extracting commits for '$author_name <$author_email>'."
+
+  git --no-pager log --no-merges --author="$author_email" --after="$start_date" --before="$end_date"
+
+  echo "Done with '$repo_dir'"
+  popd
+done
+

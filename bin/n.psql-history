@@ -1,2 +1,5 @@
 #!/bin/bash
-sed 's/\\040/ /g' ~/.psql_history | less +G
+
+hist_file="${1:-~/.psql_history}"
+
+sed 's/\\040/ /g' $hist_file | less +G

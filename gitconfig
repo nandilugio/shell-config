@@ -124,12 +124,6 @@
   sts = stash-staged
   stsh = stash show 
 
-  wip = !git add --all . && git commit -m \"wip [ci skip]\"
-  dewip = ![ \"$(git log -1 --pretty=%B)\" = \"wip [ci skip]\" ] && git reset HEAD^ && git add --all .
-  f-dirty = !git status -u --porcelain | sed -E 's/^ ?[^ ]+ +//' | xargs -I% ls -d "%" 2>/dev/null
-  f-last-commit = !git d --name-only HEAD~1 | xargs -I% ls -d "%" 2>/dev/null
-  f-branch = !git d --name-only origin/master | xargs -I% ls -d "%" 2>/dev/null
-
   stash-staged = "!f() { \
       ! git diff --cached --exit-code --quiet && \
       git stash push --quiet --keep-index -m \"temp for stash-index\" && \
@@ -137,5 +131,17 @@
       git stash pop --quiet stash@{1} && \
       git stash show -p | git apply -R; }; f"
 
+  wip = !git add --all . && git commit -m \"wip [ci skip]\"
+  dewip = ![ \"$(git log -1 --pretty=%B)\" = \"wip [ci skip]\" ] && git reset HEAD^ && git add --all .
 
   remove-merged-branches = !git branch --merged | grep -v \"\\*\" | grep -v master | grep -v develop | xargs -n 1 git branch -d
+
+  f-dirty = !git status -u --porcelain | sed -E 's/^ ?[^ ]+ +//' | xargs -I% ls -d "%" 2>/dev/null
+  f-last-commit = !git d --name-only HEAD~1 | xargs -I% ls -d "%" 2>/dev/null
+  f-branch = !git d --name-only origin/master | xargs -I% ls -d "%" 2>/dev/null
+
+  # https://stackoverflow.com/a/17819027/297586
+  gh-add-pr-remote = config --add remote.origin.fetch '+refs/pull/*/head:refs/remotes/origin/pull/*'
+  gh-get-pr = !git describe --all --contains $1 | grep ^remotes/origin/pull/ | sed -E 's!remotes/origin/pull/([0-9]+).+!\\1!'
+  
+
