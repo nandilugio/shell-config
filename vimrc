@@ -10,10 +10,11 @@
 " C- y, e       Scroll 1 line up, down
 " 
 " == Select, search & replace ==
-" *, #        Search word under cursor (down, up)
-" va[, vi[    Select around, inside barackets (or parens, braces) (d, etc. too)
-" :%s//...    An empty search pattern will match highlighted results
-" : in visual Will give you `:'<,'>` allowing you to `s///` or `norm` after it
+" *, #         Search word under cursor (down, up)
+" va[, vi[     Select around, inside barackets (or parens, braces) (d, etc. too)
+" :%s//...     An empty search pattern will match highlighted results
+" : in visual  Will give you `:'<,'>` allowing you to `s///` or `norm` after it
+" // in visual Will search for visually selected text (custom mapping)
 "
 " ==============================================================================
 
@@ -84,6 +85,9 @@ set nowritebackup
 set hlsearch
 set incsearch
 nnoremap <leader>/ :nohl<cr>
+" To search visually selected text, type `//` after visual selection
+" https://vim.fandom.com/wiki/Search_for_visually_selected_text
+vnoremap // y/\V<C-R>=escape(@",'/\')<CR><CR>
 
 " Display
 colorscheme desert

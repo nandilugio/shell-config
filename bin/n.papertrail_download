@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Adapted from: https://www.papertrail.com/help/permanent-log-archives/#downloading-multiple-archives
+
+api_key=$1
+date_from=$2 # YYYY-MM-DD
+date_to=$3 # YYYY-MM-DD
+
+curl -sH "X-Papertrail-Token: $api_key" https://papertrailapp.com/api/v1/archives.json |
+  grep -o '"filename":"[^"]*"' | egrep -o '[0-9-]+' |
+  awk "\$0 >= \"$date_from\" && \$0 < \"$date_to\" {
+    print \"output \" \$0 \".tsv.gz\"
+    print \"url https://papertrailapp.com/api/v1/archives/\" \$0 \"/download\"
+  }" | curl --progress-bar -fLH "X-Papertrail-Token: $api_key" -K-
+
+
