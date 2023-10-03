@@ -16,6 +16,11 @@
 " : in visual  Will give you `:'<,'>` allowing you to `s///` or `norm` after it
 " // in visual Will search for visually selected text (custom mapping)
 "
+" == Search flags after :%s/// ==
+" g   Global
+" i   case-Insensitive
+" c   Confirm (one-by-one substitution)
+
 " ==============================================================================
 
 " This mappings fix some weird keyboard behaviors.
@@ -46,7 +51,7 @@ nmap \ <leader>
 
 " Edit & reload .vimrc
 nnoremap <leader>, :e $MYVIMRC<cr>
-nnoremap <leader>r, :source $MYVIMRC<cr>
+nnoremap <leader>r :source $MYVIMRC<cr>
 
 " Buffers
 set hidden " Hide buffers when not displayed. This allow to switch between buffers without saving
@@ -155,9 +160,7 @@ call plug#begin('~/.vim/plugged')
 "Plug 'Xuyuanp/nerdtree-git-plugin'
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'vim-airline/vim-airline'
-Plug 'vim-ruby/vim-ruby'
 "Plug 'ervandew/supertab'
-Plug 'elixir-lang/vim-elixir'
-"Plug 'kchmck/vim-coffee-script'
+"Plug 'elixir-lang/vim-elixir'
 call plug#end()
 
