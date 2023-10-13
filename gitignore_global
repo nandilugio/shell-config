@@ -3,5 +3,5 @@
 .pryrc
 .idea/
 .vscode/
-.nando%/
+%nando/
 n.test_*.log

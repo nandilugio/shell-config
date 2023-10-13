@@ -59,12 +59,12 @@
   co = checkout
   cob = checkout -b
   cp = cherry-pick
-  d = diff
-  ds = diff --staged
+  d = diff --no-prefix
+  ds = diff --no-prefix --staged
   dt = difftool
   dts = difftool --staged
-  dw = diff --color-words='[^[:space:]]|([[:alnum:]]|UTF_8_GUARD)+'
-  dws = diff --color-words='[^[:space:]]|([[:alnum:]]|UTF_8_GUARD)+' --staged
+  dw = diff --no-prefix --color-words='[^[:space:]]|([[:alnum:]]|UTF_8_GUARD)+'
+  dws = diff --no-prefix --color-words='[^[:space:]]|([[:alnum:]]|UTF_8_GUARD)+' --staged
   f = fetch
   l = log --oneline
   lfp = log --oneline --first-parent

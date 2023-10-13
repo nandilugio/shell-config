@@ -11,6 +11,9 @@ PATH=$PATH:"/usr/local/Cellar/perl/5.32.0/bin"
 # Homebrew
 export PATH="/usr/local/sbin:$PATH"
 
+# Rbenv
+eval "$(rbenv init - zsh)"
+
 # Pyenv
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
@@ -18,6 +21,9 @@ eval "$(pyenv init -)"
 
 # Pipx
 PATH=$PATH:~/.local/bin
+
+# Direnv
+eval "$(direnv hook zsh)"
 
 # Me
 PATH=~/bin:$PATH
