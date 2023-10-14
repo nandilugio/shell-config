@@ -1,33 +1,36 @@
 # Update!
 #pushd ~/shell-config; git pull; popd
 
+# Homebrew
+eval "$(/usr/local/bin/brew shellenv)"  # NOTE: You may have already added this to .zprofile or .zshrc already
+#export PATH="/usr/local/sbin:$PATH"
+
 # FZF
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh  # NOTE: Vim plug may have already installed FZF, adding this command to .zprofile or .zshrc already
 export FZF_DEFAULT_COMMAND="find . -type f -not -path '*/\.git/*'"
 
 # Perl (and therefore pgtap, etc.)
-PATH=$PATH:"/usr/local/Cellar/perl/5.32.0/bin"
-
-# Homebrew
-export PATH="/usr/local/sbin:$PATH"
+#PATH=$PATH:"/usr/local/Cellar/perl/5.32.0/bin"
 
 # Rbenv
-eval "$(rbenv init - zsh)"
+#eval "$(rbenv init - zsh)"
 
 # Pyenv
-export PYENV_ROOT="$HOME/.pyenv"
-command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
+#export PYENV_ROOT="$HOME/.pyenv"
+#command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+#eval "$(pyenv init -)"
 
 # Pipx
-PATH=$PATH:~/.local/bin
+#PATH=$PATH:~/.local/bin
 
 # Direnv
-eval "$(direnv hook zsh)"
+#eval "$(direnv hook zsh)"
 
 # Me
+#PS1=$PS1$'\n'"%# "  # Newline after prompt for agnoster ohmyzsh theme
 PATH=~/bin:$PATH
-PS1=$PS1$'\n'"%# "  # Newline after prompt
+export EDITOR='vim'
+export VISUAL='vim'
 setopt HIST_IGNORE_SPACE
 alias g=git
 

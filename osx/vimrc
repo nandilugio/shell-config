@@ -8,4 +8,4 @@ map! <esc>[1;5C <c-right>
 map! <esc>[1;5A <c-up>
 map! <esc>[1;5B <c-down>
 
-source ~/dotfiles/vimrc
+source ~/.shell-config/common_dotfiles/vimrc
