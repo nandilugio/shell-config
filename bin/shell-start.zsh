@@ -16,9 +16,9 @@ export FZF_DEFAULT_COMMAND="find . -type f -not -path '*/\.git/*'"
 #eval "$(rbenv init - zsh)"
 
 # Pyenv
-#export PYENV_ROOT="$HOME/.pyenv"
-#command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
-#eval "$(pyenv init -)"
+export PYENV_ROOT="$HOME/.pyenv"
+command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
 
 # Pipx
 #PATH=$PATH:~/.local/bin
@@ -27,8 +27,8 @@ export FZF_DEFAULT_COMMAND="find . -type f -not -path '*/\.git/*'"
 #eval "$(direnv hook zsh)"
 
 # Me
-#PS1=$PS1$'\n'"%# "  # Newline after prompt for agnoster ohmyzsh theme
-PATH=~/bin:$PATH
+export PS1=$PS1$'\n'"%# "  # Newline after prompt for agnoster ohmyzsh theme
+export PATH=~/bin:$PATH
 export EDITOR='vim'
 export VISUAL='vim'
 setopt HIST_IGNORE_SPACE
