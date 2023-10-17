@@ -74,6 +74,7 @@ Then, to be as compatible to my Linux `i3` setup as possible, without much of a 
 
 - Clear _all_ general keybindings (including nav shortcuts, etc.)
 - In profile > keys:
+  - Ensure "Report modifiers using CSI u" is checked
   - Both Option/Meta keys to send `Esc+` (for `tmux`)
   - Load preset: Natural text editing
   - Remove `M-left` and `M-right`, now conflicting with `tmux` mappings
