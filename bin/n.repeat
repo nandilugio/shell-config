@@ -1,6 +1,6 @@
 #!/bin/bash
 
-wait_s=1
+wait_s=3
 command="$@"
 
 while true; do
