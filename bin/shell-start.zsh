@@ -36,6 +36,7 @@ export NVM_DIR="$HOME/.nvm"
 
 # Me
 #export PS1=$PS1$'\n'"%# "  # Newline after prompt for agnoster ohmyzsh theme
+export KEYTIMEOUT=1
 export PATH=~/bin:$PATH
 export EDITOR='vim'
 export VISUAL='vim'
