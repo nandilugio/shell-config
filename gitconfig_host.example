@@ -1,7 +1,23 @@
 [user]
-  name = ""
+  name = "<FILL>"
 
 [alias]
-  profile-pers = config user.email ""
-  profile-work = config user.email ""
 
+	# Using different GH accounts
+  #
+  # The last `git remote show origin` serves as a test to see if the origin is reachable, eg. ssh config.
+  # You need to have a different set of keys and somethingn like:
+  # ```
+  # Host github.com-pers
+  #   Hostname github.com
+  #   AddKeysToAgent yes
+  #   UseKeychain yes
+  #   IdentityFile ~/.ssh/id_ed25519-pers
+  # ```
+  profile-pers = !git config user.email "<FILL>" && git remote set-url origin $(git remote get-url origin | sed 's/@github.com/@github.com-pers/') && git remote get-url origin && git remote show origin
+
+  # Using samme account
+  #profile-pers = config user.email "<FILL>"
+  
+  # For work
+  profile-work = config user.email "<FILL>"
