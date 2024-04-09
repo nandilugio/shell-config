@@ -53,3 +53,17 @@ def n__ar_reset_transaction
   ::ActiveRecord::Base.connection.begin_db_transaction
 end
 
+def ar_relations(model_class)
+  rel_types = %i(has_one has_many has_and_belongs_to_many belongs_to)
+
+  result = {}
+  rel_types.map do |rel_type|
+    result[rel_type] = model_class.reflect_on_all_associations(rel_type).map do |r|
+      desc = "#{r.name} => #{r.class_name}"
+      desc += " (#{r.options})" unless r.options.empty?
+      desc
+    end
+  end
+  result
+end
+
