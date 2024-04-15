@@ -140,7 +140,8 @@
 
   f-dirty = !git status -u --porcelain | sed -E 's/^ ?[^ ]+ +//' | xargs -I% ls -d "%" 2>/dev/null
   f-last-commit = !git d --name-only HEAD~1 | xargs -I% ls -d "%" 2>/dev/null
-  f-branch = !git d --name-only origin/master | xargs -I% ls -d "%" 2>/dev/null
+  f-branch-d = !git d --name-only origin/develop | xargs -I% ls -d "%" 2>/dev/null
+  f-branch-m = !git d --name-only origin/master | xargs -I% ls -d "%" 2>/dev/null
 
   # https://stackoverflow.com/a/17819027/297586
   gh-add-pr-remote = config --add remote.origin.fetch '+refs/pull/*/head:refs/remotes/origin/pull/*'

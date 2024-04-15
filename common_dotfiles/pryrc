@@ -53,7 +53,7 @@ def n__ar_reset_transaction
   ::ActiveRecord::Base.connection.begin_db_transaction
 end
 
-def ar_relations(model_class)
+def n__ar_relations(model_class)
   rel_types = %i(has_one has_many has_and_belongs_to_many belongs_to)
 
   result = {}
