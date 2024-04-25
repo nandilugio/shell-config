@@ -7,17 +7,33 @@
   #
   # The last `git remote show origin` serves as a test to see if the origin is reachable, eg. ssh config.
   # You need to have a different set of keys and somethingn like:
+  # 
   # ```
+  # Host github.com
+  #   User git
+  #   AddKeysToAgent yes
+  #   UseKeychain yes
+  #   IdentityFile ~/.ssh/id_ed25519
+  # 
   # Host github.com-pers
   #   Hostname github.com
+  #   User git
   #   AddKeysToAgent yes
   #   UseKeychain yes
   #   IdentityFile ~/.ssh/id_ed25519-pers
+  #   IdentitiesOnly=yes
   # ```
-  profile-pers = !git config user.email "<FILL>" && git remote set-url origin $(git remote get-url origin | sed 's/@github.com/@github.com-pers/') && git remote get-url origin && git remote show origin
+  #
+  # References:
+  # https://stackoverflow.com/questions/3860112/multiple-github-accounts-on-the-same-computer
+  # https://superuser.com/questions/772660/howto-force-ssh-to-use-a-specific-private-key
 
-  # Using samme account
-  #profile-pers = config user.email "<FILL>"
+  # Profile: personal
+  #   Using multiple GH accounts (see above)
+  profile-pers = !git config user.email "<FILL>" && git remote set-url origin $(git remote get-url origin | sed 's/@github.com:/@github.com-pers:/') && git remote get-url origin && git remote show origin
+  #   Using same account
+  # profile-pers = config user.email "<FILL>"
   
-  # For work
+  # Profile: work
   profile-work = config user.email "<FILL>"
+

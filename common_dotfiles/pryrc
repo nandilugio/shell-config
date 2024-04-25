@@ -2,10 +2,10 @@
 
 begin
   require 'pry-byebug'
-  ::Pry.commands.alias_command 'cc', 'continue'
-  ::Pry.commands.alias_command 'ss', 'step'
-  ::Pry.commands.alias_command 'nn', 'next'
-  ::Pry.commands.alias_command 'ff', 'finish'
+  ::Pry.commands.alias_command 'cc', 'continue'  # Continue
+  ::Pry.commands.alias_command 'ss', 'step'      # Step-into
+  ::Pry.commands.alias_command 'nn', 'next'      # Step-over
+  ::Pry.commands.alias_command 'ff', 'finish'    # Step-out
 rescue LoadError
   puts "Skipping pry-byebug"
 end

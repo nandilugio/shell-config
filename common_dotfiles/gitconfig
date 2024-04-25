@@ -143,6 +143,7 @@
   f-branch-d = !git d --name-only origin/develop | xargs -I% ls -d "%" 2>/dev/null
   f-branch-m = !git d --name-only origin/master | xargs -I% ls -d "%" 2>/dev/null
 
+  # Get GitHub's PR for a commit
   # https://stackoverflow.com/a/17819027/297586
   gh-add-pr-remote = config --add remote.origin.fetch '+refs/pull/*/head:refs/remotes/origin/pull/*'
   gh-get-pr = !git describe --all --contains $1 | grep ^remotes/origin/pull/ | sed -E 's!remotes/origin/pull/([0-9]+).+!\\1!'
