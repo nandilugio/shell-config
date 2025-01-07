@@ -75,8 +75,9 @@
   m = merge
   ma = merge --abort
   mc = !git add --all . && git merge --continue
+  mod = !git fetch && git merge origin/develop
+  mom = !git fetch && git merge origin/master
   mt = mergetool
-  mum = merge upstream/master
   pl = pull
   ps = push
   psf = push --force-with-lease

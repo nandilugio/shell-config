@@ -6,8 +6,5 @@
 \set VERBOSITY verbose
 \set HISTCONTROL ignoredups
 \set HISTFILE ~/.psql_history_ :DBNAME
-\set PROMPT1 '>>> ':PROMPT1
-\set PROMPT2 '>>> ':PROMPT2
--- \set PROMPT3 '>>> ':PROMPT3
 \setenv LESS -X
 \set QUIET off

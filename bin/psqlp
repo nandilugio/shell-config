@@ -5,5 +5,5 @@ shift
 
 db_url=$(security find-generic-password -s db -a $target -w)
 
-psql "$db_url" "$@"
+psql "$db_url" -v "PROMPT1=$target %R%# " -v "PROMPT2=$target %R%# " "$@"
 

@@ -1,3 +1,5 @@
+puts "# START .pryrc ##########################################################"
+
 # Auto-loaded things ###########################################################
 
 begin
@@ -6,6 +8,7 @@ begin
   ::Pry.commands.alias_command 'ss', 'step'      # Step-into
   ::Pry.commands.alias_command 'nn', 'next'      # Step-over
   ::Pry.commands.alias_command 'ff', 'finish'    # Step-out
+  puts "Pry-byebug aliases:\n\tcontinue: cc\n\tstep: ss\n\tnext: nn\n\tfinish: ff"
 rescue LoadError
   puts "Skipping pry-byebug"
 end
@@ -66,4 +69,6 @@ def n__ar_relations(model_class)
   end
   result
 end
+
+puts "# FINISH .pryrc #########################################################"
 

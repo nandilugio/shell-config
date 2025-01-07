@@ -1,0 +1,16 @@
+#!/bin/sh
+
+source_volume=$1
+destination_volume=$2
+
+if [ -z "$source_volume" ] || [ -z "$destination_volume" ]; then
+  echo "Error: Missing arguments. Both source and destination volume names must be provided."
+  exit 1
+fi
+
+echo "Source: $source_volume"
+echo "Destination: $destination_volume"
+
+
+docker run --rm -v "${source_volume}:/source" -v "${destination_volume}:/destination" alpine sh -c \'cp -rfav /source /destination\'
+
