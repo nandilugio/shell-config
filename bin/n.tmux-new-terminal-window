@@ -1,5 +1,7 @@
 #!/bin/bash
 
-~/bin/n.tmux-kill-detached
-tmux
+#~/bin/n.tmux-kill-detached
+#tmux
+
+tmux new-session -A -s main
 
