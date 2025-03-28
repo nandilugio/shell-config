@@ -1,4 +1,4 @@
-# Environment config
+# Shell Environment Config
 
 Or what others call _dotfiles_.
 
@@ -13,8 +13,10 @@ Or what others call _dotfiles_.
 # Clone the project
 git clone git@github.com:nandilugio/shell-config.git ~/.shell-config
 
-# Link/copy dotfiles
+# Link dotfiles
 for f in $(ls ~/.shell-config/common_dotfiles); do ln -s ~/.shell-config/common_dotfiles/$f ~/.$f; done
+
+# Link bin folder
 ln -s ~/.shell-config/bin ~/bin
 # TODO: Check if there's anything specific for the platform
 
@@ -56,7 +58,7 @@ https://apple.stackexchange.com/questions/48502/how-can-i-permanently-add-my-ssh
 Set this command to run for new windows:
 
 ```sh
-/bin/sh -c 'PATH=/usr/local/bin:$PATH ~/bin/n.tmux-new-terminal-window'
+/bin/sh -c 'PATH=/opt/homebrew/bin:$PATH ~/bin/n.tmux-new-terminal-window'
 ```
 
 ### Keys setup
@@ -67,7 +69,7 @@ Then, to be as compatible to my Linux `i3` setup as possible, without much of a 
 
 #### System
 
-- Swap Cmd and Opt
+- Swap Cmd and Opt on PC keyboards
 - Remap Spotlight so it's in center key (old Option/Meta, now Cmd)
 
 #### iTerm2
@@ -79,11 +81,10 @@ Then, to be as compatible to my Linux `i3` setup as possible, without much of a 
   - Load preset: Natural text editing
   - Remove `M-left` and `M-right`, now conflicting with `tmux` mappings
 
-#### Rectangle
+#### Other
 
-Remember now Option/Meta, in the center, is Command. We want Rectangle in that center key (`M` below).
-Unmap everything, then map:
-- \* Half: `S-M-*`
-- Fullscreen: `M-f`
-- Prev/Next Display: `C-S-M-Left/Right`
+Some apps allow import-export of their configs from the app itself. See [`macos/app-exportable`](macos/app-exportable).
+
+Others rely on the [UserDefaults](https://developer.apple.com/documentation/foundation/userdefaults) system to persist user settings. For those see [`macos/plists`](macos/plists).
+
 
