@@ -3,10 +3,9 @@
 
 [alias]
 
-	# Using different GH accounts
+  # Using different GH accounts
   #
-  # The last `git remote show origin` serves as a test to see if the origin is reachable, eg. ssh config.
-  # You need to have a different set of keys and somethingn like:
+  # You need to have a different set of keys and something like:
   # 
   # ```
   # Host github.com
@@ -14,6 +13,7 @@
   #   AddKeysToAgent yes
   #   UseKeychain yes
   #   IdentityFile ~/.ssh/id_ed25519
+  #   IdentitiesOnly=yes
   # 
   # Host github.com-pers
   #   Hostname github.com
@@ -29,7 +29,8 @@
   # https://superuser.com/questions/772660/howto-force-ssh-to-use-a-specific-private-key
 
   # Profile: personal
-  #   Using multiple GH accounts (see above)
+  #   Using multiple GH accounts (see above). The last `git remote show origin`
+  #   serves as a test to see if the origin is reachable, eg. ssh config.
   profile-pers = !git config user.email "<FILL>" && git remote set-url origin $(git remote get-url origin | sed 's/@github.com:/@github.com-pers:/') && git remote get-url origin && git remote show origin
   #   Using same account
   # profile-pers = config user.email "<FILL>"
