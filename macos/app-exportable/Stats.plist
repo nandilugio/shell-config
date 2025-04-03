@@ -25,7 +25,7 @@
 	<key>CPU_pieChart_position</key>
 	<integer>4</integer>
 	<key>CPU_position</key>
-	<integer>1</integer>
+	<integer>0</integer>
 	<key>CPU_tachometer_position</key>
 	<integer>5</integer>
 	<key>CPU_widget</key>
@@ -79,7 +79,7 @@
 	<key>GPU_mini_position</key>
 	<integer>1</integer>
 	<key>GPU_position</key>
-	<integer>2</integer>
+	<integer>1</integer>
 	<key>GPU_state</key>
 	<true/>
 	<key>GPU_tachometer_position</key>
@@ -94,6 +94,8 @@
 	<string>{800, 448}</string>
 	<key>NSNavPanelExpandedStateForSaveMode</key>
 	<true/>
+	<key>NSStatusItem Preferred Position CombinedModules</key>
+	<real>349</real>
 	<key>NSToolbar Configuration eu.exelban.Stats.Settings.Toolbar</key>
 	<dict>
 		<key>TB Display Mode</key>
@@ -106,7 +108,7 @@
 		<integer>1</integer>
 	</dict>
 	<key>NSWindow Frame NSNavPanelAutosaveName</key>
-	<string>880 654 800 448 0 0 2560 1415 </string>
+	<string>1104 914 800 448 0 0 3008 1667 </string>
 	<key>Network_label_position</key>
 	<integer>2</integer>
 	<key>Network_networkChart_position</key>
@@ -169,18 +171,36 @@
 	<true/>
 	<key>SSD_network_chart_uploadColor</key>
 	<string>monochrome</string>
+	<key>Sensors_barChart_position</key>
+	<integer>1</integer>
+	<key>Sensors_label_position</key>
+	<integer>3</integer>
+	<key>Sensors_mini_position</key>
+	<integer>2</integer>
 	<key>Sensors_position</key>
+	<integer>2</integer>
+	<key>Sensors_sensor</key>
+	<string>Hottest CPU</string>
+	<key>Sensors_stack_position</key>
 	<integer>0</integer>
 	<key>Sensors_state</key>
 	<true/>
+	<key>Sensors_widget</key>
+	<string>sensors</string>
 	<key>runAtLoginInitialized</key>
 	<true/>
+	<key>sensor_Fastest fan</key>
+	<false/>
 	<key>sensor_Hottest CPU</key>
 	<true/>
 	<key>sensor_Hottest GPU</key>
 	<true/>
+	<key>sensor_Total System Consumption</key>
+	<false/>
 	<key>setupProcess</key>
 	<true/>
+	<key>support_ts</key>
+	<integer>1743677229</integer>
 	<key>telemetry</key>
 	<false/>
 	<key>telemetry_id</key>
@@ -188,8 +208,8 @@
 	<key>update-interval</key>
 	<string>Once per day</string>
 	<key>updater_check_ts</key>
-	<integer>1743192096</integer>
+	<integer>1743677614</integer>
 	<key>version</key>
-	<string>2.11.3</string>
+	<string>2.11.37</string>
 </dict>
 </plist>

@@ -257,17 +257,9 @@
       "keyCode" : 125,
       "modifierFlags" : 917504
     },
-    "firstThird" : {
-      "keyCode" : 123,
-      "modifierFlags" : 917504
-    },
     "larger" : {
       "keyCode" : 24,
       "modifierFlags" : 786432
-    },
-    "lastThird" : {
-      "keyCode" : 124,
-      "modifierFlags" : 917504
     },
     "leftHalf" : {
       "keyCode" : 123,
