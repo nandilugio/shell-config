@@ -7,6 +7,7 @@ n.test_*.log
 .pryrc
 
 .idea/
+.idea_*/
 .vscode/
 
 **/vendor/bundle/
