@@ -34,6 +34,11 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
+# Github
+alias ghcs='gh copilot suggest'
+alias ghce='gh copilot explain'
+
+
 # Me
 #export PS1=$PS1$'\n'"%# "  # Newline after prompt for agnoster ohmyzsh theme
 export KEYTIMEOUT=1
