@@ -43,8 +43,8 @@ alias ghce='gh copilot explain'
 #export PS1=$PS1$'\n'"%# "  # Newline after prompt for agnoster ohmyzsh theme
 export KEYTIMEOUT=1
 export PATH=~/bin:$PATH
-export EDITOR='vim'
-export VISUAL='vim'
+export EDITOR='nvim'
+export VISUAL='nvim'
 setopt HIST_IGNORE_SPACE
 alias g=git
 
