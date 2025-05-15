@@ -1,0 +1,12 @@
+#!/bin/bash
+
+echo "Hit ENTER or wait 2 seconds for neovim, any other key for vim..."
+
+read -t 2 -n 1 key
+
+if [[ "$key" == "" ]]; then
+    nvim "$@"
+else
+    /usr/bin/vim "$@"
+fi
+
