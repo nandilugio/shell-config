@@ -1,0 +1,21 @@
+#!/bin/sh
+
+backup_file=$1
+destination_volume=${2:-$(basename -s .tar.bz2 "$backup_file")}
+
+if [ -z "$backup_file" ]; then
+  echo "Error: Missing backup file path. Destination volume can also be provided. Defaults to the name of the backup file without extensions."
+  exit 1
+fi
+
+backup_realpath=$(realpath "$backup_file")
+backup_basename=$(basename "$backup_realpath")
+backup_dirname=$(dirname "$backup_realpath")
+
+
+echo "Source: $backup_basename (on $backup_dirname)"
+echo "Destination: $destination_volume"
+read -p "Press any key to continue... " -n1 -s
+
+
+docker run --rm -v "${backup_dirname}:/source_dir" -v "${destination_volume}:/destination" alpine sh -c "tar -xjf /source_dir/${backup_basename} -C /destination"

@@ -10,6 +10,7 @@ fi
 
 echo "Source: $source_volume"
 echo "Destination: $destination_volume"
+read -p "Press any key to continue... " -n1 -s
 
 
 docker run --rm -v "${source_volume}:/source" -v "${destination_volume}:/destination" alpine sh -c \'cp -rfav /source /destination\'

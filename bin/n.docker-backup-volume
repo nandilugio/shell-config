@@ -1,0 +1,19 @@
+#!/bin/sh
+
+source_volume=$1
+destination_path=${2:-$PWD}
+
+if [ -z "$source_volume" ]; then
+  echo "Error: Missing source volume. Destination path can also be provided."
+  exit 1
+fi
+
+destination_filename="$source_volume".tar.bz2
+
+echo "Source: $source_volume"
+echo "Destination: $destination_path/$destination_filename"
+read -p "Press any key to continue... " -n1 -s
+
+mkdir -p $destination_path
+
+docker run --rm -v "${source_volume}:/source" alpine sh -c 'cd /source && tar -cjf - .' > "$destination_path/$destination_filename"
