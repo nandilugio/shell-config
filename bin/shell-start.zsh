@@ -47,4 +47,5 @@ export EDITOR='nvim'
 export VISUAL='nvim'
 setopt HIST_IGNORE_SPACE
 alias g=git
+alias lg=lazygit
 
