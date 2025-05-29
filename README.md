@@ -6,7 +6,8 @@ Or what others call _dotfiles_.
 
 - Install zsh, prezto, etc.
 - Install git, configure ssh github access, etc.
-- Install vim, tmux, etc.
+- Install (n)vim, tmux, etc.
+- Install lazygit, etc.
 - Then:
 
 ```sh
@@ -15,6 +16,8 @@ git clone git@github.com:nandilugio/shell-config.git ~/.shell-config
 
 # Link dotfiles
 for f in $(ls ~/.shell-config/common_dotfiles); do ln -s ~/.shell-config/common_dotfiles/$f ~/.$f; done
+
+# TODO: link dot_donfig and lib_app_support files
 
 # Link bin folder
 ln -s ~/.shell-config/bin ~/bin
@@ -44,7 +47,11 @@ gsettings set org.gnome.shell.app-switcher current-workspace-only true
 
 ## Mac OS X
 
+https://macos-defaults.com/keyboard/applepressandholdenabled.html
+https://stackoverflow.com/questions/33152551/how-can-i-disable-applepressandholdenabled-for-a-specific-application-repeat
+
 ```sh
+defaults write NSGlobalDomain "ApplePressAndHoldEnabled" -bool "false"
 defaults write com.apple.Finder AppleShowAllFiles true
 killall Finder
 ```
