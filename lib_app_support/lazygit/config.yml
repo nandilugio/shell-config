@@ -2,3 +2,4 @@ gui:
   nerdFontsVersion: 3
 git:
   autoForwardBranches: none
+  autoFetch: false

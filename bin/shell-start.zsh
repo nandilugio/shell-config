@@ -47,5 +47,6 @@ export EDITOR='nvim'
 export VISUAL='nvim'
 setopt HIST_IGNORE_SPACE
 alias g=git
-alias lg=lazygit
+alias lg='git fetch && lazygit'
+alias ttofu='tofu workspace show; read -n 1; tofu'
 
