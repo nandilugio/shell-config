@@ -22,6 +22,8 @@ Enter           first non-blank of next line
 
 %               find matching "bracket" ([{<...
 
+H,M,L           move in the screen to a (H)igh, (M)id or (L)ow position
+
 gg              (g)o start of file
 {line} G or gg  (G)o to {line}
 G               (G)o end of file

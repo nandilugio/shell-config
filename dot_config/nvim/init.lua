@@ -100,7 +100,7 @@ vim.o.breakindent = true
 -- Don't show the mode, since it's already in the status line
 vim.o.showmode = false
 
-vim.g.have_nerd_font = true
+vim.g.have_nerd_font = false
 
 ------------
 -- Splits --
@@ -203,6 +203,15 @@ require("lazy").setup({
 
   -- Detect tabstop and shiftwidth automatically
   "NMAC427/guess-indent.nvim",
+
+  { -- Autosave
+    'boorboor/save.nvim',
+    config = function()
+      require('save').setup({
+        change_mode_mapping = '<F4>'
+      })
+    end,
+  },
 
   -- UI and Visuals --
 
