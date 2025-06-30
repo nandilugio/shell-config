@@ -102,6 +102,10 @@ vim.o.showmode = false
 
 vim.g.have_nerd_font = false
 
+vim.o.foldmethod = 'expr'
+vim.o.foldexpr = 'nvim_treesitter#foldexpr()'
+vim.o.foldlevel = 99
+
 ------------
 -- Splits --
 ------------
@@ -876,7 +880,15 @@ require("lazy").setup({
   {
     "CopilotC-Nvim/CopilotChat.nvim",
     dependencies = {
-      { "github/copilot.vim" }, -- or zbirenbaum/copilot.lua
+      -- { "github/copilot.vim" },
+      {
+        "zbirenbaum/copilot.lua",
+          cmd = "Copilot",
+          event = "InsertEnter",
+          config = function()
+            require("copilot").setup({})
+          end,
+      },
       { "nvim-lua/plenary.nvim", branch = "master" }, -- for curl, log and async functions
     },
     build = "make tiktoken", -- Only on MacOS or Linux
@@ -888,13 +900,13 @@ require("lazy").setup({
 
   -- Other --
 
-  {
-    "theprimeagen/vim-be-good",
-
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-    },
-  },
+  -- {
+  --   "theprimeagen/vim-be-good",
+  --
+  --   dependencies = {
+  --     "nvim-lua/plenary.nvim",
+  --   },
+  -- },
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
