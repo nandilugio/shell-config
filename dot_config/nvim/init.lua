@@ -54,6 +54,9 @@ vim.api.nvim_create_autocmd("TextYankPost", {
   end,
 })
 
+-- Allow visual block mode to span more chars than exist (always a square, even after dispair end of lines)
+vim.opt.virtualedit = "block"
+
 -- Mouse --
 
 vim.o.mouse = "a"
@@ -192,14 +195,12 @@ require("lazy").setup({
       -- set use_icons to true if you have a Nerd Font
       statusline.setup({ use_icons = vim.g.have_nerd_font })
 
-      ---@diagnostic disable-next-line: duplicate-set-field
       statusline.section_location = function()
         local current_line = vim.fn.line(".")
         local total_lines = vim.fn.line("$")
         local percentage = math.floor((current_line / total_lines) * 100)
         return string.format("%2d", percentage) .. "%% %2l:%-2v"
       end
-      --  Check out: https://github.com/echasnovski/mini.nvim
     end,
   },
 
@@ -219,13 +220,25 @@ require("lazy").setup({
 
   -- UI and Visuals --
 
-  { -- Add indentation guides even on blank lines
-    "lukas-reineke/indent-blankline.nvim",
-    -- Enable `lukas-reineke/indent-blankline.nvim`
-    -- See `:help ibl`
-    main = "ibl",
-    opts = {},
-  },
+  -- { -- Add indentation guides even on blank lines
+  --   "lukas-reineke/indent-blankline.nvim",
+  --   main = "ibl",
+  --   opts = {},
+  --   config = function()
+  --     local highlight = {
+  --       "CursorColumn",
+  --       "Whitespace",
+  --     }
+  --     require("ibl").setup {
+  --       indent = { highlight = highlight, char = "" },
+  --       whitespace = {
+  --         highlight = highlight,
+  --         remove_blankline_trail = false,
+  --       },
+  --       scope = { enabled = false },
+  --     }
+  --   end,
+  -- },
 
   { -- Adds git related signs to the gutter, as well as utilities for managing changes
     "lewis6991/gitsigns.nvim",
@@ -415,23 +428,16 @@ require("lazy").setup({
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
       ensure_installed = {
-        "bash",
-        "c",
-        "diff",
+        "vim", "vimdoc", "query",
+        "lua", "luadoc",
+        "c", "bash", "diff",
         "html",
-        "lua",
-        "luadoc",
-        "markdown",
-        "markdown_inline",
-        "query",
-        "vim",
-        "vimdoc",
-        "sql",
-        "python",
-        "ruby",
+        "markdown", "markdown_inline",
       },
+
       -- Autoinstall languages that are not installed
       auto_install = true,
+
       highlight = {
         enable = true,
         -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
@@ -439,7 +445,11 @@ require("lazy").setup({
         --  the list of additional_vim_regex_highlighting and disabled languages for indent.
         additional_vim_regex_highlighting = { "ruby" },
       },
-      indent = { enable = true, disable = { "ruby" } },
+
+      indent = {
+        enable = true,
+        disable = { "ruby" }, -- See note above about Ruby
+      },
     },
     -- There are additional nvim-treesitter modules that you can use to interact
     -- with nvim-treesitter. You should go explore a few and see what interests you:
