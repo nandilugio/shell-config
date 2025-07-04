@@ -80,8 +80,7 @@ vim.opt.tabstop = 4
 vim.o.confirm = true
 
 -- Remove all trailing whitespace in the current buffer
-vim.keymap.set("n", "<leader>bt", [[:%s/\s\+$//e<CR>:nohlsearch<CR>]], { desc = "[T]rim trailing whitespace" })
-
+vim.keymap.set("n", "<leader>bc", [[:%s/\s\+$//e<CR>:nohlsearch<CR>:echo "Cleared trailing whitespace"<CR>]], { desc = "[C]lear trailing whitespace" })
 -----------
 -- Other --
 -----------
@@ -129,10 +128,6 @@ vim.o.breakindent = true
 vim.o.showmode = false
 
 vim.g.have_nerd_font = false
-
-vim.o.foldmethod = 'expr'
-vim.o.foldexpr = 'nvim_treesitter#foldexpr()'
-vim.o.foldlevel = 99
 
 ----------------
 ---- Splits ----
@@ -462,35 +457,48 @@ require("lazy").setup({
     build = ":TSUpdate",
     main = "nvim-treesitter.configs", -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
-    opts = {
-      ensure_installed = {
-        "vim", "vimdoc", "query",
-        "lua", "luadoc",
-        "c", "bash", "diff",
-        "html",
-        "markdown", "markdown_inline",
-      },
+    config = function()
+      require("nvim-treesitter.configs").setup({
+        auto_install = true,
 
-      -- Autoinstall languages that are not installed
-      auto_install = true,
+        ensure_installed = {
+          "vim", "vimdoc", "query",
+          "lua", "luadoc",
+          "c", "bash", "diff",
+          "html",
+          "markdown", "markdown_inline",
+        },
 
-      highlight = {
-        enable = true,
-        -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
-        --  If you are experiencing weird indenting issues, add the language to
-        --  the list of additional_vim_regex_highlighting and disabled languages for indent.
-        additional_vim_regex_highlighting = { "ruby" },
-      },
+        highlight = {
+          enable = true,
+          -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
+          --  If you are experiencing weird indenting issues, add the language to
+          --  the list of additional_vim_regex_highlighting and disabled languages for indent.
+          additional_vim_regex_highlighting = { "ruby" },
+        },
 
-      indent = {
-        enable = true,
-        disable = { "ruby" }, -- See note above about Ruby
-      },
-    },
-    -- There are additional nvim-treesitter modules that you can use to interact
-    -- with nvim-treesitter. You should go explore a few and see what interests you:
-    --
-    --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
+        indent = {
+          enable = true,
+          disable = { "ruby" }, -- See note above about Ruby
+        },
+      })
+
+      -- Folding module
+      vim.o.foldmethod = 'expr'
+      vim.o.foldexpr = 'nvim_treesitter#foldexpr()'
+      vim.o.foldlevel = 99
+
+      vim.keymap.set('n', '<leader>bt', function()
+        local buffer = vim.api.nvim_get_current_buf()
+        local filetype = vim.bo[buffer].filetype
+        local parser_path_results = vim.api.nvim_get_runtime_file('parser/' .. filetype .. '.so', false)
+        local parser_installed = (#parser_path_results > 0)
+        local highlighting_active = vim.treesitter.highlighter.active[buffer] ~= nil
+        print("TS: hl-active: " .. tostring(highlighting_active) .. ", parser: " .. tostring(parser_path_results[1]))
+      end, { desc = "Check [T]ree-sitter parser and highlighting" })
+
+    end,
+    -- TODO: check these:
     --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
   },
