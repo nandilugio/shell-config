@@ -1,20 +1,15 @@
------------------------------
--- General editor behavior --
------------------------------
+---------------------------------
+---- General editor behavior ----
+---------------------------------
 
+--------------
 -- Keyboard --
+--------------
 
 -- Set <space> as the leader key
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
-
--- Use 4 spaces instead of tabs
---  TODO: create a function to set these manually while editing
-vim.opt.expandtab = true
-vim.opt.shiftwidth = 4
-vim.opt.softtabstop = 4
-vim.opt.tabstop = 4
 
 -- Disable arrow keys in normal mode
 -- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
@@ -22,7 +17,9 @@ vim.opt.tabstop = 4
 -- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
 -- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
 
+--------------------------------------
 -- Search, replace, clipboard, etc. --
+--------------------------------------
 
 -- Case-insensitive searching UNLESS \C or one or more capital letters in the search term
 vim.o.ignorecase = true
@@ -30,6 +27,9 @@ vim.o.smartcase = true
 
 -- Preview substitutions live, as you type!
 vim.o.inccommand = "split"
+
+-- Allow visual block mode to span more chars than exist (always a square, even after dispair end of lines)
+vim.opt.virtualedit = "block"
 
 -- Sync clipboard between OS and Neovim.
 --  Schedule the setting after `UiEnter` because it can increase startup-time.
@@ -54,14 +54,22 @@ vim.api.nvim_create_autocmd("TextYankPost", {
   end,
 })
 
--- Allow visual block mode to span more chars than exist (always a square, even after dispair end of lines)
-vim.opt.virtualedit = "block"
-
+-----------
 -- Mouse --
+-----------
 
 vim.o.mouse = "a"
 
--- Files --
+-----------------------
+-- Files and Buffers --
+-----------------------
+
+-- Use 4 spaces instead of tabs
+--  TODO: create a function to set these manually while editing
+vim.opt.expandtab = true
+vim.opt.shiftwidth = 4
+vim.opt.softtabstop = 4
+vim.opt.tabstop = 4
 
 -- Save undo history
 -- vim.o.undofile = true
@@ -71,7 +79,12 @@ vim.o.mouse = "a"
 -- See `:help 'confirm'`
 vim.o.confirm = true
 
+-- Remove all trailing whitespace in the current buffer
+vim.keymap.set("n", "<leader>bt", [[:%s/\s\+$//e<CR>:nohlsearch<CR>]], { desc = "[T]rim trailing whitespace" })
+
+-----------
 -- Other --
+-----------
 
 -- Decrease update time
 vim.o.updatetime = 250
@@ -79,9 +92,21 @@ vim.o.updatetime = 250
 -- Decrease mapped sequence wait time
 vim.o.timeoutlen = 300
 
---------------------
--- UI and Visuals --
---------------------
+------------------------
+---- UI and Visuals ----
+------------------------
+
+-- Uncomment this to search for a nice colorscheme!
+-- vim.opt.termguicolors = true
+-- local schemes = vim.fn.getcompletion('', 'color')
+-- local idx = 1
+-- function CycleColorscheme()
+--   idx = idx + 1
+--   if idx > #schemes then idx = 1 end
+--   vim.cmd('colorscheme ' .. schemes[idx])
+--   print('Colorscheme: ' .. schemes[idx])
+-- end
+-- vim.keymap.set('n', '<leader>cc', CycleColorscheme, { desc = 'Cycle colorscheme' })
 
 vim.o.number = true
 vim.o.relativenumber = true
@@ -109,9 +134,9 @@ vim.o.foldmethod = 'expr'
 vim.o.foldexpr = 'nvim_treesitter#foldexpr()'
 vim.o.foldlevel = 99
 
-------------
--- Splits --
-------------
+----------------
+---- Splits ----
+----------------
 
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
@@ -132,9 +157,9 @@ vim.keymap.set("n", "<C-k>", "<C-w><C-k>", { desc = "Move focus to the upper win
 vim.o.splitright = true
 vim.o.splitbelow = true
 
----------------------------------
--- Don't know but sound useful --
----------------------------------
+-------------------------------------
+---- Don't know but sound useful ----
+-------------------------------------
 
 -- Diagnostic keymaps
 vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Open diagnostic [Q]uickfix list" })
@@ -147,9 +172,9 @@ vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Open diagn
 -- or just use <C-\><C-n> to exit terminal mode
 vim.keymap.set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
 
--------------
--- LazyVim --
--------------
+-----------------
+---- LazyVim ----
+-----------------
 
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
@@ -168,7 +193,9 @@ rtp:prepend(lazypath)
 
 require("lazy").setup({
 
+  ---------------
   -- Mini NVim --
+  ---------------
 
   { -- Collection of various small independent plugins/modules
     "echasnovski/mini.nvim",
@@ -204,7 +231,9 @@ require("lazy").setup({
     end,
   },
 
+  ---------------------
   -- Editor behavior --
+  ---------------------
 
   -- Detect tabstop and shiftwidth automatically
   "NMAC427/guess-indent.nvim",
@@ -218,7 +247,9 @@ require("lazy").setup({
     end,
   },
 
+  --------------------
   -- UI and Visuals --
+  --------------------
 
   -- { -- Add indentation guides even on blank lines
   --   "lukas-reineke/indent-blankline.nvim",
@@ -306,6 +337,7 @@ require("lazy").setup({
 
       -- Document existing key chains
       spec = {
+        { "<leader>b", group = "[B]uffer" },
         { "<leader>s", group = "[S]earch" },
         { "<leader>t", group = "[T]oggle" },
         { "<leader>h", group = "Git [H]unk", mode = { "n", "v" } },
@@ -313,7 +345,9 @@ require("lazy").setup({
     },
   },
 
+  --------------------
   -- Added features --
+  --------------------
 
   { -- Fuzzy Finder (files, lsp, etc)
     "nvim-telescope/telescope.nvim",
@@ -419,7 +453,9 @@ require("lazy").setup({
     end,
   },
 
+  -----------------------
   -- Coding assistance --
+  -----------------------
 
   { -- Highlight, edit, and navigate code
     "nvim-treesitter/nvim-treesitter",
@@ -600,7 +636,9 @@ require("lazy").setup({
   --   },
   -- },
 
+  -----------------
   -- LSP Plugins --
+  -----------------
 
   -- { -- `lazydev` configures Lua LSP for your Neovim config, runtime and plugins
   --   -- used for completion, annotations and signatures of Neovim apis
@@ -885,7 +923,9 @@ require("lazy").setup({
   --   end,
   -- },
 
+  --------
   -- AI --
+  --------
 
   {
     "CopilotC-Nvim/CopilotChat.nvim",
@@ -908,7 +948,9 @@ require("lazy").setup({
     -- See Commands section for default commands if you want to lazy load on them
   },
 
+  -----------
   -- Other --
+  -----------
 
   -- {
   --   "theprimeagen/vim-be-good",
@@ -937,6 +979,7 @@ require("lazy").setup({
       lazy = "💤 ",
     },
   },
+  install = { colorscheme = { "default" } },
 })
 
 -- The line beneath this is called `modeline`. See `:help modeline`
