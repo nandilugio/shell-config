@@ -454,9 +454,8 @@ require("lazy").setup({
 
   { -- Highlight, edit, and navigate code
     "nvim-treesitter/nvim-treesitter",
+    lazy = false,
     build = ":TSUpdate",
-    main = "nvim-treesitter.configs", -- Sets main module to use for opts
-    -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     config = function()
       require("nvim-treesitter.configs").setup({
         auto_install = true,
@@ -484,9 +483,13 @@ require("lazy").setup({
       })
 
       -- Folding module
-      vim.o.foldmethod = 'expr'
-      vim.o.foldexpr = 'nvim_treesitter#foldexpr()'
-      vim.o.foldlevel = 99
+      vim.api.nvim_create_autocmd("BufWinEnter", {
+        callback = function(args)
+          vim.wo.foldmethod = 'expr'
+          vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()' -- 'nvim_treesitter#foldexpr()'
+          vim.wo.foldlevel = 99
+        end,
+      })
 
       vim.keymap.set('n', '<leader>bt', function()
         local buffer = vim.api.nvim_get_current_buf()
