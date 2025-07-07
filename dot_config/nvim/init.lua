@@ -486,7 +486,7 @@ require("lazy").setup({
       vim.api.nvim_create_autocmd("BufWinEnter", {
         callback = function(args)
           vim.wo.foldmethod = 'expr'
-          vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()' -- 'nvim_treesitter#foldexpr()'
+          vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
           vim.wo.foldlevel = 99
         end,
       })
