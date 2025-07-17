@@ -1,5 +1,8 @@
 # Normal Mode
 
+
+TODO: see :h notation to see help notation
+
 ## Motions
 
 {maybe-count}{motion}
