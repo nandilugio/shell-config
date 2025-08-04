@@ -30,11 +30,13 @@ while true; do
 
   echo -e "\nTest $test_number for $test_command_short_md5 finalized with exit code $exit_code\n"
 
-  trap '' 2
-  read -t2 -N1 -p"To stop test iteration type 'q'..." response
-  read_exit_code=$?
-  trap 2
-  if [[ "$read_exit_code" == 0 && "$response" == q ]]; then
+  interrupted=0
+  echo -n "To stop test iteration, press Ctrl+C in the next 2 seconds..."
+  trap 'interrupted=1' INT
+  sleep 2
+  trap - INT
+  echo
+  if [[ "$interrupted" == 1 ]]; then
     break
   fi
   echo

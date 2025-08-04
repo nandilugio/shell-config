@@ -1,7 +1,8 @@
 # Normal Mode
 
-
-TODO: see :h notation to see help notation
+# TODO
+see :h notation to see help notation
+Ctrl-w |,_ to maximize, Ctrl-w = to "restore" (all splits equal size)
 
 ## Motions
 
@@ -40,13 +41,13 @@ n,N             (n)ext and previous match
 {operator}{maybe-count}{motion}
 {operator}{maybe-count}{same-operator} to apply to line
 
-d,dd,D          (d)elete motion, line(s) and to end of line
-c,cc,C          (c)hange motion, line(s) and to end of line
-y,yy or Y       (y)ank motion and line(s)
-g~,g~~          switch case of motion and line(s)
-\ >,>>          indent line(s)
-<,<<            dedent line(s)
-=,==            format motion and line(s)
+d,dd,D          (d)elete selection/motion, line(s) and to end of line
+c,cc,C          (c)hange selection/motion, line(s) and to end of line
+y,yy or Y       (y)ank selection/motion and line(s)
+g~,g~~          switch case of selection/motion and line(s)
+\>,>>           indent selection and line(s)
+<,<<            dedent selection and line(s)
+=,==            indent (following format) selection/motion and line(s)
 
 ## Char Operators
 
@@ -56,11 +57,14 @@ x,X             delete char(s) under and before cursor
 s               (s)ubstitute char(s) under cursor
 ~               switch case of char(s) under cursor
 
+## Visual selection
+v,V,Gtrl-v      enter char, line or block (v)isual mode
+gv              re-select last selection
+
 ## Cut, Copy and Paste
 
-del operators   deleting operators "cut"
+(del operators) deleting operators "cut"
 y               (y)ank operator "copies"
-
 p,P             (p)ut or paste after and before cursor
 
 ## Scrolling

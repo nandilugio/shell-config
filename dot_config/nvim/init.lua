@@ -81,6 +81,7 @@ vim.o.confirm = true
 
 -- Remove all trailing whitespace in the current buffer
 vim.keymap.set("n", "<leader>bc", [[:%s/\s\+$//e<CR>:nohlsearch<CR>:echo "Cleared trailing whitespace"<CR>]], { desc = "[C]lear trailing whitespace" })
+
 -----------
 -- Other --
 -----------
@@ -921,9 +922,9 @@ require("lazy").setup({
     },
   },
 
-  --------
-  -- AI --
-  --------
+  ----------------------------------
+  -- Artificial Intelligence (AI) --
+  ----------------------------------
 
   {
     "CopilotC-Nvim/CopilotChat.nvim",
@@ -940,10 +941,14 @@ require("lazy").setup({
       { "nvim-lua/plenary.nvim", branch = "master" }, -- for curl, log and async functions
     },
     build = "make tiktoken", -- Only on MacOS or Linux
-    opts = {
-      -- See Configuration section for options
-    },
+    -- opts = {
+    --   -- See Configuration section for options
+    -- },
     -- See Commands section for default commands if you want to lazy load on them
+    config = function()
+      require('CopilotChat').setup()
+      vim.keymap.set("n", "<leader>aa", ':CopilotChatToggle<CR>', { desc = "Toggle Copilot Chat" })
+    end
   },
 
   -----------
