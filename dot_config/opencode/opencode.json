@@ -4,6 +4,15 @@
     "write": "ask",
     "edit": "ask",
     "bash": "ask"
+  },
+  "keybinds": {
+    "app_exit": "ctrl+d,<leader>q",
+    "messages_page_up": "", // "pgup",
+    "messages_page_down": "", // "pgdown",
+    "messages_half_page_up": "pgup,ctrl+alt+u",
+    "messages_half_page_down": "pgdown,ctrl+alt+d",
+    "messages_first": "ctrl+g",
+    "messages_last": "ctrl+alt+g",
   }
 }
 

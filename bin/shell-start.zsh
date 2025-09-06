@@ -26,6 +26,9 @@ eval "$(pyenv init -)"
 # Pipx
 #PATH=$PATH:~/.local/bin
 
+# AWS ElasticBeanstalk CLI (https://github.com/aws/aws-elastic-beanstalk-cli-setup)
+export PATH=~/.ebcli-virtual-env/executables:$PATH
+
 # Direnv
 #eval "$(direnv hook zsh)"
 
