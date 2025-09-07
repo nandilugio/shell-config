@@ -94,4 +94,8 @@ Some apps allow import-export of their configs from the app itself. See [`macos/
 
 Others rely on the [UserDefaults](https://developer.apple.com/documentation/foundation/userdefaults) system to persist user settings. For those see [`macos/plists`](macos/plists).
 
+#### TODO
 
+##### Un-tidy info
+
+Nvim > Mason > Install Solargraph (Ruby LSP for older projects with Ruby 2.7, etc.): https://github.com/mason-org/mason.nvim/issues/1493#issuecomment-3263742698
