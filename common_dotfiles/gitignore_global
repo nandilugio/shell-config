@@ -9,6 +9,9 @@ n.test_*.log
 .idea/
 .idea_*/
 .vscode/
+pyrightconfig.json
 
 **/vendor/bundle/
+
+CLAUDE.md
 
