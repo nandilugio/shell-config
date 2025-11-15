@@ -13,6 +13,28 @@
     "messages_half_page_down": "pgdown,ctrl+alt+d",
     "messages_first": "ctrl+g",
     "messages_last": "ctrl+alt+g",
+  },
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "open-websearch": {
+      "type": "local",
+      "command": ["npx", "open-websearch@latest"],
+      "environment": {
+        "DEFAULT_SEARCH_ENGINE": "exa",
+        "ALLOWED_SEARCH_ENGINES": "exa, duckduckgo, brave, bing",
+      },
+    },
+    "deepwiki": {
+      "type": "remote",
+      "url": "https://mcp.deepwiki.com/sse"
+    },
+    "markitdown": {
+      "type": "local",
+      "command": ["uvx", "markitdown-mcp"]
+    }
   }
 }
 
