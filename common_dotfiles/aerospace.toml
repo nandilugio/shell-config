@@ -25,9 +25,9 @@ on-focus-changed = ['move-mouse window-lazy-center']
     alt-cmd-shift-right = 'move right'
     alt-cmd-shift-l     = 'move right'
 
-    alt-cmd-comma = 'layout v_accordion' # 'layout stacking' in i3
-    alt-cmd-period = 'layout h_accordion' # 'layout tabbed' in i3
-    alt-cmd-slash = 'layout tiles horizontal vertical' # 'layout toggle split' in i3
+    alt-cmd-leftSquareBracket = 'layout h_accordion' # 'layout tabbed' in i3
+    alt-cmd-rightSquareBracket = 'layout v_accordion' # 'layout stacking' in i3
+    alt-cmd-backslash = 'layout tiles horizontal vertical' # 'layout toggle split' in i3
 
     alt-cmd-f = 'layout floating tiling' # 'floating toggle' in i3
 
@@ -56,6 +56,13 @@ on-focus-changed = ['move-mouse window-lazy-center']
     alt-cmd-o = 'workspace a3'
     alt-cmd-p = 'workspace a4'
 
+    alt-cmd-comma = 'workspace --wrap-around prev'
+    alt-cmd-pageUp = 'workspace --wrap-around prev'
+    alt-cmd-period = 'workspace --wrap-around next'
+    alt-cmd-pageDown = 'workspace --wrap-around next'
+
+    alt-cmd-m = 'focus-monitor --wrap-around next'
+    alt-cmd-home = 'focus-monitor --wrap-around next'
 
     alt-cmd-shift-1 = ['move-node-to-workspace m1', 'workspace m1']
     alt-cmd-shift-2 = ['move-node-to-workspace m2', 'workspace m2']
@@ -72,8 +79,13 @@ on-focus-changed = ['move-mouse window-lazy-center']
     alt-cmd-shift-o = ['move-node-to-workspace a3', 'workspace a3']
     alt-cmd-shift-p = ['move-node-to-workspace a4', 'workspace a4']
 
-    alt-cmd-m = 'focus-monitor --wrap-around next'
+    alt-cmd-shift-comma = ['move-node-to-workspace --wrap-around prev', 'workspace --wrap-around prev']
+    alt-cmd-shift-pageUp = ['move-node-to-workspace --wrap-around prev', 'workspace --wrap-around prev']
+    alt-cmd-shift-period = ['move-node-to-workspace --wrap-around next', 'workspace --wrap-around next']
+    alt-cmd-shift-pageDown = ['move-node-to-workspace --wrap-around next', 'workspace --wrap-around next']
+
     alt-cmd-shift-m = 'move-workspace-to-monitor --wrap-around next'
+    alt-cmd-shift-home = 'move-workspace-to-monitor --wrap-around next'
 
     #### Utils ################################################################
 
@@ -81,6 +93,13 @@ on-focus-changed = ['move-mouse window-lazy-center']
     alt-cmd-enter = '''exec-and-forget osascript -e '
         tell application "iTerm"
             create window with default profile
+            activate
+        end tell'
+    '''
+
+    alt-cmd-shift-enter = '''exec-and-forget osascript -e '
+        tell application "Google Chrome"
+            make new window
             activate
         end tell'
     '''
