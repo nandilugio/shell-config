@@ -1,0 +1,142 @@
+start-at-login = false
+
+on-focus-changed = ['move-mouse window-lazy-center']
+# on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+
+[mode.main.binding]
+
+    #### Windows ##############################################################
+
+    alt-cmd-left    = 'focus --boundaries-action wrap-around-the-workspace left'
+    alt-cmd-h       = 'focus --boundaries-action wrap-around-the-workspace left'
+    alt-cmd-down    = 'focus --boundaries-action wrap-around-the-workspace down'
+    alt-cmd-j       = 'focus --boundaries-action wrap-around-the-workspace down'
+    alt-cmd-up      = 'focus --boundaries-action wrap-around-the-workspace up'
+    alt-cmd-k       = 'focus --boundaries-action wrap-around-the-workspace up'
+    alt-cmd-right   = 'focus --boundaries-action wrap-around-the-workspace right'
+    alt-cmd-l       = 'focus --boundaries-action wrap-around-the-workspace right'
+
+    alt-cmd-shift-left  = 'move left'
+    alt-cmd-shift-h     = 'move left'
+    alt-cmd-shift-down  = 'move down'
+    alt-cmd-shift-j     = 'move down'
+    alt-cmd-shift-up    = 'move up'
+    alt-cmd-shift-k     = 'move up'
+    alt-cmd-shift-right = 'move right'
+    alt-cmd-shift-l     = 'move right'
+
+    alt-cmd-comma = 'layout v_accordion' # 'layout stacking' in i3
+    alt-cmd-period = 'layout h_accordion' # 'layout tabbed' in i3
+    alt-cmd-slash = 'layout tiles horizontal vertical' # 'layout toggle split' in i3
+
+    alt-cmd-f = 'layout floating tiling' # 'floating toggle' in i3
+
+    # Not supported, because this command is redundant in AeroSpace mental model.
+    # See: https://nikitabobko.github.io/AeroSpace/guide#floating-windows
+    #alt-space = 'focus toggle_tiling_floating'
+
+    # `focus parent`/`focus child` are not yet supported, and it's not clear whether they
+    # should be supported at all https://github.com/nikitabobko/AeroSpace/issues/5
+    # alt-a = 'focus parent'
+
+    #### Workspaces ###########################################################
+
+    alt-cmd-1 = 'workspace m1'
+    alt-cmd-2 = 'workspace m2'
+    alt-cmd-3 = 'workspace m3'
+    alt-cmd-4 = 'workspace m4'
+    alt-cmd-5 = 'workspace m5'
+    alt-cmd-6 = 'workspace m6'
+    alt-cmd-7 = 'workspace m7'
+    alt-cmd-8 = 'workspace m8'
+    alt-cmd-9 = 'workspace m9'
+    alt-cmd-0 = 'workspace m0'
+    alt-cmd-u = 'workspace a1'
+    alt-cmd-i = 'workspace a2'
+    alt-cmd-o = 'workspace a3'
+    alt-cmd-p = 'workspace a4'
+
+
+    alt-cmd-shift-1 = ['move-node-to-workspace m1', 'workspace m1']
+    alt-cmd-shift-2 = ['move-node-to-workspace m2', 'workspace m2']
+    alt-cmd-shift-3 = ['move-node-to-workspace m3', 'workspace m3']
+    alt-cmd-shift-4 = ['move-node-to-workspace m4', 'workspace m4']
+    alt-cmd-shift-5 = ['move-node-to-workspace m5', 'workspace m5']
+    alt-cmd-shift-6 = ['move-node-to-workspace m6', 'workspace m6']
+    alt-cmd-shift-7 = ['move-node-to-workspace m7', 'workspace m7']
+    alt-cmd-shift-8 = ['move-node-to-workspace m8', 'workspace m8']
+    alt-cmd-shift-9 = ['move-node-to-workspace m9', 'workspace m9']
+    alt-cmd-shift-0 = ['move-node-to-workspace m0', 'workspace m0']
+    alt-cmd-shift-u = ['move-node-to-workspace a1', 'workspace a1']
+    alt-cmd-shift-i = ['move-node-to-workspace a2', 'workspace a2']
+    alt-cmd-shift-o = ['move-node-to-workspace a3', 'workspace a3']
+    alt-cmd-shift-p = ['move-node-to-workspace a4', 'workspace a4']
+
+    alt-cmd-m = 'focus-monitor --wrap-around next'
+    alt-cmd-shift-m = 'move-workspace-to-monitor --wrap-around next'
+
+    #### Utils ################################################################
+
+    # See: https://nikitabobko.github.io/AeroSpace/goodies#open-a-new-window-with-applescript
+    alt-cmd-enter = '''exec-and-forget osascript -e '
+        tell application "iTerm"
+            create window with default profile
+            activate
+        end tell'
+    '''
+
+    #### Modes ################################################################
+
+    alt-cmd-a = 'mode alternate'
+
+[mode.alternate.binding]
+
+    enter = 'mode main'
+    esc = 'mode main'
+
+    #### Windows ##############################################################
+
+    equal = 'resize smart +50'
+    minus = 'resize smart -50'
+
+    alt-cmd-left    = 'resize width -50'
+    alt-cmd-h       = 'resize width -50'
+    alt-cmd-down    = 'resize height +50'
+    alt-cmd-j       = 'resize height +50'
+    alt-cmd-up      = 'resize height -50'
+    alt-cmd-k       = 'resize height -50'
+    alt-cmd-right   = 'resize width +50'
+    alt-cmd-l       = 'resize width +50'
+
+    left    = ['join-with left', 'mode main']
+    h       = ['join-with left', 'mode main']
+    down    = ['join-with down', 'mode main']
+    j       = ['join-with down', 'mode main']
+    up      = ['join-with up', 'mode main']
+    k       = ['join-with up', 'mode main']
+    right   = ['join-with right', 'mode main']
+    l       = ['join-with right', 'mode main']
+
+    #### Workspaces ###########################################################
+
+    alt-cmd-shift-1 = 'move-node-to-workspace m1'
+    alt-cmd-shift-2 = 'move-node-to-workspace m2'
+    alt-cmd-shift-3 = 'move-node-to-workspace m3'
+    alt-cmd-shift-4 = 'move-node-to-workspace m4'
+    alt-cmd-shift-5 = 'move-node-to-workspace m5'
+    alt-cmd-shift-6 = 'move-node-to-workspace m6'
+    alt-cmd-shift-7 = 'move-node-to-workspace m7'
+    alt-cmd-shift-8 = 'move-node-to-workspace m8'
+    alt-cmd-shift-9 = 'move-node-to-workspace m9'
+    alt-cmd-shift-0 = 'move-node-to-workspace m0'
+    alt-cmd-shift-u = 'move-node-to-workspace a1'
+    alt-cmd-shift-i = 'move-node-to-workspace a2'
+    alt-cmd-shift-o = 'move-node-to-workspace a3'
+    alt-cmd-shift-p = 'move-node-to-workspace a4'
+
+    #### Utils ################################################################
+
+    r = ['reload-config', 'mode main']
+    z = ['fullscreen', 'mode main']
+    b = ['balance-sizes', 'mode main']
+

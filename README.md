@@ -70,14 +70,32 @@ Set this command to run for new windows:
 
 ### Keys setup
 
-https://stackoverflow.com/questions/33270381/delete-forward-character-iterm2-osx
+This assumes aerospace/i3 window-manager is used.
 
-Then, to be as compatible to my Linux `i3` setup as possible, without much of a hassle:
-
-#### System
+#### Modifier keys
 
 - Swap Cmd and Opt on PC keyboards
 - Remap Spotlight so it's in center key (old Option/Meta, now Cmd)
+
+The idea is to _more or less_ have (this can be refined... TODO!):
+- Meta to control tmux
+- Meta+Cmd to control the window-manager
+- Ctrl and Cmd / Alt to behave normally
+
+Physical order in Mac and Pc:
+```
+PC:             Ctrl Win    Alt*
+PC in Mac(*):   Ctrl (Alt)* (Win)   <== Swaped
+Mac:            Ctrl Opt*   Cmd
+
+* = Meta
+```
+
+https://github.com/tmux/tmux/wiki/Modifier-Key://github.com/tmux/tmux/wiki/Modifier-Keys
+
+#### Delete key
+
+https://stackoverflow.com/questions/33270381/delete-forward-character-iterm2-osx
 
 #### iTerm2
 
