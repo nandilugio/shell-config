@@ -1,11 +1,11 @@
-start-at-login = false
+start-at-login = true
 
-on-focus-changed = ['move-mouse window-lazy-center']
-# on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+# on-focus-changed = ['move-mouse window-lazy-center']
+on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 
-[mode.main.binding]
+[mode.main.binding] ###########################################################
 
-    #### Windows ##############################################################
+    # Windows =================================================================
 
     alt-cmd-left    = 'focus --boundaries-action wrap-around-the-workspace left'
     alt-cmd-h       = 'focus --boundaries-action wrap-around-the-workspace left'
@@ -25,9 +25,9 @@ on-focus-changed = ['move-mouse window-lazy-center']
     alt-cmd-shift-right = 'move right'
     alt-cmd-shift-l     = 'move right'
 
-    alt-cmd-leftSquareBracket = 'layout h_accordion' # 'layout tabbed' in i3
-    alt-cmd-rightSquareBracket = 'layout v_accordion' # 'layout stacking' in i3
-    alt-cmd-backslash = 'layout tiles horizontal vertical' # 'layout toggle split' in i3
+    alt-cmd-comma   = 'layout h_accordion' # 'layout tabbed' in i3
+    alt-cmd-period  = 'layout v_accordion' # 'layout stacking' in i3
+    alt-cmd-slash   = 'layout tiles horizontal vertical' # 'layout toggle split' in i3
 
     alt-cmd-f = 'layout floating tiling' # 'floating toggle' in i3
 
@@ -39,7 +39,7 @@ on-focus-changed = ['move-mouse window-lazy-center']
     # should be supported at all https://github.com/nikitabobko/AeroSpace/issues/5
     # alt-a = 'focus parent'
 
-    #### Workspaces ###########################################################
+    # Workspaces ==============================================================
 
     alt-cmd-1 = 'workspace m1'
     alt-cmd-2 = 'workspace m2'
@@ -51,43 +51,43 @@ on-focus-changed = ['move-mouse window-lazy-center']
     alt-cmd-8 = 'workspace m8'
     alt-cmd-9 = 'workspace m9'
     alt-cmd-0 = 'workspace m0'
-    alt-cmd-u = 'workspace a1'
-    alt-cmd-i = 'workspace a2'
-    alt-cmd-o = 'workspace a3'
-    alt-cmd-p = 'workspace a4'
+    alt-cmd-u = 'workspace s1'
+    alt-cmd-i = 'workspace s2'
+    alt-cmd-o = 'workspace s3'
+    alt-cmd-p = 'workspace s4'
 
-    alt-cmd-comma = 'workspace --wrap-around prev'
-    alt-cmd-pageUp = 'workspace --wrap-around prev'
-    alt-cmd-period = 'workspace --wrap-around next'
-    alt-cmd-pageDown = 'workspace --wrap-around next'
+    alt-cmd-leftSquareBracket   = 'workspace --wrap-around prev'
+    alt-cmd-pageUp              = 'workspace --wrap-around prev'
+    alt-cmd-rightSquareBracket  = 'workspace --wrap-around next'
+    alt-cmd-pageDown            = 'workspace --wrap-around next'
 
-    alt-cmd-m = 'focus-monitor --wrap-around next'
-    alt-cmd-home = 'focus-monitor --wrap-around next'
+    alt-cmd-m       = 'focus-monitor --wrap-around next'
+    alt-cmd-home    = 'focus-monitor --wrap-around next'
 
-    alt-cmd-shift-1 = ['move-node-to-workspace m1', 'workspace m1']
-    alt-cmd-shift-2 = ['move-node-to-workspace m2', 'workspace m2']
-    alt-cmd-shift-3 = ['move-node-to-workspace m3', 'workspace m3']
-    alt-cmd-shift-4 = ['move-node-to-workspace m4', 'workspace m4']
-    alt-cmd-shift-5 = ['move-node-to-workspace m5', 'workspace m5']
-    alt-cmd-shift-6 = ['move-node-to-workspace m6', 'workspace m6']
-    alt-cmd-shift-7 = ['move-node-to-workspace m7', 'workspace m7']
-    alt-cmd-shift-8 = ['move-node-to-workspace m8', 'workspace m8']
-    alt-cmd-shift-9 = ['move-node-to-workspace m9', 'workspace m9']
-    alt-cmd-shift-0 = ['move-node-to-workspace m0', 'workspace m0']
-    alt-cmd-shift-u = ['move-node-to-workspace a1', 'workspace a1']
-    alt-cmd-shift-i = ['move-node-to-workspace a2', 'workspace a2']
-    alt-cmd-shift-o = ['move-node-to-workspace a3', 'workspace a3']
-    alt-cmd-shift-p = ['move-node-to-workspace a4', 'workspace a4']
+    alt-cmd-shift-1 = 'move-node-to-workspace m1'
+    alt-cmd-shift-2 = 'move-node-to-workspace m2'
+    alt-cmd-shift-3 = 'move-node-to-workspace m3'
+    alt-cmd-shift-4 = 'move-node-to-workspace m4'
+    alt-cmd-shift-5 = 'move-node-to-workspace m5'
+    alt-cmd-shift-6 = 'move-node-to-workspace m6'
+    alt-cmd-shift-7 = 'move-node-to-workspace m7'
+    alt-cmd-shift-8 = 'move-node-to-workspace m8'
+    alt-cmd-shift-9 = 'move-node-to-workspace m9'
+    alt-cmd-shift-0 = 'move-node-to-workspace m0'
+    alt-cmd-shift-u = 'move-node-to-workspace s1'
+    alt-cmd-shift-i = 'move-node-to-workspace s2'
+    alt-cmd-shift-o = 'move-node-to-workspace s3'
+    alt-cmd-shift-p = 'move-node-to-workspace s4'
 
-    alt-cmd-shift-comma = ['move-node-to-workspace --wrap-around prev', 'workspace --wrap-around prev']
-    alt-cmd-shift-pageUp = ['move-node-to-workspace --wrap-around prev', 'workspace --wrap-around prev']
-    alt-cmd-shift-period = ['move-node-to-workspace --wrap-around next', 'workspace --wrap-around next']
-    alt-cmd-shift-pageDown = ['move-node-to-workspace --wrap-around next', 'workspace --wrap-around next']
+    alt-cmd-shift-leftSquareBracket = ['move-node-to-workspace --wrap-around prev', 'workspace --wrap-around prev']
+    alt-cmd-shift-pageUp            = ['move-node-to-workspace --wrap-around prev', 'workspace --wrap-around prev']
+    alt-cmd-shift-rightSquareBracket= ['move-node-to-workspace --wrap-around next', 'workspace --wrap-around next']
+    alt-cmd-shift-pageDown          = ['move-node-to-workspace --wrap-around next', 'workspace --wrap-around next']
 
-    alt-cmd-shift-m = 'move-workspace-to-monitor --wrap-around next'
-    alt-cmd-shift-home = 'move-workspace-to-monitor --wrap-around next'
+    alt-cmd-shift-m     = 'move-workspace-to-monitor --wrap-around next'
+    alt-cmd-shift-home  = 'move-workspace-to-monitor --wrap-around next'
 
-    #### Utils ################################################################
+    # Utils ===================================================================
 
     # See: https://nikitabobko.github.io/AeroSpace/goodies#open-a-new-window-with-applescript
     alt-cmd-enter = '''exec-and-forget osascript -e '
@@ -104,19 +104,21 @@ on-focus-changed = ['move-mouse window-lazy-center']
         end tell'
     '''
 
-    #### Modes ################################################################
+    # Modes ===================================================================
 
     alt-cmd-a = 'mode alternate'
 
-[mode.alternate.binding]
+[mode.alternate.binding] ######################################################
 
     enter = 'mode main'
-    esc = 'mode main'
+    esc     = 'mode main'
 
-    #### Windows ##############################################################
+    # Windows =================================================================
 
-    equal = 'resize smart +50'
-    minus = 'resize smart -50'
+    alt-cmd-b       = 'balance-sizes'
+
+    alt-cmd-equal   = 'resize smart +50'
+    alt-cmd-minus   = 'resize smart -50'
 
     alt-cmd-left    = 'resize width -50'
     alt-cmd-h       = 'resize width -50'
@@ -136,26 +138,15 @@ on-focus-changed = ['move-mouse window-lazy-center']
     right   = ['join-with right', 'mode main']
     l       = ['join-with right', 'mode main']
 
-    #### Workspaces ###########################################################
-
-    alt-cmd-shift-1 = 'move-node-to-workspace m1'
-    alt-cmd-shift-2 = 'move-node-to-workspace m2'
-    alt-cmd-shift-3 = 'move-node-to-workspace m3'
-    alt-cmd-shift-4 = 'move-node-to-workspace m4'
-    alt-cmd-shift-5 = 'move-node-to-workspace m5'
-    alt-cmd-shift-6 = 'move-node-to-workspace m6'
-    alt-cmd-shift-7 = 'move-node-to-workspace m7'
-    alt-cmd-shift-8 = 'move-node-to-workspace m8'
-    alt-cmd-shift-9 = 'move-node-to-workspace m9'
-    alt-cmd-shift-0 = 'move-node-to-workspace m0'
-    alt-cmd-shift-u = 'move-node-to-workspace a1'
-    alt-cmd-shift-i = 'move-node-to-workspace a2'
-    alt-cmd-shift-o = 'move-node-to-workspace a3'
-    alt-cmd-shift-p = 'move-node-to-workspace a4'
-
-    #### Utils ################################################################
+    # Utils ===================================================================
 
     r = ['reload-config', 'mode main']
     z = ['fullscreen', 'mode main']
-    b = ['balance-sizes', 'mode main']
+
+[workspace-to-monitor-force-assignment] #######################################
+
+    s1 = 'secondary'
+    s2 = 'secondary'
+    s3 = 'secondary'
+    s4 = 'secondary'
 
