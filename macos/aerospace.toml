@@ -1,5 +1,4 @@
 start-at-login = true
-
 # on-focus-changed = ['move-mouse window-lazy-center']
 on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 
@@ -7,23 +6,23 @@ on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 
     # Windows =================================================================
 
-    alt-cmd-left    = 'focus --boundaries-action wrap-around-the-workspace left'
-    alt-cmd-h       = 'focus --boundaries-action wrap-around-the-workspace left'
-    alt-cmd-down    = 'focus --boundaries-action wrap-around-the-workspace down'
-    alt-cmd-j       = 'focus --boundaries-action wrap-around-the-workspace down'
-    alt-cmd-up      = 'focus --boundaries-action wrap-around-the-workspace up'
-    alt-cmd-k       = 'focus --boundaries-action wrap-around-the-workspace up'
-    alt-cmd-right   = 'focus --boundaries-action wrap-around-the-workspace right'
-    alt-cmd-l       = 'focus --boundaries-action wrap-around-the-workspace right'
+    alt-cmd-left    = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors left'
+    alt-cmd-h       = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors left'
+    alt-cmd-down    = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors down'
+    alt-cmd-j       = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors down'
+    alt-cmd-up      = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors up'
+    alt-cmd-k       = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors up'
+    alt-cmd-right   = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors right'
+    alt-cmd-l       = 'focus --boundaries all-monitors-outer-frame --boundaries-action wrap-around-all-monitors right'
 
-    alt-cmd-shift-left  = 'move left'
-    alt-cmd-shift-h     = 'move left'
-    alt-cmd-shift-down  = 'move down'
-    alt-cmd-shift-j     = 'move down'
-    alt-cmd-shift-up    = 'move up'
-    alt-cmd-shift-k     = 'move up'
-    alt-cmd-shift-right = 'move right'
-    alt-cmd-shift-l     = 'move right'
+    alt-cmd-shift-left  = 'move --boundaries all-monitors-outer-frame left'
+    alt-cmd-shift-h     = 'move --boundaries all-monitors-outer-frame left'
+    alt-cmd-shift-down  = 'move --boundaries all-monitors-outer-frame down'
+    alt-cmd-shift-j     = 'move --boundaries all-monitors-outer-frame down'
+    alt-cmd-shift-up    = 'move --boundaries all-monitors-outer-frame up'
+    alt-cmd-shift-k     = 'move --boundaries all-monitors-outer-frame up'
+    alt-cmd-shift-right = 'move --boundaries all-monitors-outer-frame right'
+    alt-cmd-shift-l     = 'move --boundaries all-monitors-outer-frame right'
 
     alt-cmd-comma   = 'layout h_accordion' # 'layout tabbed' in i3
     alt-cmd-period  = 'layout v_accordion' # 'layout stacking' in i3
@@ -84,8 +83,8 @@ on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
     alt-cmd-shift-rightSquareBracket= ['move-node-to-workspace --wrap-around next', 'workspace --wrap-around next']
     alt-cmd-shift-pageDown          = ['move-node-to-workspace --wrap-around next', 'workspace --wrap-around next']
 
-    alt-cmd-shift-m     = 'move-workspace-to-monitor --wrap-around next'
-    alt-cmd-shift-home  = 'move-workspace-to-monitor --wrap-around next'
+    alt-cmd-shift-m     = ['move-node-to-monitor --wrap-around next', 'focus-monitor --wrap-around next']
+    alt-cmd-shift-home  = ['move-node-to-monitor --wrap-around next', 'focus-monitor --wrap-around next']
 
     # Utils ===================================================================
 
@@ -110,8 +109,9 @@ on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 
 [mode.alternate.binding] ######################################################
 
-    enter = 'mode main'
-    esc     = 'mode main'
+    enter     = 'mode main'
+    esc       = 'mode main'
+    alt-cmd-a = 'mode main'
 
     # Windows =================================================================
 
@@ -129,14 +129,19 @@ on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
     alt-cmd-right   = 'resize width +50'
     alt-cmd-l       = 'resize width +50'
 
-    left    = ['join-with left', 'mode main']
-    h       = ['join-with left', 'mode main']
-    down    = ['join-with down', 'mode main']
-    j       = ['join-with down', 'mode main']
-    up      = ['join-with up', 'mode main']
-    k       = ['join-with up', 'mode main']
-    right   = ['join-with right', 'mode main']
-    l       = ['join-with right', 'mode main']
+    alt-cmd-shift-left    = ['join-with left', 'mode main']
+    alt-cmd-shift-h       = ['join-with left', 'mode main']
+    alt-cmd-shift-down    = ['join-with down', 'mode main']
+    alt-cmd-shift-j       = ['join-with down', 'mode main']
+    alt-cmd-shift-up      = ['join-with up', 'mode main']
+    alt-cmd-shift-k       = ['join-with up', 'mode main']
+    alt-cmd-shift-right   = ['join-with right', 'mode main']
+    alt-cmd-shift-l       = ['join-with right', 'mode main']
+
+    # Workspaces ==============================================================
+
+    alt-cmd-shift-m     = ['move-workspace-to-monitor --wrap-around next', 'mode main']
+    alt-cmd-shift-home  = ['move-workspace-to-monitor --wrap-around next', 'mode main']
 
     # Utils ===================================================================
 
