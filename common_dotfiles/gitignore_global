@@ -13,6 +13,8 @@ pyrightconfig.json
 
 **/vendor/bundle/
 
+.claude/
 CLAUDE.md
+AGENTS.md
 .kiro/
 
