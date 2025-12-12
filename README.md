@@ -50,6 +50,8 @@ gsettings set org.gnome.shell.app-switcher current-workspace-only true
 https://macos-defaults.com/keyboard/applepressandholdenabled.html
 https://stackoverflow.com/questions/33152551/how-can-i-disable-applepressandholdenabled-for-a-specific-application-repeat
 
+Nvim config uses Ctrl+Space for showing docs on autocompletion with blink. This is taken by the system for selecting input sources. Unmap on System Settings > Keyboard > Keyboard Shortcuts... > Input Sources
+
 ```sh
 defaults write NSGlobalDomain "ApplePressAndHoldEnabled" -bool "false"
 defaults write com.apple.Finder AppleShowAllFiles true

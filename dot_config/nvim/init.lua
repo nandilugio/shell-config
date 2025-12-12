@@ -70,12 +70,12 @@ vim.o.mouse = "a"
 -- Files and Buffers --
 -----------------------
 
--- Use 4 spaces instead of tabs
+-- Use 2 spaces instead of tabs
 --  TODO: create a function to set these manually while editing
 vim.opt.expandtab = true
-vim.opt.shiftwidth = 4
-vim.opt.softtabstop = 4
-vim.opt.tabstop = 4
+vim.opt.shiftwidth = 2
+vim.opt.softtabstop = 2
+vim.opt.tabstop = 2
 vim.opt.fixendofline = false
 
 -- Save undo history
@@ -125,7 +125,7 @@ vim.o.breakindent = true
 -- Don't show the mode, since it's already in the status line
 vim.o.showmode = false
 
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 ----------------
 ---- Splits ----
@@ -613,6 +613,9 @@ require("lazy").setup({
 
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
+
+        ['<C-n>'] = { 'show_and_insert', 'select_next' },
+        ['<Esc>'] = { 'cancel', 'fallback' },
       },
 
       appearance = {
@@ -623,8 +626,15 @@ require("lazy").setup({
 
       completion = {
         -- By default, you may press `<c-space>` to show the documentation.
+        -- MACOS: This is taken by the system for selecting input sources.
+        --  Unmap on System Settings > Keyboard > Keyboard Shortcuts... > Input Sources
         -- Optionally, set `auto_show = true` to show the documentation after a delay.
-        documentation = { auto_show = false, auto_show_delay_ms = 500 },
+        -- documentation = { auto_show = true, auto_show_delay_ms = 500 },
+        documentation = { auto_show = false },
+
+        -- Disable auto brackets
+        -- NOTE some LSPs may add auto brackets themselves anyway
+        accept = { auto_brackets = { enabled = false }, },
       },
 
       sources = {
@@ -645,8 +655,17 @@ require("lazy").setup({
       -- See :h blink-cmp-config-fuzzy for more information
       fuzzy = { implementation = "lua" },
 
-      -- Shows a signature help window while you type arguments for a function
+      -- Shows a signature help window while you type arguments for a function (experimental?)
       signature = { enabled = true },
+
+      cmdline = {
+        keymap = {
+          preset = 'inherit',
+          ['<Tab>'] = { 'show' },
+          ['<Esc>'] = {},
+        },
+        -- completion = { menu = { auto_show = true } },
+      },
     },
   },
 
@@ -925,40 +944,40 @@ require("lazy").setup({
   -- Artificial Intelligence (AI) --
   ----------------------------------
 
-  {
-    "CopilotC-Nvim/CopilotChat.nvim",
-    dependencies = {
-      -- { "github/copilot.vim" },
-      {
-        "zbirenbaum/copilot.lua",
-          cmd = "Copilot",
-          event = "InsertEnter",
-          config = function()
-            require("copilot").setup({})
-          end,
-      },
-      { "nvim-lua/plenary.nvim", branch = "master" }, -- for curl, log and async functions
-    },
-    build = "make tiktoken", -- Only on MacOS or Linux
-    -- opts = {
-    --   -- See Configuration section for options
-    -- },
-    -- See Commands section for default commands if you want to lazy load on them
-    config = function()
-      require('CopilotChat').setup()
-      vim.keymap.set("n", "<leader>aa", ':CopilotChatToggle<CR>', { desc = "Toggle Copilot Chat" })
-    end
-  },
-
-  {
-    "greggh/claude-code.nvim",
-    dependencies = {
-      "nvim-lua/plenary.nvim", -- Required for git operations
-    },
-    config = function()
-      require("claude-code").setup()
-    end
-  },
+  -- {
+  --   "CopilotC-Nvim/CopilotChat.nvim",
+  --   dependencies = {
+  --     -- { "github/copilot.vim" },
+  --     {
+  --       "zbirenbaum/copilot.lua",
+  --         cmd = "Copilot",
+  --         event = "InsertEnter",
+  --         config = function()
+  --           require("copilot").setup({})
+  --         end,
+  --     },
+  --     { "nvim-lua/plenary.nvim", branch = "master" }, -- for curl, log and async functions
+  --   },
+  --   build = "make tiktoken", -- Only on MacOS or Linux
+  --   -- opts = {
+  --   --   -- See Configuration section for options
+  --   -- },
+  --   -- See Commands section for default commands if you want to lazy load on them
+  --   config = function()
+  --     require('CopilotChat').setup()
+  --     vim.keymap.set("n", "<leader>aa", ':CopilotChatToggle<CR>', { desc = "Toggle Copilot Chat" })
+  --   end
+  -- },
+  --
+  -- {
+  --   "greggh/claude-code.nvim",
+  --   dependencies = {
+  --     "nvim-lua/plenary.nvim", -- Required for git operations
+  --   },
+  --   config = function()
+  --     require("claude-code").setup()
+  --   end
+  -- },
 
   -----------
   -- Other --
