@@ -635,6 +635,8 @@ require("lazy").setup({
         -- Disable auto brackets
         -- NOTE some LSPs may add auto brackets themselves anyway
         accept = { auto_brackets = { enabled = false }, },
+
+        menu = { auto_show = false },
       },
 
       sources = {
