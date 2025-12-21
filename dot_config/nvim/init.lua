@@ -448,6 +448,18 @@ require("lazy").setup({
     end,
   },
 
+  {"vimwiki/vimwiki",
+  init = function()
+    vim.g.vimwiki_list = {
+      {
+        path = '~/notes',
+        syntax = 'markdown',
+        ext = '.md',
+      },
+    }
+  end,
+  },
+
   -----------------------
   -- Coding assistance --
   -----------------------
@@ -551,6 +563,16 @@ require("lazy").setup({
     end
   },
 
+  {
+    'MeanderingProgrammer/render-markdown.nvim',
+    dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-mini/mini.nvim' },            -- if you use the mini.nvim suite
+    -- dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-mini/mini.icons' },        -- if you use standalone mini plugins
+    -- dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' }, -- if you prefer nvim-web-devicons
+    ---@module 'render-markdown'
+    ---@type render.md.UserConfig
+    opts = {},
+  },
+
   { -- Autocompletion
     "saghen/blink.cmp",
     event = "VimEnter",
@@ -580,7 +602,9 @@ require("lazy").setup({
           --   end,
           -- },
         },
-        opts = {},
+        opts = {
+          file_types = { 'markdown', 'vimwiki' },
+        },
       },
       "folke/lazydev.nvim",
     },
@@ -945,41 +969,6 @@ require("lazy").setup({
   ----------------------------------
   -- Artificial Intelligence (AI) --
   ----------------------------------
-
-  -- {
-  --   "CopilotC-Nvim/CopilotChat.nvim",
-  --   dependencies = {
-  --     -- { "github/copilot.vim" },
-  --     {
-  --       "zbirenbaum/copilot.lua",
-  --         cmd = "Copilot",
-  --         event = "InsertEnter",
-  --         config = function()
-  --           require("copilot").setup({})
-  --         end,
-  --     },
-  --     { "nvim-lua/plenary.nvim", branch = "master" }, -- for curl, log and async functions
-  --   },
-  --   build = "make tiktoken", -- Only on MacOS or Linux
-  --   -- opts = {
-  --   --   -- See Configuration section for options
-  --   -- },
-  --   -- See Commands section for default commands if you want to lazy load on them
-  --   config = function()
-  --     require('CopilotChat').setup()
-  --     vim.keymap.set("n", "<leader>aa", ':CopilotChatToggle<CR>', { desc = "Toggle Copilot Chat" })
-  --   end
-  -- },
-  --
-  -- {
-  --   "greggh/claude-code.nvim",
-  --   dependencies = {
-  --     "nvim-lua/plenary.nvim", -- Required for git operations
-  --   },
-  --   config = function()
-  --     require("claude-code").setup()
-  --   end
-  -- },
 
   -----------
   -- Other --

@@ -77,6 +77,7 @@
   mc = !git add --all . && git merge --continue
   mod = !git fetch && git merge origin/develop
   mom = !git fetch && git merge origin/master
+  moma = !git fetch && git merge origin/main
   mt = mergetool
   pl = pull
   ps = push
@@ -97,9 +98,11 @@
   ri9 = rebase -i HEAD~9
   riod = !git fetch && git rebase -i origin/develop
   riom = !git fetch && git rebase -i origin/master
+  rioma = !git fetch && git rebase -i origin/main
   rl = reflog
   rod = !git fetch && git rebase origin/develop
   rom = !git fetch && git rebase origin/master
+  roma = !git fetch && git rebase origin/main
   rs = reset
   rsh = reset HEAD
   rsh1 = reset HEAD~1
@@ -137,12 +140,14 @@
   wip = !git add --all . && git commit -m \"wip [ci skip]\"
   dewip = ![ \"$(git log -1 --pretty=%B)\" = \"wip [ci skip]\" ] && git reset HEAD^ && git add --all .
 
-  remove-merged-branches = !git branch --merged | grep -v \"\\*\" | grep -v master | grep -v develop | xargs -n 1 git branch -d
+  merged-branches = !git branch --merged | grep -v \"\\*\" | grep -Ev 'develop|master|main'
+  remove-merged-branches = !git merged-branches | xargs -n 1 git branch -d
 
   f-dirty = !git status -u --porcelain | sed -E 's/^ ?[^ ]+ +//' | xargs -I% ls -d "%" 2>/dev/null
   f-last-commit = !git d --name-only HEAD~1 | xargs -I% ls -d "%" 2>/dev/null
   f-branch-d = !git d --name-only origin/develop | xargs -I% ls -d "%" 2>/dev/null
   f-branch-m = !git d --name-only origin/master | xargs -I% ls -d "%" 2>/dev/null
+  f-branch-ma = !git d --name-only origin/main | xargs -I% ls -d "%" 2>/dev/null
 
   # Get GitHub's PR for a commit
   # https://stackoverflow.com/a/17819027/297586
