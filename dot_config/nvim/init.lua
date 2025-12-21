@@ -334,6 +334,7 @@ require("lazy").setup({
         { "<leader>s", group = "[S]earch" },
         { "<leader>t", group = "[T]oggle" },
         { "<leader>h", group = "Git [H]unk", mode = { "n", "v" } },
+        { "<leader>w", group = "vim[W]iki" },
       },
     },
   },
@@ -412,16 +413,28 @@ require("lazy").setup({
       local builtin = require("telescope.builtin")
       vim.keymap.set("n", "<leader>sh", builtin.help_tags, { desc = "[S]earch [H]elp" })
       vim.keymap.set("n", "<leader>sk", builtin.keymaps, { desc = "[S]earch [K]eymaps" })
-      vim.keymap.set("n", "<leader>sf", function()
+      vim.keymap.set("n", "<leader>sf", builtin.find_files, { desc = "[S]earch [f]iles" })
+      vim.keymap.set("n", "<leader>sF", function()
         builtin.find_files({ hidden = true })
-      end, { desc = "[S]earch [F]iles" })
+      end, { desc = "[S]earch [F]iles (+ hidden)" })
       vim.keymap.set("n", "<leader>ss", builtin.builtin, { desc = "[S]earch [S]elect Telescope" })
       vim.keymap.set("n", "<leader>sw", builtin.grep_string, { desc = "[S]earch current [W]ord" })
-      vim.keymap.set("n", "<leader>sg", builtin.live_grep, { desc = "[S]earch by [G]rep" })
+      vim.keymap.set("n", "<leader>sg", builtin.live_grep, { desc = "[S]earch with [G]rep" })
       vim.keymap.set("n", "<leader>sd", builtin.diagnostics, { desc = "[S]earch [D]iagnostics" })
       vim.keymap.set("n", "<leader>sr", builtin.resume, { desc = "[S]earch [R]esume" })
       vim.keymap.set("n", "<leader>s.", builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set("n", "<leader><leader>", builtin.buffers, { desc = "[ ] Find existing buffers" })
+
+      -- VimWiki
+      vim.keymap.set("n", "<leader>wf", function()
+        builtin.find_files({ cwd = vim.fn.expand("~/notes") })
+      end, { desc = "Search note [f]iles" })
+      vim.keymap.set("n", "<leader>wF", function()
+        builtin.find_files({ cwd = vim.fn.expand("~/notes"), hidden = true })
+      end, { desc = "Search note [F]iles (+ hidden)" })
+      vim.keymap.set("n", "<leader>wg", function()
+        builtin.live_grep({ cwd = vim.fn.expand("~/notes") })
+      end, { desc = "[G]rep notes" })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set("n", "<leader>/", function()
@@ -472,13 +485,14 @@ require("lazy").setup({
       require("nvim-treesitter.configs").setup({
         auto_install = true,
 
-        -- ensure_installed = {
-        --   "vim", "vimdoc", "query",
-        --   "lua", "luadoc",
-        --   "c", "bash", "diff",
-        --   "html",
-        --   "markdown", "markdown_inline",
-        -- },
+        ensure_installed = {
+          "markdown",
+          -- "markdown_inline",
+          --   "vim", "vimdoc", "query",
+          --   "lua", "luadoc",
+          --   "c", "bash", "diff",
+          --   "html",
+        },
 
         highlight = {
           enable = true,
@@ -568,9 +582,13 @@ require("lazy").setup({
     dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-mini/mini.nvim' },            -- if you use the mini.nvim suite
     -- dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-mini/mini.icons' },        -- if you use standalone mini plugins
     -- dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' }, -- if you prefer nvim-web-devicons
-    ---@module 'render-markdown'
-    ---@type render.md.UserConfig
-    opts = {},
+    config = function()
+      vim.treesitter.language.register('markdown', 'vimwiki')
+      require('render-markdown').setup({
+        completions = { lsp = { enabled = true } },
+        pipe_table = { border_virtual = true },
+      })
+    end,
   },
 
   { -- Autocompletion
