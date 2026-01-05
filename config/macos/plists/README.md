@@ -8,9 +8,9 @@ The `.plists` in this folder are created using the same names used in `~/Library
 
 ```sh
 # Export Alt-Tab settings and store here
-defaults export com.lwouis.alt-tab-macos ~/.shell-config/macos/plists/com.lwouis.alt-tab-macos.plist
+defaults export com.lwouis.alt-tab-macos ~/.shell-config/config/macos/plists/com.lwouis.alt-tab-macos.plist
 
 # Import Alt-Tab settings from here to the user's database
-defaults import com.lwouis.alt-tab-macos ~/.shell-config/macos/plists/com.lwouis.alt-tab-macos.plist
+defaults import com.lwouis.alt-tab-macos ~/.shell-config/config/macos/plists/com.lwouis.alt-tab-macos.plist
 ```
 

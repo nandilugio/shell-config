@@ -17,7 +17,7 @@ git clone git@github.com:nandilugio/shell-config.git ~/.shell-config
 # Link dotfiles
 for f in $(ls ~/.shell-config/common_dotfiles); do ln -s ~/.shell-config/common_dotfiles/$f ~/.$f; done
 
-# TODO: link dot_donfig and lib_app_support files
+# TODO: Update this. Now everything to be linked is in the `config/` dir. Also, link dot_donfig, lib_app_support, etc.
 
 # Link bin folder
 ln -s ~/.shell-config/bin ~/bin
