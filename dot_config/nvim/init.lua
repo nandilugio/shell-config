@@ -470,6 +470,7 @@ require("lazy").setup({
         ext = '.md',
       },
     }
+    vim.g.vimwiki_markdown_link_ext = 1
   end,
   },
 
