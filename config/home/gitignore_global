@@ -14,7 +14,7 @@ pyrightconfig.json
 **/vendor/bundle/
 
 **/AGENTS.md
-!dot_config/opencode/AGENTS.md
+!config/home/dot_config/opencode/AGENTS.md
 **/.claude/
 **/CLAUDE.md
 **/.kiro/
