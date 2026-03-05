@@ -145,6 +145,15 @@
 
   f-dirty = !git status -u --porcelain | sed -E 's/^ ?[^ ]+ +//' | xargs -I% ls -d "%" 2>/dev/null
   f-last-commit = !git d --name-only HEAD~1 | xargs -I% ls -d "%" 2>/dev/null
+  f-last1-commits = !git d --name-only HEAD~1 | xargs -I% ls -d "%" 2>/dev/null
+  f-last2-commits = !git d --name-only HEAD~2 | xargs -I% ls -d "%" 2>/dev/null
+  f-last3-commits = !git d --name-only HEAD~3 | xargs -I% ls -d "%" 2>/dev/null
+  f-last4-commits = !git d --name-only HEAD~4 | xargs -I% ls -d "%" 2>/dev/null
+  f-last5-commits = !git d --name-only HEAD~5 | xargs -I% ls -d "%" 2>/dev/null
+  f-last6-commits = !git d --name-only HEAD~6 | xargs -I% ls -d "%" 2>/dev/null
+  f-last7-commits = !git d --name-only HEAD~7 | xargs -I% ls -d "%" 2>/dev/null
+  f-last8-commits = !git d --name-only HEAD~8 | xargs -I% ls -d "%" 2>/dev/null
+  f-last9-commits = !git d --name-only HEAD~9 | xargs -I% ls -d "%" 2>/dev/null
   f-branch-d = !git d --name-only origin/develop | xargs -I% ls -d "%" 2>/dev/null
   f-branch-m = !git d --name-only origin/master | xargs -I% ls -d "%" 2>/dev/null
   f-branch-ma = !git d --name-only origin/main | xargs -I% ls -d "%" 2>/dev/null
