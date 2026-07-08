@@ -41,8 +41,8 @@ RESET=$'\033[0m'
 )"
 
 # Fish-style path abbreviation: every ancestor element shortened to its
-# first character, last element kept in full (e.g. /Users/nandosq/empty -> /U/n/empty)
-# Paths under $HOME are first collapsed to a ~ prefix (e.g. ~/empty, ~/d/f/bar)
+# first two characters, last element kept in full (e.g. /Users/nandosq/empty -> /Us/na/empty)
+# Paths under $HOME are first collapsed to a ~ prefix (e.g. ~/empty, ~/de/fo/bar)
 abbreviate_path() {
     local path="$1"
     local home="${HOME:-}"
@@ -71,7 +71,7 @@ abbreviate_path() {
         if [ -z "$part" ]; then
             abbreviated="$abbreviated/"
         else
-            abbreviated="$abbreviated${part:0:1}/"
+            abbreviated="$abbreviated${part:0:2}/"
         fi
     done
 
