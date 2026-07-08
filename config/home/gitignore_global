@@ -16,6 +16,6 @@ pyrightconfig.json
 **/AGENTS.md
 !config/home/dot_config/opencode/AGENTS.md
 **/.claude/
-**/CLAUDE.md
+**/CLAUDE.local.md
 **/.kiro/
 
