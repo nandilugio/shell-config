@@ -14,6 +14,13 @@
 #     }
 # Requires: bash 3.2+, jq, git >= 2.15
 
+# No globbing anywhere; keeps unquoted expansions (path splitting) literal.
+set -f
+
+# The bracketed line (brackets included, vim prefix excluded) is kept within
+# MAX_WIDTH visible chars by walking the reduction ladder near the bottom.
+MAX_WIDTH=80
+
 # Colors
 DARK_GRAY=$'\033[90m'
 GRAY=$'\033[38;5;245m'
@@ -48,21 +55,24 @@ RESET=$'\033[0m'
     '
 )"
 
-# Fish-style path abbreviation: every ancestor element shortened to its
-# first two characters, last element kept in full (e.g. /Users/nandosq/empty -> /Us/na/empty)
-# Paths under $HOME are first collapsed to a ~ prefix (e.g. ~/empty, ~/de/fo/bar)
+# $HOME prefix collapsed to ~ (e.g. /Users/nandosq/dev -> ~/dev)
+collapse_home() {
+    local path="$1" home="${HOME:-}"
+    if [ -n "$home" ]; then
+        if [ "$path" = "$home" ]; then
+            path="~"
+        elif [ "${path#"$home"/}" != "$path" ]; then
+            path="~/${path#"$home"/}"
+        fi
+    fi
+    echo "$path"
+}
+
+# Fish-style abbreviation: every ancestor element shortened to its first
+# $2 characters, last element kept in full (e.g. ~/dev/foo/bar -> ~/de/fo/bar).
+# As in fish, a leading dot doesn't count (.claude -> .c at width 1).
 abbreviate_path() {
-    local path="$1"
-    local home="${HOME:-}"
-
-    if [ -n "$home" ] && [ "$path" = "$home" ]; then
-        echo "~"
-        return
-    fi
-
-    if [ -n "$home" ] && [ "${path#"$home"/}" != "$path" ]; then
-        path="~/${path#"$home"/}"
-    fi
+    local path="$1" width="$2"
 
     local last="${path##*/}"
     local dir="${path%/*}"
@@ -79,7 +89,10 @@ abbreviate_path() {
         if [ -z "$part" ]; then
             abbreviated="$abbreviated/"
         else
-            abbreviated="$abbreviated${part:0:2}/"
+            case "$part" in
+                .*) abbreviated="$abbreviated${part:0:width+1}/" ;;
+                *)  abbreviated="$abbreviated${part:0:width}/" ;;
+            esac
         fi
     done
 
@@ -88,8 +101,13 @@ abbreviate_path() {
 
 # Single git call: `status --porcelain=v2 --branch` reports branch/detached
 # state, ahead/behind counts, and dirty status all in one subprocess.
+# Sets GIT_TEXT/GIT_LEN (full branch) and GIT_TEXT_SHORT/GIT_LEN_SHORT
+# (branch as first8…last8; same as full when the branch is 17 chars or less).
+# All empty/0 when not in a git repository.
 read_git_segment() {
     local cwd="$1"
+    GIT_TEXT="" GIT_LEN=0 GIT_TEXT_SHORT="" GIT_LEN_SHORT=0
+
     local status
     status=$(git -C "$cwd" --no-optional-locks status --porcelain=v2 --branch 2>/dev/null) || return
     [ -n "$status" ] || return
@@ -139,11 +157,20 @@ read_git_segment() {
         fi
     fi
 
-    local segment="${GRAY}${branch}${RESET}"
-    [ -n "$dirty" ] && segment="${segment}${PINK}${dirty}${RESET}"
-    [ -n "$action" ] && segment="${segment}${GRAY} ${action}${RESET}"
-    [ -n "$arrows" ] && segment="${segment}${CYAN} ${arrows}${RESET}"
-    echo "$segment"
+    local suffix="" suffix_len=0
+    [ -n "$dirty" ] && { suffix+="${PINK}${dirty}${RESET}"; suffix_len=$((suffix_len + 1)); }
+    [ -n "$action" ] && { suffix+="${GRAY} ${action}${RESET}"; suffix_len=$((suffix_len + 1 + ${#action})); }
+    [ -n "$arrows" ] && { suffix+="${CYAN} ${arrows}${RESET}"; suffix_len=$((suffix_len + 1 + ${#arrows})); }
+
+    GIT_TEXT="${GRAY}${branch}${RESET}${suffix}"
+    GIT_LEN=$(( ${#branch} + suffix_len ))
+    if [ "${#branch}" -gt 17 ]; then
+        GIT_TEXT_SHORT="${GRAY}${branch:0:8}${DARK_GRAY}…${GRAY}${branch: -8}${RESET}${suffix}"
+        GIT_LEN_SHORT=$(( 17 + suffix_len ))
+    else
+        GIT_TEXT_SHORT="$GIT_TEXT"
+        GIT_LEN_SHORT=$GIT_LEN
+    fi
 }
 
 # Usage color gradient: gray (low) -> yellow -> orange -> red (near full)
@@ -170,58 +197,129 @@ effort_color() {
     esac
 }
 
-# Colored "prefix<pct>%" segment for a usage value, or nothing if not numeric.
+# Segments as parallel arrays: colored text, visible length, active flag.
+seg_texts=()
+seg_lens=()
+seg_on=()
+
+add_seg() { # <visible_len> <colored_text>; leaves the new index in LAST_IDX
+    seg_lens+=("$1")
+    seg_texts+=("$2")
+    seg_on+=(1)
+    LAST_IDX=$(( ${#seg_texts[@]} - 1 ))
+}
+
+# Colored "<prefix><pct>%" usage segment, skipped (LAST_IDX=-1) if not numeric.
 # Truncates any fractional part (values arrive as integers in practice).
-usage_segment() {
+add_usage_seg() {
     local prefix="$1" value="$2"
+    LAST_IDX=-1
     local pct="${value%%[.,]*}"
     case "$pct" in
         ''|*[!0-9]*) return ;;
     esac
-    local color
-    color=$(usage_color "$pct")
-    echo "${color}${prefix}${pct}%${RESET}"
+    add_seg $(( ${#prefix} + ${#pct} + 1 )) "$(usage_color "$pct")${prefix}${pct}%${RESET}"
 }
 
-dir_display=$(abbreviate_path "$cwd")
-git_segment=$(read_git_segment "$cwd")
+drop_seg() { # deactivate segment by index (-1 = absent) and its separator
+    local i="$1"
+    { [ "$i" -ge 0 ] && [ "${seg_on[$i]}" = 1 ]; } || return
+    seg_on[$i]=0
+    total=$(( total - seg_lens[i] - 1 ))
+}
 
-parts=("${CYAN}${dir_display}${RESET}")
+swap_path() { # re-abbreviate the path segment (always index 0) to width $1
+    local new_path
+    new_path=$(abbreviate_path "$path_display" "$1")
+    total=$(( total - seg_lens[0] + ${#new_path} ))
+    seg_lens[0]=${#new_path}
+    seg_texts[0]="${CYAN}${new_path}${RESET}"
+}
 
-[ -n "$git_segment" ] && parts+=("$git_segment")
+path_display=$(collapse_home "$cwd")
+add_seg "${#path_display}" "${CYAN}${path_display}${RESET}"
 
-parts+=("${YELLOW}${model}${RESET}")
+read_git_segment "$cwd"
+idx_git=-1
+if [ -n "$GIT_TEXT" ]; then
+    add_seg "$GIT_LEN" "$GIT_TEXT"
+    idx_git=$LAST_IDX
+fi
 
-[ -n "$effort" ] && parts+=("$(effort_color "$effort")${effort}${RESET}")
+add_seg "${#model}" "${YELLOW}${model}${RESET}"
+idx_model=$LAST_IDX
 
-# Context usage (c). Null until the first API response — omit the segment then.
-c_segment=$(usage_segment "c" "$context_used")
-[ -n "$c_segment" ] && parts+=("$c_segment")
+idx_effort=-1
+if [ -n "$effort" ]; then
+    add_seg "${#effort}" "$(effort_color "$effort")${effort}${RESET}"
+    idx_effort=$LAST_IDX
+fi
 
-# Subscription usage (h = 5-hour, w = 7-day). Absent until the first API
-# response of a session, and for non-subscribers — omit the segment then.
-h_segment=$(usage_segment "h" "$five_hour")
-[ -n "$h_segment" ] && parts+=("$h_segment")
-
-w_segment=$(usage_segment "w" "$seven_day")
-[ -n "$w_segment" ] && parts+=("$w_segment")
+# Usage (c = context, h = 5-hour limit, w = 7-day limit). Null/absent until
+# the first API response, and h/w only for subscribers — skipped then.
+add_usage_seg "c" "$context_used"; idx_c=$LAST_IDX
+add_usage_seg "h" "$five_hour";   idx_h=$LAST_IDX
+add_usage_seg "w" "$seven_day";   idx_w=$LAST_IDX
 
 # Session cost, truncated to cents. String math instead of printf %.2f:
 # float printf mis-parses dot decimals under comma-decimal locales.
+idx_cost=-1
+case "$cost" in
+    # scientific notation passes through jq (e.g. 1.23E-7) and would mis-split;
+    # it only appears below one micro-dollar, so it truncates to zero anyway.
+    *[eE]*) cost="0" ;;
+esac
 cost_int="${cost%%[.,]*}"
 case "$cost_int" in
     ''|*[!0-9]*) ;;
     *)
         cost_frac="${cost#"$cost_int"}"
         cost_frac="${cost_frac#[.,]}00"
-        parts+=("${GRAY}\$${cost_int}.${cost_frac:0:2}${RESET}")
+        add_seg $(( ${#cost_int} + 4 )) "${GRAY}\$${cost_int}.${cost_frac:0:2}${RESET}"
+        idx_cost=$LAST_IDX
         ;;
 esac
 
+# Visible width: brackets + segments + one pipe between each pair.
+total=$(( 2 + ${#seg_texts[@]} - 1 ))
+for len in "${seg_lens[@]}"; do
+    total=$(( total + len ))
+done
+
+# Reduction ladder, applied in order until the line fits MAX_WIDTH:
+# path fish-2 -> path fish-1 -> short branch -> drop cost -> effort -> model
+# -> w -> h -> c. Overflow is accepted if the floor still doesn't fit.
+step=0
+while [ "$total" -gt "$MAX_WIDTH" ] && [ "$step" -lt 9 ]; do
+    case "$step" in
+        0) swap_path 2 ;;
+        1) swap_path 1 ;;
+        2)
+            if [ "$idx_git" -ge 0 ] && [ "$GIT_LEN_SHORT" -lt "$GIT_LEN" ]; then
+                total=$(( total - seg_lens[idx_git] + GIT_LEN_SHORT ))
+                seg_lens[$idx_git]=$GIT_LEN_SHORT
+                seg_texts[$idx_git]="$GIT_TEXT_SHORT"
+            fi
+            ;;
+        3) drop_seg "$idx_cost" ;;
+        4) drop_seg "$idx_effort" ;;
+        5) drop_seg "$idx_model" ;;
+        6) drop_seg "$idx_w" ;;
+        7) drop_seg "$idx_h" ;;
+        8) drop_seg "$idx_c" ;;
+    esac
+    step=$(( step + 1 ))
+done
+
 sep="${DARK_GRAY}|${RESET}"
-line="${parts[0]}"
-for part in "${parts[@]:1}"; do
-    line+="${sep}${part}"
+line=""
+for i in "${!seg_texts[@]}"; do
+    [ "${seg_on[$i]}" = 1 ] || continue
+    if [ -z "$line" ]; then
+        line="${seg_texts[$i]}"
+    else
+        line+="${sep}${seg_texts[$i]}"
+    fi
 done
 
 bracketed="${DARK_GRAY}[${RESET}${line}${DARK_GRAY}]${RESET}"
