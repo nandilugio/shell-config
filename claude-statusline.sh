@@ -12,16 +12,16 @@
 #       "hideVimModeIndicator": true,
 #       "refreshInterval": 60
 #     }
-# Requires: bash, jq, git >= 2.13
+# Requires: bash 3.2+, jq, git >= 2.15
 
 # Colors
-DIM=$'\033[90m'
+DARK_GRAY=$'\033[90m'
+GRAY=$'\033[38;5;245m'
 CYAN=$'\033[36m'
-GREEN=$'\033[32m'
 YELLOW=$'\033[33m'
 ORANGE=$'\033[38;5;208m'
 RED=$'\033[31m'
-DIRTY=$'\033[38;5;218m'
+PINK=$'\033[38;5;218m'
 RESET=$'\033[0m'
 
 # Single jq call: extract all needed fields at once, one per line.
@@ -29,13 +29,21 @@ RESET=$'\033[0m'
 {
     IFS= read -r cwd
     IFS= read -r model
-    IFS= read -r remaining
+    IFS= read -r effort
+    IFS= read -r context_used
+    IFS= read -r five_hour
+    IFS= read -r seven_day
+    IFS= read -r cost
     IFS= read -r vim_mode
 } <<<"$(
     jq -r '
         (.workspace.current_dir // .cwd),
         (.model.display_name // "Claude"),
-        (.context_window.remaining_percentage // ""),
+        (.effort.level // ""),
+        (.context_window.used_percentage // ""),
+        (.rate_limits.five_hour.used_percentage // ""),
+        (.rate_limits.seven_day.used_percentage // ""),
+        (.cost.total_cost_usd // ""),
         (.vim.mode // "")
     '
 )"
@@ -131,18 +139,18 @@ read_git_segment() {
         fi
     fi
 
-    local segment="${DIM}${branch}${RESET}"
-    [ -n "$dirty" ] && segment="${segment}${DIRTY}${dirty}${RESET}"
-    [ -n "$action" ] && segment="${segment}${DIM} ${action}${RESET}"
+    local segment="${GRAY}${branch}${RESET}"
+    [ -n "$dirty" ] && segment="${segment}${PINK}${dirty}${RESET}"
+    [ -n "$action" ] && segment="${segment}${GRAY} ${action}${RESET}"
     [ -n "$arrows" ] && segment="${segment}${CYAN} ${arrows}${RESET}"
     echo "$segment"
 }
 
-# Context color gradient: green (low usage) -> yellow -> orange -> red (near full)
-context_color() {
+# Usage color gradient: gray (low) -> yellow -> orange -> red (near full)
+usage_color() {
     local used="$1"
     if [ "$used" -lt 50 ]; then
-        echo "$GREEN"
+        echo "$GRAY"
     elif [ "$used" -lt 75 ]; then
         echo "$YELLOW"
     elif [ "$used" -lt 90 ]; then
@@ -152,6 +160,29 @@ context_color() {
     fi
 }
 
+# Effort color: gray below high, yellow at high, orange at xhigh, red at max.
+effort_color() {
+    case "$1" in
+        high)  echo "$YELLOW" ;;
+        xhigh) echo "$ORANGE" ;;
+        max)   echo "$RED" ;;
+        *)     echo "$GRAY" ;;
+    esac
+}
+
+# Colored "prefix<pct>%" segment for a usage value, or nothing if not numeric.
+# Truncates any fractional part (values arrive as integers in practice).
+usage_segment() {
+    local prefix="$1" value="$2"
+    local pct="${value%%[.,]*}"
+    case "$pct" in
+        ''|*[!0-9]*) return ;;
+    esac
+    local color
+    color=$(usage_color "$pct")
+    echo "${color}${prefix}${pct}%${RESET}"
+}
+
 dir_display=$(abbreviate_path "$cwd")
 git_segment=$(read_git_segment "$cwd")
 
@@ -159,45 +190,45 @@ parts=("${CYAN}${dir_display}${RESET}")
 
 [ -n "$git_segment" ] && parts+=("$git_segment")
 
-parts+=("${GREEN}${model}${RESET}")
+parts+=("${YELLOW}${model}${RESET}")
 
-if [ -n "$remaining" ]; then
-    # Locale-safe rounding without a subprocess: printf "%.0f" mis-parses
-    # comma-decimal locales (e.g. LC_NUMERIC=de_DE), tolerate either separator.
-    remaining_int="${remaining%%[.,]*}"
-    frac="${remaining#"$remaining_int"}"
-    frac="${frac#[.,]}"
-    case "$remaining_int" in
-        ''|*[!0-9]*) remaining_int="" ;;
-        *)
-            case "$frac" in
-                [5-9]*) remaining_int=$((remaining_int + 1)) ;;
-            esac
-            ;;
-    esac
+[ -n "$effort" ] && parts+=("$(effort_color "$effort")${effort}${RESET}")
 
-    if [ -n "$remaining_int" ]; then
-        used_int=$((100 - remaining_int))
-        color=$(context_color "$used_int")
-        parts+=("${color}${used_int}%${RESET}")
-    fi
-fi
+# Context usage (c). Null until the first API response — omit the segment then.
+c_segment=$(usage_segment "c" "$context_used")
+[ -n "$c_segment" ] && parts+=("$c_segment")
 
-sep="${DIM}|${RESET}"
-line=""
-for i in "${!parts[@]}"; do
-    if [ "$i" -eq 0 ]; then
-        line="${parts[$i]}"
-    else
-        line="${line}${sep}${parts[$i]}"
-    fi
+# Subscription usage (h = 5-hour, w = 7-day). Absent until the first API
+# response of a session, and for non-subscribers — omit the segment then.
+h_segment=$(usage_segment "h" "$five_hour")
+[ -n "$h_segment" ] && parts+=("$h_segment")
+
+w_segment=$(usage_segment "w" "$seven_day")
+[ -n "$w_segment" ] && parts+=("$w_segment")
+
+# Session cost, truncated to cents. String math instead of printf %.2f:
+# float printf mis-parses dot decimals under comma-decimal locales.
+cost_int="${cost%%[.,]*}"
+case "$cost_int" in
+    ''|*[!0-9]*) ;;
+    *)
+        cost_frac="${cost#"$cost_int"}"
+        cost_frac="${cost_frac#[.,]}00"
+        parts+=("${GRAY}\$${cost_int}.${cost_frac:0:2}${RESET}")
+        ;;
+esac
+
+sep="${DARK_GRAY}|${RESET}"
+line="${parts[0]}"
+for part in "${parts[@]:1}"; do
+    line+="${sep}${part}"
 done
 
-bracketed="${DIM}[${RESET}${line}${DIM}]${RESET}"
+bracketed="${DARK_GRAY}[${RESET}${line}${DARK_GRAY}]${RESET}"
 
+# Payload sends the mode already uppercase ("INSERT", "NORMAL", ...).
 if [ -n "$vim_mode" ]; then
-    vim_mode_upper=$(echo "$vim_mode" | tr '[:lower:]' '[:upper:]')
-    printf "%s-- %s --%s  %s" "$DIM" "$vim_mode_upper" "$RESET" "$bracketed"
+    printf "%s-- %s --%s  %s" "$DARK_GRAY" "$vim_mode" "$RESET" "$bracketed"
 else
     printf "%s" "$bracketed"
 fi
