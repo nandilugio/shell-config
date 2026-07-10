@@ -21,6 +21,10 @@ set -f
 # MAX_WIDTH visible chars by walking the reduction ladder near the bottom.
 MAX_WIDTH=80
 
+# Percentages at or above this never drop from the ladder (orange and red
+# bands): a hot value is worth showing even over shorter segments.
+HOT_PCT=75
+
 # Colors
 DARK_GRAY=$'\033[90m'
 GRAY=$'\033[38;5;245m'
@@ -197,10 +201,29 @@ effort_color() {
     esac
 }
 
+# Compact model name into MODEL_SHORT: first two chars of the name plus the
+# first version-looking token (contains a digit), parenthetical suffix
+# dropped (e.g. "Opus 4.8 (1M context)" -> "Op4.8", "Fable 5" -> "Fa5").
+abbrev_model() {
+    local name="${model%% (*}" rest tok
+    MODEL_SHORT="${name:0:2}"
+    rest="${name#* }"
+    [ "$rest" = "$name" ] && return
+    for tok in $rest; do
+        case "$tok" in
+            *[0-9]*) MODEL_SHORT="${MODEL_SHORT}${tok}"; return ;;
+        esac
+    done
+}
+
 # Segments as parallel arrays: colored text, visible length, active flag.
 seg_texts=()
 seg_lens=()
 seg_on=()
+
+# Percentage segments, for danger-ordered dropping: segment index and value.
+pct_idxs=()
+pct_vals=()
 
 add_seg() { # <visible_len> <colored_text>; leaves the new index in LAST_IDX
     seg_lens+=("$1")
@@ -219,6 +242,8 @@ add_usage_seg() {
         ''|*[!0-9]*) return ;;
     esac
     add_seg $(( ${#prefix} + ${#pct} + 1 )) "$(usage_color "$pct")${prefix}${pct}%${RESET}"
+    pct_idxs+=("$LAST_IDX")
+    pct_vals+=("$pct")
 }
 
 drop_seg() { # deactivate segment by index (-1 = absent) and its separator
@@ -236,6 +261,22 @@ swap_path() { # re-abbreviate the path segment (always index 0) to width $1
     seg_texts[0]="${CYAN}${new_path}${RESET}"
 }
 
+# Drop the coolest active percentage segment; values at or above HOT_PCT are
+# pinned. Ties resolve toward the later-scanned one, so w drops before h
+# before c. No-op when everything left is hot (the floor accepts overflow).
+drop_coolest_pct() {
+    local i si drop_at=-1 drop_val=999
+    for (( i = 0; i < ${#pct_idxs[@]}; i++ )); do
+        si=${pct_idxs[$i]}
+        [ "${seg_on[$si]}" = 1 ] || continue
+        [ "${pct_vals[$i]}" -lt "$HOT_PCT" ] || continue
+        [ "${pct_vals[$i]}" -le "$drop_val" ] || continue
+        drop_val=${pct_vals[$i]}
+        drop_at=$si
+    done
+    drop_seg "$drop_at"
+}
+
 path_display=$(collapse_home "$cwd")
 add_seg "${#path_display}" "${CYAN}${path_display}${RESET}"
 
@@ -249,17 +290,19 @@ fi
 add_seg "${#model}" "${YELLOW}${model}${RESET}"
 idx_model=$LAST_IDX
 
+# Effort always truncated to 2 chars (lo/me/hi/xh/ma); the color carries it.
 idx_effort=-1
 if [ -n "$effort" ]; then
-    add_seg "${#effort}" "$(effort_color "$effort")${effort}${RESET}"
+    effort_short="${effort:0:2}"
+    add_seg "${#effort_short}" "$(effort_color "$effort")${effort_short}${RESET}"
     idx_effort=$LAST_IDX
 fi
 
 # Usage (c = context, h = 5-hour limit, w = 7-day limit). Null/absent until
 # the first API response, and h/w only for subscribers — skipped then.
-add_usage_seg "c" "$context_used"; idx_c=$LAST_IDX
-add_usage_seg "h" "$five_hour";   idx_h=$LAST_IDX
-add_usage_seg "w" "$seven_day";   idx_w=$LAST_IDX
+add_usage_seg "c" "$context_used"
+add_usage_seg "h" "$five_hour"
+add_usage_seg "w" "$seven_day"
 
 # Session cost, truncated to cents. String math instead of printf %.2f:
 # float printf mis-parses dot decimals under comma-decimal locales.
@@ -287,26 +330,33 @@ for len in "${seg_lens[@]}"; do
 done
 
 # Reduction ladder, applied in order until the line fits MAX_WIDTH:
-# path fish-2 -> path fish-1 -> short branch -> drop cost -> effort -> model
-# -> w -> h -> c. Overflow is accepted if the floor still doesn't fit.
+# drop cost -> path fish-2 -> fish-1 -> short model -> short branch ->
+# drop effort -> model -> percentages coolest-first (hot ones pinned, see
+# HOT_PCT). Overflow is accepted if the floor still doesn't fit.
 step=0
-while [ "$total" -gt "$MAX_WIDTH" ] && [ "$step" -lt 9 ]; do
+while [ "$total" -gt "$MAX_WIDTH" ] && [ "$step" -lt 10 ]; do
     case "$step" in
-        0) swap_path 2 ;;
-        1) swap_path 1 ;;
-        2)
+        0) drop_seg "$idx_cost" ;;
+        1) swap_path 2 ;;
+        2) swap_path 1 ;;
+        3)
+            abbrev_model
+            if [ "${#MODEL_SHORT}" -lt "${seg_lens[idx_model]}" ]; then
+                total=$(( total - seg_lens[idx_model] + ${#MODEL_SHORT} ))
+                seg_lens[$idx_model]=${#MODEL_SHORT}
+                seg_texts[$idx_model]="${YELLOW}${MODEL_SHORT}${RESET}"
+            fi
+            ;;
+        4)
             if [ "$idx_git" -ge 0 ] && [ "$GIT_LEN_SHORT" -lt "$GIT_LEN" ]; then
                 total=$(( total - seg_lens[idx_git] + GIT_LEN_SHORT ))
                 seg_lens[$idx_git]=$GIT_LEN_SHORT
                 seg_texts[$idx_git]="$GIT_TEXT_SHORT"
             fi
             ;;
-        3) drop_seg "$idx_cost" ;;
-        4) drop_seg "$idx_effort" ;;
-        5) drop_seg "$idx_model" ;;
-        6) drop_seg "$idx_w" ;;
-        7) drop_seg "$idx_h" ;;
-        8) drop_seg "$idx_c" ;;
+        5) drop_seg "$idx_effort" ;;
+        6) drop_seg "$idx_model" ;;
+        7|8|9) drop_coolest_pct ;;
     esac
     step=$(( step + 1 ))
 done
