@@ -31,6 +31,7 @@ YELLOW="${ESC}[33m"
 ORANGE="${ESC}[38;5;208m"
 RED="${ESC}[31m"
 PINK="${ESC}[38;5;218m"
+RESET_ESC="${ESC}[0m"
 
 # render <json> [env VAR=VAL ...] -> sets RAW, PLAIN, WIDTH
 # Width is pinned to 80 so the ladder assertions are stable regardless of the
@@ -114,6 +115,31 @@ has "c6%" "decimals truncated"
 
 render "$(mk "$H/dev" "Fable 5" - '"abc"' - - -)"
 plain_is '[~/dev|Fable 5]' "non-numeric percentage skipped"
+
+### Reset times on hot h/w windows ##################################
+# Epoch 1700000000 under TZ=UTC is 22:13 on a Tuesday; pinning TZ keeps the
+# formatted time/weekday deterministic across machines.
+RL_RESET='"five_hour":{"used_percentage":%s,"resets_at":1700000000},"seven_day":{"used_percentage":%s,"resets_at":1700000000}'
+reset_json() { # <h_pct> <w_pct>
+    printf '{"workspace":{"current_dir":"%s/dev"},"model":{"display_name":"Fable 5"},"rate_limits":{'"$RL_RESET"'}}' \
+        "$H" "$1" "$2"
+}
+
+render "$(reset_json 77 80)" TZ=UTC
+has "h77%(22:13)" "hot h: reset time appended, no space"
+has "w80%(Tue)" "hot w: reset weekday appended"
+raw_has "${ORANGE}h77%(22:13)${RESET_ESC}" "reset time shares the segment color"
+
+render "$(reset_json 74 74)" TZ=UTC
+plain_is '[~/dev|Fable 5|h74%|w74%]' "below HOT_PCT: no reset shown"
+
+render "$(reset_json 75 90)" TZ=UTC
+has "h75%(22:13)" "at HOT_PCT threshold: shown"
+has "w90%(Tue)" "red window: shown"
+
+# Missing resets_at on a hot window: percentage still renders, no parens.
+render "$(printf '{"workspace":{"current_dir":"%s/dev"},"model":{"display_name":"Fable 5"},"rate_limits":{"five_hour":{"used_percentage":80}}}' "$H")"
+plain_is '[~/dev|Fable 5|h80%]' "hot but no resets_at: bare percentage"
 
 ### Effort levels ####################################################
 

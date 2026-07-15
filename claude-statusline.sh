@@ -43,7 +43,9 @@ RESET=$'\033[0m'
     IFS= read -r effort
     IFS= read -r context_used
     IFS= read -r five_hour
+    IFS= read -r five_hour_reset
     IFS= read -r seven_day
+    IFS= read -r seven_day_reset
     IFS= read -r cost
     IFS= read -r vim_mode
 } <<<"$(
@@ -53,7 +55,9 @@ RESET=$'\033[0m'
         (.effort.level // ""),
         (.context_window.used_percentage // ""),
         (.rate_limits.five_hour.used_percentage // ""),
+        (.rate_limits.five_hour.resets_at // ""),
         (.rate_limits.seven_day.used_percentage // ""),
+        (.rate_limits.seven_day.resets_at // ""),
         (.cost.total_cost_usd // ""),
         (.vim.mode // "")
     '
@@ -177,6 +181,16 @@ read_git_segment() {
     fi
 }
 
+# Format an epoch (Unix seconds) with a strftime string, trying BSD (-r) then
+# GNU (-d @) date. Empty on any failure (non-numeric epoch, no date binary).
+fmt_epoch() {
+    local epoch="$1" fmt="$2"
+    case "$epoch" in
+        ''|*[!0-9]*) return ;;
+    esac
+    date -r "$epoch" +"$fmt" 2>/dev/null || date -d "@$epoch" +"$fmt" 2>/dev/null
+}
+
 # Usage color gradient: gray (low) -> yellow -> orange -> red (near full)
 usage_color() {
     local used="$1"
@@ -234,14 +248,22 @@ add_seg() { # <visible_len> <colored_text>; leaves the new index in LAST_IDX
 
 # Colored "<prefix><pct>%" usage segment, skipped (LAST_IDX=-1) if not numeric.
 # Truncates any fractional part (values arrive as integers in practice).
+# When hot (pct >= HOT_PCT) and a reset epoch is given, the window's reset time
+# is appended as "(<time>)" directly after the percentage, in the same color.
 add_usage_seg() {
-    local prefix="$1" value="$2"
+    local prefix="$1" value="$2" reset_epoch="$3" reset_fmt="$4"
     LAST_IDX=-1
     local pct="${value%%[.,]*}"
     case "$pct" in
         ''|*[!0-9]*) return ;;
     esac
-    add_seg $(( ${#prefix} + ${#pct} + 1 )) "$(usage_color "$pct")${prefix}${pct}%${RESET}"
+    local extra="" extra_len=0
+    if [ "$pct" -ge "$HOT_PCT" ] && [ -n "$reset_epoch" ]; then
+        local reset
+        reset=$(fmt_epoch "$reset_epoch" "$reset_fmt")
+        [ -n "$reset" ] && { extra="(${reset})"; extra_len=$(( ${#reset} + 2 )); }
+    fi
+    add_seg $(( ${#prefix} + ${#pct} + 1 + extra_len )) "$(usage_color "$pct")${prefix}${pct}%${extra}${RESET}"
     pct_idxs+=("$LAST_IDX")
     pct_vals+=("$pct")
 }
@@ -301,8 +323,8 @@ fi
 # Usage (c = context, h = 5-hour limit, w = 7-day limit). Null/absent until
 # the first API response, and h/w only for subscribers — skipped then.
 add_usage_seg "c" "$context_used"
-add_usage_seg "h" "$five_hour"
-add_usage_seg "w" "$seven_day"
+add_usage_seg "h" "$five_hour" "$five_hour_reset" "%H:%M"
+add_usage_seg "w" "$seven_day" "$seven_day_reset" "%a"
 
 # Session cost, truncated to cents. String math instead of printf %.2f:
 # float printf mis-parses dot decimals under comma-decimal locales.
