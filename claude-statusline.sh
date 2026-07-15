@@ -191,27 +191,29 @@ fmt_epoch() {
     date -r "$epoch" +"$fmt" 2>/dev/null || date -d "@$epoch" +"$fmt" 2>/dev/null
 }
 
-# Usage color gradient: gray (low) -> yellow -> orange -> red (near full)
+# Usage color gradient: gray (low) -> yellow -> orange -> red (near full).
+# Result in REPLY (avoids a subshell on this hot path).
 usage_color() {
     local used="$1"
     if [ "$used" -lt 50 ]; then
-        echo "$GRAY"
+        REPLY="$GRAY"
     elif [ "$used" -lt 75 ]; then
-        echo "$YELLOW"
+        REPLY="$YELLOW"
     elif [ "$used" -lt 90 ]; then
-        echo "$ORANGE"
+        REPLY="$ORANGE"
     else
-        echo "$RED"
+        REPLY="$RED"
     fi
 }
 
 # Effort color: gray below high, yellow at high, orange at xhigh, red at max.
+# Result in REPLY.
 effort_color() {
     case "$1" in
-        high)  echo "$YELLOW" ;;
-        xhigh) echo "$ORANGE" ;;
-        max)   echo "$RED" ;;
-        *)     echo "$GRAY" ;;
+        high)  REPLY="$YELLOW" ;;
+        xhigh) REPLY="$ORANGE" ;;
+        max)   REPLY="$RED" ;;
+        *)     REPLY="$GRAY" ;;
     esac
 }
 
@@ -263,7 +265,8 @@ add_usage_seg() {
         reset=$(fmt_epoch "$reset_epoch" "$reset_fmt")
         [ -n "$reset" ] && { extra="(${reset})"; extra_len=$(( ${#reset} + 2 )); }
     fi
-    add_seg $(( ${#prefix} + ${#pct} + 1 + extra_len )) "$(usage_color "$pct")${prefix}${pct}%${extra}${RESET}"
+    usage_color "$pct"
+    add_seg $(( ${#prefix} + ${#pct} + 1 + extra_len )) "${REPLY}${prefix}${pct}%${extra}${RESET}"
     pct_idxs+=("$LAST_IDX")
     pct_vals+=("$pct")
 }
@@ -316,7 +319,8 @@ idx_model=$LAST_IDX
 idx_effort=-1
 if [ -n "$effort" ]; then
     effort_short="${effort:0:2}"
-    add_seg "${#effort_short}" "$(effort_color "$effort")${effort_short}${RESET}"
+    effort_color "$effort"
+    add_seg "${#effort_short}" "${REPLY}${effort_short}${RESET}"
     idx_effort=$LAST_IDX
 fi
 
