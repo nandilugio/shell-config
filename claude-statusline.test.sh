@@ -33,9 +33,11 @@ RED="${ESC}[31m"
 PINK="${ESC}[38;5;218m"
 
 # render <json> [env VAR=VAL ...] -> sets RAW, PLAIN, WIDTH
+# Width is pinned to 80 so the ladder assertions are stable regardless of the
+# script's own default; a case can still override it via a trailing env arg.
 render() {
     local json="$1"; shift
-    RAW=$(printf '%s' "$json" | env HOME="$H" "$@" "$SL_BASH" "$SL")
+    RAW=$(printf '%s' "$json" | env HOME="$H" CLAUDE_MAX_STATUSLINE_WIDTH=80 "$@" "$SL_BASH" "$SL")
     PLAIN=$(printf '%s' "$RAW" | sed "s/${ESC}\[[0-9;]*m//g")
     WIDTH=${#PLAIN}
 }

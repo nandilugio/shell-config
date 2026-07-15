@@ -18,8 +18,8 @@
 set -f
 
 # The bracketed line (brackets included, vim prefix excluded) is kept within
-# MAX_WIDTH visible chars by walking the reduction ladder near the bottom.
-MAX_WIDTH=80
+# max_width visible chars by walking the reduction ladder near the bottom.
+max_width=${CLAUDE_MAX_STATUSLINE_WIDTH:-120}
 
 # Percentages at or above this never drop from the ladder (orange and red
 # bands): a hot value is worth showing even over shorter segments.
@@ -329,12 +329,12 @@ for len in "${seg_lens[@]}"; do
     total=$(( total + len ))
 done
 
-# Reduction ladder, applied in order until the line fits MAX_WIDTH:
+# Reduction ladder, applied in order until the line fits max_width:
 # drop cost -> path fish-2 -> fish-1 -> short model -> short branch ->
 # drop effort -> model -> percentages coolest-first (hot ones pinned, see
 # HOT_PCT). Overflow is accepted if the floor still doesn't fit.
 step=0
-while [ "$total" -gt "$MAX_WIDTH" ] && [ "$step" -lt 10 ]; do
+while [ "$total" -gt "$max_width" ] && [ "$step" -lt 10 ]; do
     case "$step" in
         0) drop_seg "$idx_cost" ;;
         1) swap_path 2 ;;
