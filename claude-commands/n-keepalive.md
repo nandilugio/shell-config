@@ -23,7 +23,7 @@ Caveat: Each wakeup is a real billed turn reading the full conversation (roughly
 2. Parse the requested duration (`6h`, `90m`, `2h30m`, …; default `6h`) and compute an absolute deadline. Cap it at **12h** — beyond that, a forgotten loop costs more than the prefills it avoids.
 3. This command could have been used before in this session. Call `ScheduleWakeup` with `stop: true` to ensure we override any prior call.
 4. Schedule the first wakeup with `ScheduleWakeup`:
-   - `delaySeconds`: **60** (1 minute — TEMPORARY TEST VALUE, revert to 3000 / 50 minutes — see *About timing* below)
+   - `delaySeconds`: **3000** (50 minutes — see *About timing* below)
    - `reason`: something like `"checking the time before the deadline at <DEADLINE>"`, with the deadline filled in
    - `prompt`: exactly the sentinel described below, with the deadline filled in
 5. Tell the user in one line: the deadline, the interval, and that any message from them ends the chain. Then add a second line with the break-even session count for this duration, computed as described in *About the break-even count* below.
@@ -40,17 +40,26 @@ The literal `[Deadline check: …]` format is how you recognize your own wakeup 
 
 ## On each wakeup
 
+0. If the user has sent any message of their own since this chain was armed, the chain should already be over: call `ScheduleWakeup` with `stop: true`, say in one line that a late wakeup arrived after the chain ended, and do nothing else. Do not reschedule, and do not re-answer the user's earlier message. Such a wakeup is not "stale" and did not misfire — it was scheduled and never cancelled, which means the stop in *Standing instruction* below was missed.
 1. Run `date` via shell for a fresh reading.
 2. If now is at or past the deadline, or the deadline cannot be determined: call `ScheduleWakeup` with `stop: true`, state in one line that the keep-alive expired, and do nothing else.
 3. Otherwise, schedule the next wakeup with `ScheduleWakeup`:
-   - `delaySeconds`: **60** (1 minute — TEMPORARY TEST VALUE, revert to 3000 / 50 minutes — see *About timing* below)
+   - `delaySeconds`: **3000** (50 minutes — see *About timing* below)
    - `reason`: same as before, something like `"checking the time before the deadline at <DEADLINE>"`, with the deadline filled in
    - `prompt`: exactly the sentinel described above, with the deadline filled in
 4. Then reply with **exactly: `warming at <CURRENT_TIME>`** with the time you've just got from the `date` command filled-in. Nothing else — no summary, no restatement of the deadline, no commentary.
 
 ## Standing instruction: the user's next message ends the chain
 
-**The moment the user sends any message of their own, the keep-alive is over.** Before answering that message, call `ScheduleWakeup` with `stop: true` to cancel any pending wakeup, and mention in one short line that the keep-alive stopped. Then answer normally.
+**The moment the user sends any message of their own, the keep-alive is over.**
+
+1. Call `ScheduleWakeup` with `stop: true` as the **first tool call of the turn** — before any other tool call, and before composing any part of your answer.
+2. Report what the tool actually returned, in one line:
+   - it cancelled something → `Keep-alive stopped (cancelled 1 pending wakeup).`
+   - nothing was pending → `Keep-alive was already inactive (nothing pending).`
+3. Then answer the user's message normally.
+
+**Never write that the keep-alive stopped unless step 1 returned in this turn.** That sentence reports a tool result; it is not a courtesy. Picking between the two lines in step 2 is only possible by reading the result, which is the point: if you are about to type either one without having called the tool, that is the bug this section exists to catch. The user's message pulls attention to its substance, don't let that distract you from this.
 
 This needs no dedicated stop command: the user is back, their own turns now keep the cache warm, and a chain that outlived their return would only disrupt the session and burn money.
 
@@ -67,12 +76,18 @@ How many *other* idle sessions are worth keeping warm at this duration, assuming
 
 Break-even is `N × 0.12 × hours = 3`, i.e. **`N ≈ 25 / hours`**. Round down to a sensible whole number and present it as approximate — the `3 units` figure depends on how much of the conversation the harness marks cacheable, which is not observable.
 
+**If the requested duration is under 1 hour, skip the calculation entirely** and warn briefly instead, e.g.:
+
+```
+Note a duration under the 60min cache TTL does little — the cache outlives it unaided, and the first wakeup lands past the deadline.
+```
+
 Note that conversation size cancels out: both sides scale linearly with token count, so the same count applies to a small session and a huge one. Only the stakes differ.
 
 Report it as one line, for example:
 
 ```
-Worth keeping ~4 other sessions warm at this duration if you return to one of them — scales linearly with the number you return to (~8 for two, ~12 for three).
+Given the current token multipliers on Anthropic's docs, it's worth keeping ~5 other sessions warm at the requested 5h duration if you return to at least _one_ of them — scales linearly with the number you return to (~10 for two, ~15 for three).
 ```
 
 ## About timing
