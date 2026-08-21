@@ -19,7 +19,7 @@ set -f
 
 # The bracketed line (brackets included, vim prefix excluded) is kept within
 # max_width visible chars by walking the reduction ladder near the bottom.
-max_width=${CLAUDE_MAX_STATUSLINE_WIDTH:-120}
+max_width=${CLAUDE_MAX_STATUSLINE_WIDTH:-80}
 
 # Percentages at or above this never drop from the ladder (orange and red
 # bands): a hot value is worth showing even over shorter segments.
