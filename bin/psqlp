@@ -1,9 +1,22 @@
 #!/bin/bash
+set -euo pipefail
+
+if [ $# -lt 1 ]; then
+  echo "usage: ${0##*/} <target> [psql args...]" >&2
+  exit 2
+fi
 
 target=$1
 shift
 
-db_url=$(security find-generic-password -s db -a $target -w)
+db_url=$(security find-generic-password -s db -a "$target" -w 2>/dev/null) || {
+  echo "${0##*/}: no keychain entry for service 'db', account '$target'" >&2
+  exit 1
+}
+
+if [ -z "$db_url" ]; then
+  echo "${0##*/}: empty password in keychain for service 'db', account '$target'" >&2
+  exit 1
+fi
 
 psql "$db_url" -v "PROMPT1=$target %R%# " -v "PROMPT2=$target %R%# " "$@"
-
