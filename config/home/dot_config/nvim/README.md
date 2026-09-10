@@ -167,3 +167,9 @@ RBENV_VERSION=3.3.9 gem install ruby-lsp
 ```
 
 `:checkhealth config` reports what is present and what each gap costs.
+
+## Further reading
+
+`docs/` holds the notes behind these choices: what the ecosystem actually
+converged on, the churn and size measurements, and the awkward cases — netrw's
+unpatched code path, Ruby 2.7. Useful when a decision here looks arbitrary.
