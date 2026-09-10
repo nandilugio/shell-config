@@ -19,3 +19,6 @@ pyrightconfig.json
 **/CLAUDE.local.md
 **/.kiro/
 
+
+# ruby-lsp composed bundle (generated per project)
+.ruby-lsp/

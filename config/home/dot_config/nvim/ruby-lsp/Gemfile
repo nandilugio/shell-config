@@ -1,0 +1,9 @@
+# Standalone bundle for ruby-lsp.
+#
+# Used only for projects whose Gemfile pins Ruby < 3: ruby-lsp cannot compose a
+# bundle from those (bundler refuses the version mismatch), so it runs against
+# this one instead. The project's own source is still indexed; its gems are not.
+#
+# Ruby 3.x projects ignore this file and use the normal composed bundle.
+source "https://rubygems.org"
+gem "ruby-lsp"
