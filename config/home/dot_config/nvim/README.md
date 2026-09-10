@@ -117,6 +117,7 @@ lua/keymaps.lua       every binding, as data
 lua/setup/*.lua       per-feature configuration
 lua/config/health.lua :checkhealth config
 cheatsheet.md         key reference, shown by <leader>oh
+docs/                 why it is built this way
 ```
 
 Three questions, three answers: *what are my keys* is `keymaps.lua`, *what am I
