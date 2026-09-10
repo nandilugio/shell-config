@@ -47,24 +47,68 @@ vim.o.splitright = true
 vim.o.splitbelow = true
 
 -- Completion: Neovim 0.12 does this natively, so no completion plugin.
--- `autocomplete` triggers the menu as you type; sources come from 'complete'.
--- `fuzzy` gives fzf-style matching; `popup` shows documentation alongside.
--- LSP candidates are added per-buffer in setup/lsp.lua, and <C-y> applies side
--- effects (snippet expansion, auto-imports) — the standard Vim accept key.
+--
+-- Sources come from 'complete', in order. "o" is the one that matters: it means
+-- 'omnifunc', which the LSP client sets on attach, so the menu reaches the
+-- language server. Without it you get buffer words and nothing else.
+--
+-- The menu appears on a pause rather than on every keystroke — 'autocompletedelay'
+-- is set a little above typing speed, which is what the option is for. Helix
+-- does the same thing by default. To summon it sooner, <C-n> completes from all
+-- sources and <C-x><C-o> asks the server alone.
+--
+-- Under 'autocomplete' most of 'completeopt' is ignored: the docs say only
+-- fuzzy, longest, popup, preinsert and preview still apply, and "noselect" is
+-- turned on regardless. So there are two flags worth setting, not five.
+-- Note fuzzy and preinsert are mutually exclusive; fuzzy matching wins here.
 vim.o.autocomplete = true
-vim.o.complete = ".,w,b,u"
-vim.o.completeopt = "menu,menuone,popup,noselect,fuzzy"
+vim.o.autocompletedelay = 250
+vim.o.complete = ".,w,b,u,o"
+vim.o.completeopt = "popup,fuzzy"
+
+-- <CR> accepts only once something is actually selected. The menu opens with
+-- nothing highlighted, so typing straight through it and pressing Enter still
+-- gives a newline: the popup never changes what ordinary typing does. Press
+-- <C-n> first and Enter accepts, which is the state where you are choosing
+-- from the list rather than writing.
+--
+-- Every other editor accepts on Enter, so this keeps the habit portable.
+-- <C-y> accepts regardless, and <C-e> dismisses without accepting.
+vim.keymap.set("i", "<CR>", function()
+  return vim.fn.complete_info({ "selected" }).selected ~= -1 and "<C-y>" or "<CR>"
+end, { expr = true, desc = "Accept selected completion, else newline" })
 
 -- Folds via treesitter, all open on entry.
 vim.o.foldmethod = "expr"
 vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.o.foldlevel = 99
 
--- For the no-fzf fallback: keymaps.lua falls back to :find and :grep, which
--- are close to useless without a recursive 'path' and fuzzy wildmenu.
+-- Command-line completion, arranged to match insert mode: the menu appears as
+-- you type, <C-n>/<C-p> move through it, <C-y> accepts and <C-e> dismisses.
+-- Those last three are already built in here — only the auto-showing needs
+-- setting up, which is what wildtrigger() is for. See :h cmdline-autocompletion.
+--
+-- "noselect" keeps <CR> executing the command rather than accepting whatever
+-- happens to be highlighted. "tagfile" is part of the default and kept.
+vim.o.wildmode = "noselect:lastused,full"
+vim.o.wildoptions = "pum,fuzzy,tagfile"
+
+vim.api.nvim_create_autocmd("CmdlineChanged", {
+  pattern = { ":", "/", "?" },
+  callback = function() vim.fn.wildtrigger() end,
+})
+
+-- With the menu open <Up>/<Down> would walk it; keep them on history instead
+-- and leave the menu to <C-n>/<C-p> and <Tab>.
+for _, key in ipairs({ "<Up>", "<Down>" }) do
+  vim.keymap.set("c", key, function()
+    return vim.fn.wildmenumode() == 1 and ("<C-E>" .. key) or key
+  end, { expr = true, desc = "Command history" })
+end
+
+-- Recursive 'path' so :find works as a fallback where fzf is absent.
 vim.o.path = vim.o.path .. ",**"
 vim.o.wildmenu = true
-vim.o.wildoptions = "pum,fuzzy"
 
 -- Prefer ripgrep for :grep when present; both fill the quickfix list, which
 -- ]q / [q navigate.

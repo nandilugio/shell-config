@@ -158,21 +158,31 @@ Same in VS Code, Zed and Visual Studio.
 
 ## Completion
 
-Neovim's own, no plugin. Appears as you type.
+Neovim's own, no plugin. The menu appears after a short pause; <C-n> summons it
+at once. Sources are the buffer, other buffers, and the language server.
 
-<C-n>,<C-p>     next, previous candidate
+<C-n>,<C-p>     next, previous candidate — <C-n> also opens the menu
 <C-y>           accept — also expands snippets and adds imports
-<C-e>           dismiss
+Enter           accept, but only once you have selected something
+<C-e>           dismiss, keeping what you typed
+<C-x><C-o>      ask the language server only
 <C-x><C-f>      file paths
-<C-x><C-o>      force the language server
+
+The menu opens with nothing selected, so typing straight past it and pressing
+Enter still gives a newline. Press <C-n> first and Enter accepts — by then you
+are choosing from the list, not writing. <C-y> accepts either way.
 
 
 ## Command line
 
-Same keys as insert-mode completion, once Tab has opened the menu.
+Same keys as insert-mode completion: the menu shows itself as you type, and
+<C-y> and <C-e> mean what they mean above.
 
-Tab,<S-Tab>     open the menu, next, previous
-<C-n>,<C-p>     next, previous once it is open
+<C-n>,<C-p>     next, previous match       Tab,<S-Tab> also work
+<C-y>           accept the match
+<C-e>           dismiss the menu
+Enter           run the command
+<Up>,<Down>     command history, not the menu
 <C-u>,<C-w>     clear the line, clear a word
 <C-r> {reg}     insert a register — <C-r><C-w> is the word under the cursor
 <C-f>           edit the command line as a buffer
