@@ -220,6 +220,10 @@ function M.git()
   return out .. " "
 end
 
+-- Bracketed, because the servers attached to a buffer are a different kind of
+-- fact from the file's own properties beside them. The statusline's ordinary
+-- foreground separates them from the dimmer filetype and indent without
+-- introducing a colour of its own.
 function M.lsp()
   if not wide_enough("lsp") then return "" end
   local names = {}
@@ -227,7 +231,7 @@ function M.lsp()
     names[#names + 1] = c.name
   end
   if #names == 0 then return "" end
-  return ("%%#StatuslineMuted#%s %%*"):format(table.concat(names, " "))
+  return ("%%*[%s] "):format(table.concat(names, " "))
 end
 
 -- Silent unless something is unusual, which is the only time it matters.
