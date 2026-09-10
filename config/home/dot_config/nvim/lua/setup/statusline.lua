@@ -254,10 +254,12 @@ function M.search()
   return ("%%#StatuslineMuted#[%d/%d] %%*"):format(s.current, s.total)
 end
 
+-- Recording is a mode of sorts, so it reads as a block beside the mode rather
+-- than as another item in the line.
 function M.recording()
   local reg = vim.fn.reg_recording()
   if reg == "" then return "" end
-  return ("%%#StatuslineDelete#@%s %%*"):format(reg)
+  return ("%%#StatuslineReplace# @%s %%*"):format(reg)
 end
 
 -- Neovim's own diagnostic counts, lifted verbatim from the default statusline
@@ -273,12 +275,12 @@ local DIAGNOSTICS = "%{% luaeval('(package.loaded[\"vim.diagnostic\"] "
 function M.render()
   return table.concat({
     M.mode(),
+    M.recording(),
     " %<",
     "%#StatuslineAccent#",
     M.path(),
     "%*%m%r ",
     M.git(),
-    M.recording(),
     "%=", -- right-hand side from here
     M.search(),
     DIAGNOSTICS,
@@ -287,7 +289,8 @@ function M.render()
     M.fileinfo(),
     M.indent(),
     "%{% &busy > 0 ? '◐ ' : '' %}",
-    " %P %l:%c ",
+    -- Vim's own ruler format: line,col then how far through the file.
+    " %l,%c %P ",
   })
 end
 
