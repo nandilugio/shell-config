@@ -5,8 +5,6 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = ","
 
-vim.g.have_nerd_font = true
-
 -- netrw is deprecated, unmaintained, and ships a code-execution path via
 -- .netrwhist (GHSA-crm5-rh6j-2c7c, unpatched in 0.12.5). mini.files replaces it.
 vim.g.loaded_netrw = 1
@@ -52,19 +50,21 @@ vim.o.splitbelow = true
 -- 'omnifunc', which the LSP client sets on attach, so the menu reaches the
 -- language server. Without it you get buffer words and nothing else.
 --
--- The menu appears on a pause rather than on every keystroke — 'autocompletedelay'
--- is set a little above typing speed, which is what the option is for. Helix
--- does the same thing by default. To summon it sooner, <C-n> completes from all
--- sources and <C-x><C-o> asks the server alone.
+-- The menu waits for a pause rather than following every keystroke, which is
+-- what 'autocompletedelay' is for — set above typing speed so it appears when
+-- you stop to think, not mid-word. <C-n> summons it sooner, and <C-x><C-o>
+-- asks the language server alone.
 --
--- Under 'autocomplete' most of 'completeopt' is ignored: the docs say only
--- fuzzy, longest, popup, preinsert and preview still apply, and "noselect" is
--- turned on regardless. So there are two flags worth setting, not five.
--- Note fuzzy and preinsert are mutually exclusive; fuzzy matching wins here.
+-- Spell every flag out. The docs say 'autocomplete' implies "noselect" and
+-- that "menu"/"menuone" no longer matter, but in practice leaving them out
+-- gets the first candidate completing itself as you type and reinserting
+-- after a backspace. Written in full it behaves: the menu appears, nothing is
+-- selected, and what you typed is left alone until you choose with <C-n>.
+-- (fuzzy and preinsert are mutually exclusive; fuzzy wins here.)
 vim.o.autocomplete = true
-vim.o.autocompletedelay = 250
+vim.o.autocompletedelay = 500
 vim.o.complete = ".,w,b,u,o"
-vim.o.completeopt = "popup,fuzzy"
+vim.o.completeopt = "menu,menuone,popup,noselect,fuzzy"
 
 -- <CR> accepts only once something is actually selected. The menu opens with
 -- nothing highlighted, so typing straight through it and pressing Enter still

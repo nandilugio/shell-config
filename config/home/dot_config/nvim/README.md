@@ -17,7 +17,8 @@ even when the larger one is more popular.
 **Every external tool is optional.** Clone this onto a bare server and it
 works: bindings fall back to built-ins, and `:checkhealth config` says what is
 missing and what that costs. Nothing has to be installed for the editor to be
-usable.
+usable — including fonts. Symbols stay within plain UTF-8, so nothing here
+needs a patched Nerd Font to render.
 
 **Bindings should transfer.** Muscle memory is expensive to build, so it is
 spent on keys that also work in Helix, Zed, VS Code and RubyMine — not on keys

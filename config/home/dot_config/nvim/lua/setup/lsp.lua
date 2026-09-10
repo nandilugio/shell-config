@@ -156,6 +156,22 @@ if #servers > 0 then
   vim.lsp.enable(servers)
 end
 
+-- Floating windows get a border. Without one the text runs straight into the
+-- buffer behind it and reads as corruption; the border also gives the content
+-- a column of breathing room on each side.
+--
+-- Square borders, matching the file browser and the cheatsheet. keymaps.lua
+-- binds Esc to close these.
+local float = { border = "single", max_width = 80 }
+
+vim.lsp.buf.hover = (function(orig)
+  return function(opts) return orig(vim.tbl_extend("force", float, opts or {})) end
+end)(vim.lsp.buf.hover)
+
+vim.lsp.buf.signature_help = (function(orig)
+  return function(opts) return orig(vim.tbl_extend("force", float, opts or {})) end
+end)(vim.lsp.buf.signature_help)
+
 vim.api.nvim_create_autocmd("LspAttach", {
   callback = function(args)
     local client = vim.lsp.get_client_by_id(args.data.client_id)
@@ -170,6 +186,13 @@ vim.api.nvim_create_autocmd("LspAttach", {
     -- ruff and pyright both answer hover; pyright's is the useful one.
     if client.name == "ruff" then
       client.server_capabilities.hoverProvider = false
+    end
+
+    -- Folds from the language server where it offers them: it knows an import
+    -- block or a region comment is one thing, which treesitter cannot see.
+    -- Treesitter stays the default everywhere else (set in options.lua).
+    if client:supports_method("textDocument/foldingRange") then
+      vim.wo[vim.api.nvim_get_current_win()][0].foldexpr = "v:lua.vim.lsp.foldexpr()"
     end
 
     -- Highlight other uses of the symbol under the cursor. The autocommands

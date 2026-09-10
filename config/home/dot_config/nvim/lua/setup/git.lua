@@ -6,7 +6,25 @@
 
 local ok, gitsigns = pcall(require, "gitsigns")
 if ok then
-  gitsigns.setup({ preview_config = { border = "rounded" } })
+  gitsigns.setup({
+    -- Diff characters rather than gitsigns' default bars. A bar says only
+    -- "something changed here" and leaves the colour to carry the meaning;
+    -- + ~ - say which, and read the same way as diff output, git add -p and
+    -- every review tool.
+    --
+    -- Plain UTF-8, no Nerd Font: these live in the Basic Multilingual Plane
+    -- and render in any modern monospace font. ‾ marks a deletion above the
+    -- first line, ≃ a line both changed and partly deleted.
+    signs = {
+      add = { text = "+" },
+      change = { text = "~" },
+      delete = { text = "-" },
+      topdelete = { text = "‾" },
+      changedelete = { text = "≃" },
+      untracked = { text = "┆" },
+    },
+    preview_config = { border = "single" },
+  })
 end
 
 -- RuboCop via :make, because ruby-lsp cannot always provide it: on a Ruby 2.x

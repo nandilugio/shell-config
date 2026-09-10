@@ -28,7 +28,11 @@ local function load()
     winopts = {
       height = 0.85,
       width = 0.85,
-      preview = { layout = "flex", scrollbar = false },
+      -- Square, like every other float here. fzf still colours its own text
+      -- through the fzf binary's ANSI palette rather than Neovim highlight
+      -- groups, so the picker stays visually its own thing inside the frame.
+      border = "single",
+      preview = { layout = "flex", border = "single" },
     },
     -- Keys are fzf's own, so this behaves like the fzf already used in a
     -- shell: <C-j>/<C-k> move, <Enter> opens, <C-u> clears the query.

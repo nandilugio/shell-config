@@ -11,7 +11,7 @@ g jumps · gr acts on symbols · <leader> opens tools · [ ] iterate
 ## Getting out
 
 q               close the file browser
-<Esc>           close a picker, clear search highlight
+<Esc>           close a picker or a hover window, clear search highlight
 <C-c>           close a picker, when <Esc> is taken
 <Esc><Esc>      leave terminal mode
 <C-o>           jump back where you came from
@@ -72,7 +72,9 @@ gd,gD           definition, declaration
 gy,gI           type definition, implementation
 <C-]> / <C-t>   definition via tags / back
 <C-o>,<C-i>     back, forward through jumps
-K               hover documentation
+K               hover documentation      <Esc> closes it
+KK              open it and jump inside, to scroll or copy; q also closes
+<C-s>           signature help, while typing arguments (insert mode)
 gO              symbols in this file
 
 grn             rename
@@ -133,7 +135,8 @@ Hunks live here; commits and history live in lazygit.
 ## Toggles — <leader>u
 
 uw  wrap            us  spell           ul  line numbers
-ur  relative nums   ud  diagnostics     uh  inlay hints
+ur  relative nums   uh  inlay hints — parameter names and inferred types
+ud  diagnostics: all, warnings and errors, errors only, off
 ub  light/dark
 
 
@@ -158,8 +161,8 @@ Same in VS Code, Zed and Visual Studio.
 
 ## Completion
 
-Neovim's own, no plugin. The menu appears after a short pause; <C-n> summons it
-at once. Sources are the buffer, other buffers, and the language server.
+Neovim's own, no plugin. The menu appears when you pause; <C-n> summons it at
+once. Sources are the buffer, other buffers, and the language server.
 
 <C-n>,<C-p>     next, previous candidate — <C-n> also opens the menu
 <C-y>           accept — also expands snippets and adds imports
@@ -171,6 +174,12 @@ Enter           accept, but only once you have selected something
 The menu opens with nothing selected, so typing straight past it and pressing
 Enter still gives a newline. Press <C-n> first and Enter accepts — by then you
 are choosing from the list, not writing. <C-y> accepts either way.
+
+Snippets come from the language server: accepting a function with <C-y> fills
+in its placeholders, and adds the import if one is missing.
+
+<Tab>,<S-Tab>   next, previous placeholder
+<Esc>           stop, leaving the text as it is
 
 
 ## Command line
@@ -187,6 +196,24 @@ Enter           run the command
 <C-r> {reg}     insert a register — <C-r><C-w> is the word under the cursor
 <C-f>           edit the command line as a buffer
 q:              command history as a buffer
+
+
+## Quickfix — a list of places
+
+Vim's universal "list of locations". Many things fill it; the same keys walk it.
+
+]q,[q           next, previous entry     ]Q,[Q  last, first
+<leader>xq      open the list            :cclose  shut it
+<CR>            in the list, jump to that entry
+
+Things that fill it:
+
+:make           run the compiler — for ruby, rubocop into the list
+:grep {pat}     ripgrep across the project
+<C-q>           in a picker, send every result there
+<leader>xd      every diagnostic in the project
+
+The location list is the same idea, scoped to one window: ]l,[l and <leader>xl.
 
 
 ## Scrolling

@@ -33,6 +33,7 @@ M.groups = {
   { "<leader>u", "toggle (ui)" },
   { "<leader>b", "buffer" },
   { "<leader>o", "own" }, -- reserved: no plugin or convention may claim it
+  { "<leader>x", "lists" },
 
   -- Built-in prefixes. Not ours, but the popup is where you look when you
   -- have forgotten what lives under them.
@@ -206,11 +207,9 @@ M.maps = {
   { "<leader>us", "<Cmd>set spell!<CR>", desc = "Spell" },
   { "<leader>ul", "<Cmd>set number!<CR>", desc = "Line numbers" },
   { "<leader>ur", "<Cmd>set relativenumber!<CR>", desc = "Relative numbers" },
-  {
-    "<leader>ud",
-    function() vim.diagnostic.enable(not vim.diagnostic.is_enabled()) end,
-    desc = "Diagnostics",
-  },
+  -- Steps through all / warnings and errors / errors only / off, rather than
+  -- a plain on-off: a noisy file usually wants less, not none.
+  { "<leader>ud", function() _G.CycleDiagnostics() end, desc = "Diagnostics shown (cycle)" },
   {
     "<leader>uh",
     function() vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({})) end,
@@ -235,6 +234,14 @@ M.maps = {
   { "<S-h>", "<Cmd>bprevious<CR>", desc = "Previous buffer" },
   { "<S-l>", "<Cmd>bnext<CR>", desc = "Next buffer" },
   { "<leader>bd", "<Cmd>bdelete<CR>", desc = "Delete buffer" },
+
+  -- ── Lists: <leader>x ────────────────────────────────────────────────────
+  -- The quickfix list is Vim's list of places — :make, :grep and the pickers
+  -- all fill it, and ]q / [q walk it. The location list is the same, scoped
+  -- to one window.
+  { "<leader>xq", "<Cmd>copen<CR>", desc = "Quickfix list" },
+  { "<leader>xl", "<Cmd>lopen<CR>", desc = "Location list" },
+  { "<leader>xd", vim.diagnostic.setqflist, desc = "Diagnostics to quickfix" },
 
   -- ── Files ───────────────────────────────────────────────────────────────
   {
@@ -272,7 +279,24 @@ M.maps = {
   { "<leader>oa", function() require("setup.autosave").toggle() end, desc = "Autosave on/off" },
 
   -- ── Odds and ends ───────────────────────────────────────────────────────
-  { "<Esc>", "<Cmd>nohlsearch<CR>", desc = "Clear search highlight" },
+  -- One key for "dismiss whatever is in the way": a hover or diagnostic float
+  -- if one is open, the search highlight otherwise. Neovim closes floats when
+  -- the cursor moves but not on a keypress, and after a plain K the cursor is
+  -- still in the buffer, so Esc has to reach across to them.
+  {
+    "<Esc>",
+    function()
+      local closed = false
+      for _, win in ipairs(vim.api.nvim_list_wins()) do
+        if vim.api.nvim_win_get_config(win).relative ~= "" then
+          pcall(vim.api.nvim_win_close, win, false)
+          closed = true
+        end
+      end
+      if not closed then vim.cmd("nohlsearch") end
+    end,
+    desc = "Close float, else clear search highlight",
+  },
   { "<Esc><Esc>", "<C-\\><C-n>", desc = "Leave terminal mode", mode = "t" },
 }
 

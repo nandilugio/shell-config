@@ -175,7 +175,6 @@ if ok then
     -- Show immediately: this is a reference you reach for on purpose.
     -- 'timeoutlen' still governs when a pending mapping resolves.
     delay = 0,
-    icons = { mappings = vim.g.have_nerd_font },
   })
 
   local groups = {}

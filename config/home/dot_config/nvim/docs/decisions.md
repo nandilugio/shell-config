@@ -124,3 +124,23 @@ Lua (tertiary): lua_ls + lazydev. No stylua.
    (note: the CLI is the `tree-sitter-cli` formula, not `tree-sitter`).
 5. `.ruby-lsp/` added to config/home/gitignore_global.
 6. Standalone ruby-lsp Gemfile + lock committed at dot_config/nvim/ruby-lsp/.
+
+## Symbols: plain UTF-8, never a Nerd Font
+Nerd Font glyphs live in the Unicode private-use area (U+E000-F8FF) and render
+as boxes without a patched font — an invisible dependency, and one that breaks
+over SSH or in a console. Everything here stays in the Basic Multilingual
+Plane, which any monospace font of the last two decades covers:
+
+  gutter      + ~ -        ASCII
+              ‾  U+203E    deletion above the first line
+              ≃  U+2243    line both changed and partly deleted
+              ┆  U+2506    untracked
+  statusline  ⇡  U+21E1    ahead of upstream
+              ⇣  U+21E3    behind upstream
+              ◐  U+25D0    busy (Neovim's own default)
+
+The arrows match the zsh prompt (Pure) and the Claude Code statusline, which
+use the same glyphs for the same reason.
+
+`vim.g.have_nerd_font` was dropped with this: nothing needs one, and the only
+reader was a which-key option already set to its default.
