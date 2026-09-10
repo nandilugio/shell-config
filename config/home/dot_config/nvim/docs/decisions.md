@@ -32,6 +32,8 @@ save.nvim               -> nothing (PRIORITY REMOVAL: unmaintained since 2024-02
                            author, runs on every text change, owns <F4>)
 todo-comments           -> :grep TODO / fzf-lua grep
 nvim-web-devicons       -> nothing
+nvim-treesitter-textobjects -> nothing. ]f/[f, af/if, ac/ic are gone; core's an/in select
+                           syntax nodes. Re-add (main branch) if missed.
 render-markdown         -> DROPPED: collides with vimwiki; syntax colour comes from treesitter
                            anyway. Re-add later if concealment is missed.
 guess-indent            -> .editorconfig (built-in support)
@@ -51,7 +53,9 @@ lazy.nvim's declarative spec makes that clumsier. Portability requirement ARGUES
 Sequence: cull to 8 first, measure startup (now ~55ms w/ lazy-loading; clean nvim ~6ms), then migrate.
 
 ### Completion: BUILT-IN, drop blink.cmp
-set autocomplete + completeopt=menu,menuone,popup,fuzzy + vim.lsp.completion.enable()
+set autocomplete + completeopt=menu,menuone,popup,noselect,fuzzy + vim.lsp.completion.enable()
+(every flag spelled out: trimming to popup,fuzzy on the docs' word made the first
+candidate insert itself while typing — see options.lua)
 => autotrigger, LSP, snippets, auto-imports, fuzzy matching, accept with <C-y>
 (<C-y> is the same key blink's `default` preset uses => ZERO retraining)
 Drops the churniest dependency (197 commits/yr, 15k LOC) + the LuaSnip dep.
@@ -118,8 +122,9 @@ Lua (tertiary): lua_ls + lazydev. No stylua.
 1. save.nvim removed; replaced by a built-in toggle on <leader>oa. <F4> freed.
 2. The dead mason-lspconfig `handlers` block replaced by vim.lsp.config/enable.
    (It had been silently discarding the lua_ls settings.)
-3. `rbenv global` left alone — NOT needed. The config points at the 3.3.9
-   interpreter by path for Ruby < 3 projects, so the global stays `system`.
+3. `rbenv global` left alone — NOT needed. For Ruby < 3 projects the config finds
+   the newest rbenv Ruby >= 3 that has ruby-lsp installed (nothing pinned), so the
+   global stays `system`.
 4. nvim-treesitter migrated master -> main; tree-sitter-cli installed via brew
    (note: the CLI is the `tree-sitter-cli` formula, not `tree-sitter`).
 5. `.ruby-lsp/` added to config/home/gitignore_global.

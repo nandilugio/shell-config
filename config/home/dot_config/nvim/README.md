@@ -1,7 +1,8 @@
 # Neovim
 
-A small configuration built on Neovim's own features, with keybindings chosen
-to transfer to other editors. Around 1300 lines, 8 plugins, ~25ms startup.
+A configuration built on Neovim's own features, with keybindings chosen to
+transfer to other editors. Few plugins, no plugin manager, and every external
+tool optional.
 
 ## Principles
 
@@ -13,6 +14,12 @@ break.
 **Small, finished dependencies.** A plugin that has not changed in a year is
 usually done, not abandoned. Preferred over a larger one that changes weekly,
 even when the larger one is more popular.
+
+**Few dependencies, not a sparse interface.** The aim is less to install and
+less that can break, not less on screen. Breadcrumbs, a mode-coloured
+statusline, diagnostics on their own lines, fuzzy completion and bordered
+floats are all here — from options Neovim already has, not from plugins that
+draw them.
 
 **Every external tool is optional.** Clone this onto a bare server and it
 works: bindings fall back to built-ins, and `:checkhealth config` says what is
@@ -48,7 +55,7 @@ accurate and unreadable.
 
 **`[` and `]` follow tpope's rule**, which Neovim 0.12 adopted into core:
 *"`[` always comes before `]`"*. Lowercase steps, uppercase jumps to the first
-or last. `]d` diagnostics, `]q` quickfix, `]c` changes, `]f` functions.
+or last. `]d` diagnostics, `]q` quickfix, `]c` changes.
 
 **`<leader>` is namespaced by domain, not by plugin**: `<leader>g` is git
 whether gitsigns or something else provides it. Plugin-keyed namespaces break
@@ -68,7 +75,8 @@ conflicts and missing tools; `:KeymapAudit` explains a conflict in detail.
 
 ## Plugins
 
-Eight, each doing one thing:
+`lua/plugins.lua` is the list, and says when each one loads. Each does one
+thing:
 
 | | |
 |---|---|
@@ -84,11 +92,10 @@ Eight, each doing one thing:
 ### Not installed, and why
 
 **No plugin manager.** `vim.pack` is built in and writes a committed lockfile.
-It has no lazy-loading, which costs nothing at this size — startup is faster
-than the previous 24-plugin lazy-loaded config.
+It has no lazy-loading, which at this size costs nothing you can feel.
 
-**No completion plugin.** `'autocomplete'` with `completeopt=fuzzy` plus
-`vim.lsp.completion` gives autotrigger, fuzzy matching, snippets and
+**No completion plugin.** `'autocomplete'` and `'completeopt'` plus
+`vim.lsp.completion` give autotrigger, fuzzy matching, snippets and
 auto-imports. `<C-y>` accepts, as it has since Vim.
 
 **No `mason`.** It installs a second, untracked, editor-only copy of tools the
@@ -96,11 +103,13 @@ system already manages, and Shopify warns against using it for `ruby-lsp` at
 all. Servers come from `uv`, `brew` and `gem`, so the shell and CI use the same
 binary.
 
-**No statusline or colorscheme plugin.** The bundled colorscheme is used as
-is. The default statusline already shows LSP progress, diagnostic counts and
-a busy spinner; `setup/statusline.lua` appends the git branch and filetype,
-colouring them from groups the colorscheme already defines so they follow it
-when it changes.
+**No statusline, winbar or colorscheme plugin.** The bundled colorscheme is
+used as is. `setup/statusline.lua` builds on Neovim's default line — which
+already carries LSP progress and diagnostic counts — adding a mode block, the
+git branch and repository state, hunk counts and the attached servers.
+`setup/winbar.lua` draws breadcrumbs from the language server's symbol tree.
+Both colour themselves from groups the colorscheme already defines, so they
+follow it when it changes.
 
 **No `netrw`.** Deprecated upstream, and 0.12 still carries an unpatched path
 that executes code from `.netrwhist`. Disabled; `mini.files` replaces it.
@@ -141,20 +150,21 @@ the config portable, and it keeps every binding in one readable file.
 | | server | installed with |
 |---|---|---|
 | Python | `basedpyright` + `ruff` | `uv tool install` |
-| Ruby | `ruby-lsp` | `gem install`, per Ruby version |
+| Ruby | `ruby-lsp` | `gem install`, into any Ruby ≥ 3 |
 | Lua | `lua_ls` + `lazydev` | `brew` |
 
 `basedpyright` bundles its own Node, so projects pinning different Node
 versions cannot disturb it. Virtualenvs are detected per project — `VIRTUAL_ENV`,
 then `CONDA_PREFIX`, then `.venv` — with no plugin.
 
-Ruby needs one trick. `ruby-lsp` requires Ruby ≥ 3.0 but does not have to *be*
-the project's Ruby, so a 2.7 codebase is analysed by a modern server. Where the
-Gemfile pins `ruby "2.7.x"`, Bundler refuses to compose a bundle, so
-`ruby-lsp/Gemfile` here is used instead: the project's own code is indexed, its
-gems are not. RuboCop still runs through `:make`, using the project's own gem
-and `.rubocop.yml`, into the quickfix list. Ruby 3 projects need none of this
-and the config needs no change when the migration happens.
+Ruby needs one trick. `ruby-lsp` requires Ruby ≥ 3 but does not have to *be*
+the project's Ruby, so a legacy codebase is analysed by a modern server: the
+newest rbenv Ruby with `ruby-lsp` installed is used. Where the Gemfile pins an
+old Ruby, Bundler refuses to compose a bundle, so `ruby-lsp/Gemfile` here is
+used instead: the project's own code is indexed, its gems are not. RuboCop
+still runs through `:make`, using the project's own gem and `.rubocop.yml`,
+into the quickfix list. Ruby 3 projects need none of this and the config needs
+no change when the migration happens.
 
 ## Setting up elsewhere
 
@@ -164,7 +174,7 @@ Clone and start Neovim; plugins install on first run. Then, for full function:
 brew install fzf ripgrep fd lazygit tree-sitter-cli lua-language-server
 uv tool install ruff
 uv tool install basedpyright
-RBENV_VERSION=3.3.9 gem install ruby-lsp
+RBENV_VERSION=3.x gem install ruby-lsp   # any Ruby >= 3; the newest is used
 ```
 
 `:checkhealth config` reports what is present and what each gap costs.
@@ -173,4 +183,5 @@ RBENV_VERSION=3.3.9 gem install ruby-lsp
 
 `docs/` holds the notes behind these choices: what the ecosystem actually
 converged on, the churn and size measurements, and the awkward cases — netrw's
-unpatched code path, Ruby 2.7. Useful when a decision here looks arbitrary.
+unpatched code path, a Ruby 2.7 codebase. Useful when a decision here looks
+arbitrary.

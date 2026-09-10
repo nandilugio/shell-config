@@ -40,7 +40,10 @@ local function refresh(buf)
     textDocument = vim.lsp.util.make_text_document_params(buf),
   }, function(err, symbols)
     if err or not symbols then return end
-    local line = vim.api.nvim_win_get_cursor(0)[1] - 1
+    -- The reply is asynchronous; the current window may show another buffer by now.
+    local win = vim.fn.bufwinid(buf)
+    if win == -1 then return end
+    local line = vim.api.nvim_win_get_cursor(win)[1] - 1
     vim.b[buf].winbar_trail = table.concat(innermost_path(symbols, line, {}), " › ")
     vim.cmd.redrawstatus()
   end, buf)

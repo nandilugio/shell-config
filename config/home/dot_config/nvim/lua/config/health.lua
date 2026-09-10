@@ -51,12 +51,12 @@ local function check_servers()
 
   -- ruby-lsp needs Ruby >= 3.0 even to analyse a 2.x project, so the shim on
   -- PATH is not proof: check for an interpreter that can actually run it.
-  local modern = vim.fn.expand("~/.rbenv/versions/3.3.9/bin/ruby-lsp")
-  if vim.uv.fs_stat(modern) then
-    H.ok("ruby-lsp (ruby, via rbenv 3.3.9)")
+  local modern = require("setup.lsp").modern_ruby_lsp()
+  if modern then
+    H.ok("ruby-lsp (ruby, via " .. modern .. ")")
   elseif vim.fn.executable("ruby-lsp") == 1 then
-    H.warn("ruby-lsp found on PATH but not at the pinned rbenv 3.3.9 path", {
-      "Ruby < 3 projects rely on that path. RBENV_VERSION=3.3.9 gem install ruby-lsp",
+    H.warn("ruby-lsp is on PATH but no rbenv Ruby >= 3 has it installed", {
+      "Ruby < 3 projects need one: RBENV_VERSION=3.x gem install ruby-lsp",
     })
   else
     H.warn("ruby-lsp not found — no ruby support")
@@ -131,7 +131,10 @@ local function check_keymaps()
   for _, m in ipairs(spec.maps) do
     local modes = type(m.mode) == "table" and m.mode or { m.mode or "n" }
     for _, mo in ipairs(modes) do
-      ours[mo .. " " .. norm(m[1])] = m.desc
+      -- "v" covers x and s, which is how nvim_get_keymap() reports them.
+      for _, real in ipairs(mo == "v" and { "x", "s" } or { mo }) do
+        ours[real .. " " .. norm(m[1])] = m.desc
+      end
     end
   end
 

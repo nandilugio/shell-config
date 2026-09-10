@@ -3,6 +3,8 @@ Criteria (user's words): "small, do one thing right, mostly done, very little ch
 surface for vulnerabilities, avoid big things changing every day, reliable and reproducible
 for years." NOT popularity.
 Raw evidence: `research-plugins.md`. Keymap: `keymaps.md`.
+Status: investigation notes. Every open call below was settled in `decisions.md`; the
+"live bug" was fixed by the rebuild.
 
 ## LIVE BUG FOUND IN CURRENT CONFIG  [empirically verified, not inferred]
 init.lua:959-972 passes `handlers = {...}` to require("mason-lspconfig").setup().

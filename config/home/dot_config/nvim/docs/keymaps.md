@@ -1,6 +1,9 @@
 # Neovim keybinding map — design + rationale
 nvim 0.12.5 · leader = `<Space>` · localleader = `,`
-Status: agreed with user, pending implementation. Companion research: `research-keybindings.md`.
+Status: the design as agreed, frozen at that point. What shipped is `lua/keymaps.lua`;
+where it differs (no `gW` or `<leader>uf`; `]t`/`[t` left as Vim's tag motion; a `<leader>x`
+lists namespace; treesitter text objects gone with the plugin) see `decisions.md`.
+Companion research: `research-keybindings.md`.
 
 ## The rule
 > `g` jumps · `gr` acts on symbols · `<leader>` opens tools · `[`/`]` iterate lists

@@ -36,7 +36,7 @@ vim.o.scrolloff = 10
 vim.o.signcolumn = "yes"
 vim.o.cursorline = true
 vim.o.breakindent = true
-vim.o.showmode = true -- nothing else reports the mode
+vim.o.showmode = false -- the statusline has a mode block
 vim.o.list = true
 vim.opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
 
@@ -108,7 +108,6 @@ end
 
 -- Recursive 'path' so :find works as a fallback where fzf is absent.
 vim.o.path = vim.o.path .. ",**"
-vim.o.wildmenu = true
 
 -- Prefer ripgrep for :grep when present; both fill the quickfix list, which
 -- ]q / [q navigate.

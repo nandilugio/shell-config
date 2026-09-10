@@ -1,6 +1,8 @@
 -- How problems are shown. Nvim 0.12 enables diagnostics automatically when an
 -- LSP attaches; this only adjusts presentation.
 
+local M = {}
+
 vim.diagnostic.config({
   -- Every diagnostic, on its own line beneath the code. Virtual lines have
   -- room for the whole message where end-of-line text would truncate it, and
@@ -41,7 +43,9 @@ local function apply()
   vim.notify("Diagnostics: " .. l.label)
 end
 
-function _G.CycleDiagnostics()
+function M.cycle()
   level = level % #LEVELS + 1
   apply()
 end
+
+return M

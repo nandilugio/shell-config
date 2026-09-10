@@ -1,8 +1,7 @@
 # Cheatsheet
 
-<leader> is Space. <localleader> is comma.
-Press <leader> and wait to see what follows. <leader>fk searches every mapping.
-:checkhealth config reports anything missing on this machine.
+<leader> is Space, <localleader> is comma. Press <leader> and wait to see what
+follows; <leader>fk searches every mapping; :checkhealth config lists gaps.
 
 g jumps · gr acts on symbols · <leader> opens tools · [ ] iterate
 <C-w> windows · F-keys bridge other editors
@@ -10,270 +9,150 @@ g jumps · gr acts on symbols · <leader> opens tools · [ ] iterate
 
 ## Getting out
 
-q               close the file browser
-<Esc>           close a picker or a hover window, clear search highlight
-<C-c>           close a picker, when <Esc> is taken
+<Esc>           close a float or picker, else clear the search highlight
 <Esc><Esc>      leave terminal mode
-<C-o>           jump back where you came from
+q               close the file browser, the cheatsheet, a hover you entered
+<C-o>           jump back to where you came from
 
 
 ## File browser — <leader>e
 
-A normal buffer: j,k to move, edit a line to rename, delete a line to delete,
-then = to apply. Deletes go to a trash dir, so a mistaken = is recoverable.
+A normal buffer: edit a line to rename, delete a line to delete, = to apply.
+Deletes go to a trash directory, so a mistaken = is recoverable.
 
-l               enter directory, or open file AND STAY here
-L               enter directory, or open file AND CLOSE the browser
-h               go to parent directory
-H               go to parent, closing the current column
-q               close
-=               apply pending renames, deletes and creations
-g?              help, inside the browser
-
-m and '         set a mark, jump to it
-@               reveal the working directory
+l / L           enter, or open the file and stay / and close the browser
+h / H           parent directory / parent, closing this column
+=               apply pending changes           g?  help
+m / '           set a mark / jump to it         @   reveal the working dir
 
 
-## Pickers — <leader>f...
+## Pickers — <leader>f
 
-The input line is a text field, so h,j,k,l become query text. Move with Ctrl —
-no need to clear what you typed first.
+The input line is a text field, so move with Ctrl, not h j k l.
 
-<C-j>,<C-k>     next, previous result   (also <C-n>,<C-p> or the arrows)
-Enter           open it
-<C-x>,<C-v>     open in a split, a vsplit
-<C-t>           open in a new tab
-<S-up>,<S-down> scroll the preview
+<C-j>,<C-k>     next, previous                  Enter  open
+<C-x>,<C-v>     open in a split, a vsplit       <C-t>  in a tab
+<S-Up>,<S-Down> scroll the preview
+<C-u>           clear the query                 <C-a>,<C-e>  start, end
+Tab             tick several                    <C-q>  send all to quickfix
 
-<C-u>           clear the query         (as in a shell, not a half-page scroll)
-<C-a>,<C-e>     start, end of the query
-<BS>,<C-w>      delete a char, a word
-
-Tab             tick several, then Enter sends them to the quickfix list
-<C-q>           send every result to the quickfix list
-
-<leader><leader>  switch buffer
-<leader>ff        files
-<leader>fg or /   grep the project
-<leader>fw        grep the word under the cursor
-<leader>fr        recent files
-<leader>fh        help
-<leader>fk        keymaps
-<leader>fd        diagnostics
-<leader>fs,fS     symbols in this file, in the workspace
-<leader>fR        references (usages), with a preview   note: fr is recent files
+<leader><leader>  buffers                       <leader>ff  files
+<leader>fg or /   grep the project              <leader>fw  word under cursor
+<leader>fr        recent files                  <leader>fh  help
+<leader>fk        keymaps                       <leader>fd  diagnostics
+<leader>fs,fS     symbols: file, workspace      <leader>fR  references (usages)
 
 
 ## Code
 
-Jumps live on g, actions on gr.
-
-gd,gD           definition, declaration
-gy,gI           type definition, implementation
-<C-]> / <C-t>   definition via tags / back
-<C-o>,<C-i>     back, forward through jumps
-K               hover documentation      <Esc> closes it
-KK              open it and jump inside, to scroll or copy; q also closes
-<C-s>           signature help, while typing arguments (insert mode)
+gd,gD           definition, declaration         gy,gI  type def, implementation
+<C-]> / <C-t>   definition via tags / back      <C-o>,<C-i>  back, forward
+K               hover — K again enters it, <Esc> or q closes
+<C-s>           signature help, while typing arguments
 gO              symbols in this file
 
-grn             rename
-gra             code action
-grr             references — every usage, into the quickfix list
-<leader>fR      the same, in a picker with previews
-grx             run codelens
+grn             rename                          gra  code action
+grr             references, into quickfix       grx  run codelens
+gq {motion}     format                          <leader>=  the whole buffer
+gcc, gc         comment line, selection
 
-gq {motion}     format          <leader>= whole buffer
-gcc, gc         comment line, comment selection
-
-g]              ruby only: list every matching definition, not just the first
-
-grr finds what the language server can resolve. For anything it cannot — a
-method reached through metaprogramming, a name in a comment — grep instead
-with <leader>fw (word under the cursor) or <leader>fg.
+grr finds what the server can resolve. For a metaprogrammed name or a word in
+a comment, grep instead: <leader>fw or <leader>fg.
 
 
-## Between things
+## Between things — [ back, ] forward, capital = first or last
 
-[ goes back, ] goes forward. Uppercase jumps to the first or last.
-
-]d,[d           diagnostic              ]D,[D  last, first
-]e,[e           error only
-]w,[w           warning only
-]c,[c           changed hunk
-]f,[f           function
-]t,[t           type or class
-]q,[q           quickfix entry          ]Q,[Q  last, first
-]b,[b           buffer
-]<Space>        blank line below        [<Space> above
+]d,[d  ]D,[D    diagnostic; last, first         ]e,[e  ]w,[w  error, warning
+]c,[c           changed hunk                    ]q,[q  ]Q,[Q  quickfix
+]b,[b           buffer                          ]<Space>,[<Space>  blank line
 
 
 ## Git — <leader>g
 
 Hunks live here; commits and history live in lazygit.
 
-]c,[c           next, previous hunk
-<leader>gs      stage hunk              (works on a selection)
-<leader>gr      reset hunk
-<leader>gp      preview hunk
-<leader>gb      blame line
-<leader>gd      diff this file
-<leader>gg      lazygit
+<leader>gs      stage hunk (or selection)       <leader>gr  reset hunk
+<leader>gp      preview hunk                    <leader>gb  blame line
+<leader>gd      diff this file                  <leader>gg  lazygit
+ih              the hunk as a text object: dih, yih
 
 
 ## Windows and buffers
 
-<C-h,j,k,l>     move between windows    (tmux uses M-h,j,k,l for panes)
-<leader>-       split below             as in tmux
-<leader>|       split right             as in tmux
-<C-w>           everything else: c close, o only, = equalise, _ | maximise
-
-<S-h>,<S-l>     previous, next buffer
-<leader>bd      close buffer
+<C-h,j,k,l>     move between windows            tmux uses M-h,j,k,l for panes
+<leader>-  |    split below, right              as in tmux
+<C-w>           c close · o only · = equalise · _ | maximise
+<S-h>,<S-l>     previous, next buffer           <leader>bd  close buffer
 
 
 ## Toggles — <leader>u
 
-uw  wrap            us  spell           ul  line numbers
-ur  relative nums   uh  inlay hints — parameter names and inferred types
-ud  diagnostics: all, warnings and errors, errors only, off
-ub  light/dark
+uw wrap · us spell · ul line numbers · ur relative numbers · ub light/dark
+uh inlay hints       ud diagnostics: all → warnings+errors → errors → off
 
 
 ## Own — <leader>o
 
 Reserved: nothing else will ever claim these.
 
-<leader>oh      this cheatsheet
-<leader>oa      autosave on/off         (writes when you leave insert)
-<leader>ox      strip trailing whitespace
-<leader>ow      wiki index              od diary today, oD diary index
+oh  this cheatsheet    oa  autosave on/off    ox  strip trailing whitespace
+ow  wiki index         od  diary today        oD  diary index
 
 
-## Function keys
+## Function keys — same in VS Code, Zed and Visual Studio
 
-Same in VS Code, Zed and Visual Studio.
-
-<F2>            rename
-<F12>           definition
-<S-F12>         references
+<F2> rename          <F12> definition          <S-F12> references
 
 
 ## Completion
 
-Neovim's own, no plugin. The menu appears when you pause; <C-n> summons it at
-once. Sources are the buffer, other buffers, and the language server.
+Neovim's own. The menu appears when you pause, with nothing selected, so
+typing straight past it and pressing Enter still gives a newline.
 
-<C-n>,<C-p>     next, previous candidate — <C-n> also opens the menu
-<C-y>           accept — also expands snippets and adds imports
-Enter           accept, but only once you have selected something
+<C-n>,<C-p>     next, previous — <C-n> also opens the menu at once
+<C-y>           accept; also expands the snippet and adds the import
+Enter           accept, but only once something is selected
 <C-e>           dismiss, keeping what you typed
-<C-x><C-o>      ask the language server only
-<C-x><C-f>      file paths
-
-The menu opens with nothing selected, so typing straight past it and pressing
-Enter still gives a newline. Press <C-n> first and Enter accepts — by then you
-are choosing from the list, not writing. <C-y> accepts either way.
-
-Snippets come from the language server: accepting a function with <C-y> fills
-in its placeholders, and adds the import if one is missing.
-
-<Tab>,<S-Tab>   next, previous placeholder
-<Esc>           stop, leaving the text as it is
+<C-x><C-o>      language server only            <C-x><C-f>  file paths
+<Tab>,<S-Tab>   next, previous snippet placeholder
 
 
-## Command line
+## Command line — the same keys as completion
 
-Same keys as insert-mode completion: the menu shows itself as you type, and
-<C-y> and <C-e> mean what they mean above.
-
-<C-n>,<C-p>     next, previous match       Tab,<S-Tab> also work
-<C-y>           accept the match
-<C-e>           dismiss the menu
-Enter           run the command
-<Up>,<Down>     command history, not the menu
-<C-u>,<C-w>     clear the line, clear a word
-<C-r> {reg}     insert a register — <C-r><C-w> is the word under the cursor
-<C-f>           edit the command line as a buffer
-q:              command history as a buffer
+<C-n>,<C-p>     next, previous match (Tab too)  <C-y> accept    <C-e> dismiss
+<Up>,<Down>     history, not the menu
+<C-r><C-w>      insert the word under the cursor   <C-r>{reg}  a register
+<C-f>           edit the command line as a buffer  q:  history as a buffer
 
 
-## Quickfix — a list of places
+## Quickfix — Vim's list of places
 
-Vim's universal "list of locations". Many things fill it; the same keys walk it.
+Filled by :make (rubocop, for ruby), :grep, <C-q> in a picker, <leader>xd.
 
-]q,[q           next, previous entry     ]Q,[Q  last, first
-<leader>xq      open the list            :cclose  shut it
-<CR>            in the list, jump to that entry
-
-Things that fill it:
-
-:make           run the compiler — for ruby, rubocop into the list
-:grep {pat}     ripgrep across the project
-<C-q>           in a picker, send every result there
-<leader>xd      every diagnostic in the project
-
-The location list is the same idea, scoped to one window: ]l,[l and <leader>xl.
+]q,[q           next, previous                  <leader>xq  open    :cclose
+<CR>            jump to the entry under the cursor
+The location list is the same, per window: ]l,[l and <leader>xl.
 
 
-## Scrolling
+## Vim itself
 
-<C-u>,<C-d>     half page up, down      in buffers, which-key, hover floats
-<C-b>,<C-f>     full page up, down
-zz,zt,zb        cursor to centre, top, bottom
-<C-e>,<C-y>     one line down, up
+Motions take a count and work in visual mode. Operators take a motion, and
+doubled apply to the line: dd yy cc >> ==.
 
+w,e,b  W,E,B    word, end, back                 0,^,$  start, first char, end
+f,t {c}  ;  ,   find, till a char; repeat       {,}  paragraph   %  bracket
+gg,G  {n}G      file start, end, line n         H,M,L  screen top, mid, bottom
+*,#  n,N        search the word under cursor; next, previous match
+<C-d>,<C-u>     half page      <C-f>,<C-b>  full page      zz,zt,zb  cursor to
 
-## Motions
+d c y  > < =    delete, change, yank; indent, dedent, reindent
+gu gU g~        lower, upper, swap case         gq  format
+x s  p P        delete, substitute a char; put after, before
+v V <C-v>       visual char, line, block        gv  reselect
 
-{count}{motion}, and they work in visual mode too.
+Text objects, after an operator: diw ca( yip
+iw,aw  i(,a(    word; brackets — also { [ < " ' `      ip,ap  paragraph
+it,at           html tag                               in,an  syntax node
 
-w,e,b           word, end, back         W,E,B  same but WORDS
-f,F {char}      find next, prev in line
-t,T {char}      same, stopping before it
-; and ,         repeat that find forward, backward
-
-0,$             start, end of line
-^ or _          first non-blank
-{,}             previous, next paragraph
-%               matching bracket
-H,M,L           screen high, middle, low
-gg,G            file start, end         {n}G  line n
-*,#             search word under cursor, forward and back
-/,? {pat}       search forward, back    n,N  next, previous match
-
-
-## Operators
-
-{operator}{count}{motion}, doubled to apply to the line.
-
-d,dd,D          delete motion, line, to end of line
-c,cc,C          change
-y,yy,Y          yank
->,<,=           indent, dedent, reindent
-gu,gU,g~        lower, upper, swap case
-gq              format
-
-x,s             delete, substitute char
-v,V,<C-v>       visual char, line, block        gv  reselect
-p,P             put after, before
-
-
-## Text objects
-
-Use with an operator: diw, ca(, yif.
-
-iw,aw           word, word plus space
-i(,a(  i[,a[    inside, around brackets — also i{ i< i" i' i`
-ip,ap           paragraph
-it,at           xml/html tag
-if,af           function
-ic,ac           class
-ih              git hunk
-
-
-## Substitute
-
-:%s/old/new/gc  whole file — g every match on the line, c confirm each
-:'<,'>s/old/new/  the visual selection
+:%s/old/new/gc  whole file, confirming each     :'<,'>s/...  the selection
 :%s//new/g      an empty pattern reuses the last search

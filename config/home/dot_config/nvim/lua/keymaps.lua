@@ -200,6 +200,14 @@ M.maps = {
   { "<leader>gb", function() require("gitsigns").blame_line({ full = true }) end, desc = "Blame line", needs = "mod:gitsigns" },
   { "<leader>gd", function() require("gitsigns").diffthis() end, desc = "Diff this", needs = "mod:gitsigns" },
   { "<leader>gg", "<Cmd>terminal lazygit<CR>", desc = "Lazygit", needs = "lazygit" },
+  -- A hunk as a text object, so dih and yih read like diw and yiw.
+  {
+    "ih",
+    function() require("gitsigns").select_hunk() end,
+    desc = "Hunk",
+    mode = { "o", "x" },
+    needs = "mod:gitsigns",
+  },
 
   -- ── Toggle: <leader>u (ui) ──────────────────────────────────────────────
   -- Only the seven letters LazyVim and AstroNvim agree on.
@@ -209,7 +217,7 @@ M.maps = {
   { "<leader>ur", "<Cmd>set relativenumber!<CR>", desc = "Relative numbers" },
   -- Steps through all / warnings and errors / errors only / off, rather than
   -- a plain on-off: a noisy file usually wants less, not none.
-  { "<leader>ud", function() _G.CycleDiagnostics() end, desc = "Diagnostics shown (cycle)" },
+  { "<leader>ud", function() require("setup.diagnostics").cycle() end, desc = "Diagnostics shown (cycle)" },
   {
     "<leader>uh",
     function() vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({})) end,
@@ -244,12 +252,14 @@ M.maps = {
   { "<leader>xd", vim.diagnostic.setqflist, desc = "Diagnostics to quickfix" },
 
   -- ── Files ───────────────────────────────────────────────────────────────
+  -- netrw is disabled, so without mini.files the command line with completion
+  -- is the browser: Tab walks directories.
   {
     "<leader>e",
     function() require("mini.files").open(vim.api.nvim_buf_get_name(0)) end,
     desc = "File browser",
     needs = "mod:mini.files",
-    fallback = "<Cmd>edit .<CR>",
+    fallback = ":edit ",
   },
 
   -- ── Edit ────────────────────────────────────────────────────────────────

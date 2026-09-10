@@ -47,7 +47,7 @@ c, lua, markdown, markdown_inline, query, vim, vimdoc
 BUT 0.12 adds native |v_an| |v_in| |v_]n| |v_[n| |v_]N| |v_[N| incremental selection
 + vim.treesitter.select() => may displace part of nvim-treesitter-textobjects.
 
-### netrw — OFFICIALLY DEPRECATED, docs REMOVED in 0.12
+### netrw — deprecated. (The "docs removed" claim here was WRONG: see the corrected analysis below.)
 - $VIMRUNTIME/plugin/netrwPlugin.vim still ships (still works)
 - **$VIMRUNTIME/doc/pi_netrw.txt is GONE** in 0.12.5 (no such file)
 - news-0.10.txt:407 literally says "To continue using netrw (deprecated):"

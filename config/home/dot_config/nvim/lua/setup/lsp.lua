@@ -12,7 +12,9 @@
 --     uv tool install ruff
 --     uv tool install basedpyright
 --     brew install lua-language-server
---     RBENV_VERSION=3.3.9 gem install ruby-lsp
+--     RBENV_VERSION=3.x gem install ruby-lsp   # any Ruby >= 3 rbenv manages
+
+local M = {}
 
 local function have(exe) return vim.fn.executable(exe) == 1 end
 
@@ -71,7 +73,22 @@ vim.lsp.config("ruff", {})
 --
 -- Ruby 3 projects take the first branch and need nothing special. After the
 -- migration the legacy branch is simply dead code.
-local RUBY_LSP_MODERN = vim.fn.expand("~/.rbenv/versions/3.3.9/bin/ruby-lsp")
+
+-- The newest Ruby >= 3 under rbenv that has ruby-lsp installed. Nothing is
+-- pinned: install a newer Ruby, `gem install ruby-lsp` into it, and it is used.
+-- Strict parsing so "jruby-9.x" is skipped rather than misread.
+function M.modern_ruby_lsp()
+  local best, best_v
+  for _, path in ipairs(vim.fn.glob("~/.rbenv/versions/*/bin/ruby-lsp", true, true)) do
+    local v = vim.version.parse(path:match("/versions/([^/]+)/") or "", { strict = true })
+    if v and v.major >= 3 and (not best_v or vim.version.gt(v, best_v)) then
+      best, best_v = path, v
+    end
+  end
+  return best
+end
+
+local RUBY_LSP_MODERN = M.modern_ruby_lsp()
 local RUBY_LSP_BUNDLE = vim.fn.stdpath("config") .. "/ruby-lsp/Gemfile"
 
 local function project_ruby_major(root)
@@ -99,7 +116,7 @@ vim.lsp.config("ruby_lsp", {
     local env = nil
     local exe = "ruby-lsp" -- the rbenv shim: right for Ruby 3.x projects
 
-    if vim.uv.fs_stat(RUBY_LSP_MODERN) then
+    if RUBY_LSP_MODERN then
       if major and major < 3 then
         -- Legacy project: run a modern server against it, and skip bundle
         -- composition, which bundler refuses when the Gemfile pins Ruby < 3.
@@ -150,7 +167,7 @@ end
 if have("ruff") then table.insert(servers, "ruff") end
 if have("lua-language-server") then table.insert(servers, "lua_ls") end
 -- The rbenv shim always exists, so test a real interpreter instead.
-if have("ruby-lsp") or vim.uv.fs_stat(RUBY_LSP_MODERN) then table.insert(servers, "ruby_lsp") end
+if have("ruby-lsp") or RUBY_LSP_MODERN then table.insert(servers, "ruby_lsp") end
 
 if #servers > 0 then
   vim.lsp.enable(servers)
@@ -192,7 +209,9 @@ vim.api.nvim_create_autocmd("LspAttach", {
     -- block or a region comment is one thing, which treesitter cannot see.
     -- Treesitter stays the default everywhere else (set in options.lua).
     if client:supports_method("textDocument/foldingRange") then
-      vim.wo[vim.api.nvim_get_current_win()][0].foldexpr = "v:lua.vim.lsp.foldexpr()"
+      for _, win in ipairs(vim.fn.win_findbuf(args.buf)) do
+        vim.wo[win][0].foldexpr = "v:lua.vim.lsp.foldexpr()"
+      end
     end
 
     -- Highlight other uses of the symbol under the cursor. The autocommands
@@ -209,3 +228,5 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end
   end,
 })
+
+return M

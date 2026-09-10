@@ -1,5 +1,9 @@
 # Language server decisions — Python (main) + Ruby (work) + Lua
 nvim 0.12.5. Criteria: low churn, MIT-ish, reproducible for years, minimal plugins.
+Status: investigation notes, in the order the work happened. Both items under "BROKEN
+RIGHT NOW" were fixed by the rebuild, and later sections supersede earlier ones (the
+shim-only advice gives way to the Ruby 2.7 resolution). The config no longer pins 3.3.9:
+it uses the newest rbenv Ruby >= 3 that has ruby-lsp installed.
 
 ## TWO THINGS ARE BROKEN RIGHT NOW  [both verified on this machine]
 
