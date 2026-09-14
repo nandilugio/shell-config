@@ -106,21 +106,29 @@ ow  wiki index         od  diary today        oD  diary index
 
 ## Completion
 
-Neovim's own. The menu appears when you pause, with nothing selected, so
-typing straight past it and pressing Enter still gives a newline.
+Neovim's own, and it never appears on its own — you ask for it. Nothing is
+selected when the menu opens, so Enter still gives a newline until you pick.
 
-<C-n>,<C-p>     next, previous — <C-n> also opens the menu at once
+<C-n>,<C-p>     open the menu, then next, previous
 <C-y>           accept; also expands the snippet and adds the import
 Enter           accept, but only once something is selected
-<C-e>           dismiss, keeping what you typed
+<C-e>, <Esc>    dismiss, keeping what you typed — Esc again leaves insert
 <C-x><C-o>      language server only            <C-x><C-f>  file paths
 <Tab>,<S-Tab>   next, previous snippet placeholder
 
+<C-Space> is mapped too, as in VS Code and Zed, but many terminals swallow it.
 
-## Command line — the same keys as completion
 
-<C-n>,<C-p>     next, previous match (Tab too)  <C-y> accept    <C-e> dismiss
-<Up>,<Down>     history, not the menu
+## Command line — the same idea, on <Tab>
+
+Tab             open the menu, then next match  <S-Tab>  previous
+<C-n>,<C-p>     with the menu open, next and previous — as in insert mode;
+                with it closed, newer and older commands from history
+<C-y>           accept the match and keep editing — for building up arguments
+Enter           accept and run
+<C-e>           dismiss the menu
+<Down>,<Up>     with the menu open, descend into and leave a directory;
+                with it closed, command history — never the menu
 <C-r><C-w>      insert the word under the cursor   <C-r>{reg}  a register
 <C-f>           edit the command line as a buffer  q:  history as a buffer
 

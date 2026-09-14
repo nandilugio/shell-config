@@ -94,9 +94,10 @@ thing:
 **No plugin manager.** `vim.pack` is built in and writes a committed lockfile.
 It has no lazy-loading, which at this size costs nothing you can feel.
 
-**No completion plugin.** `'autocomplete'` and `'completeopt'` plus
-`vim.lsp.completion` give autotrigger, fuzzy matching, snippets and
-auto-imports. `<C-y>` accepts, as it has since Vim.
+**No completion plugin.** `'completeopt'` plus `vim.lsp.completion` give
+fuzzy matching, snippets and auto-imports. The menu is asked for rather than
+volunteered — `<C-Space>` as in VS Code and Zed, or Vim's own `<C-n>` — and
+`<C-y>` accepts, as it has since Vim.
 
 **No `mason`.** It installs a second, untracked, editor-only copy of tools the
 system already manages, and Shopify warns against using it for `ruby-lsp` at

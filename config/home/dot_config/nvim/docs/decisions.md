@@ -53,12 +53,45 @@ lazy.nvim's declarative spec makes that clumsier. Portability requirement ARGUES
 Sequence: cull to 8 first, measure startup (now ~55ms w/ lazy-loading; clean nvim ~6ms), then migrate.
 
 ### Completion: BUILT-IN, drop blink.cmp
-set autocomplete + completeopt=menu,menuone,popup,noselect,fuzzy + vim.lsp.completion.enable()
-(every flag spelled out: trimming to popup,fuzzy on the docs' word made the first
-candidate insert itself while typing — see options.lua)
-=> autotrigger, LSP, snippets, auto-imports, fuzzy matching, accept with <C-y>
+completeopt=menu,menuone,popup,noselect,fuzzy + vim.lsp.completion.enable()
+=> LSP, snippets, auto-imports, fuzzy matching, accept with <C-y>
 (<C-y> is the same key blink's `default` preset uses => ZERO retraining)
 Drops the churniest dependency (197 commits/yr, 15k LOC) + the LuaSnip dep.
+
+REVISED 2026-09-14, after a few days of use: MANUAL, not automatic.
+'autocomplete' is off. Tried it on with autocompletedelay=500; a menu that
+appears while you are still thinking interrupts more than it helps.
+- Off is the DEFAULT in both editors. The option originated in **Vim**
+  (patch 9.1.1590, 2025-07-25, Girish Palya); nvim ported it. Neither enables it.
+  vim.lsp.completion.enable() likewise defaults autotrigger=false.
+- Costs nothing: autotrigger only adds an InsertCharPre autocmd
+  ($VIMRUNTIME/lua/vim/lsp/completion.lua:1175). Omnifunc, <C-y> side effects,
+  snippets and auto-imports are all outside that branch.
+- Also removes a documented wart: with 'autocomplete' ON, :h ins-autocompletion
+  says you must press <C-e> before i_CTRL-N behaves.
+- The completeopt flags become fully live again. The docs' claim that only
+  fuzzy/longest/popup/preinsert/preview matter is scoped to autocomplete=ON —
+  that sentence is what misled an earlier trim to "popup,fuzzy" and broke typing.
+TRIGGER KEY: <C-Space>, mapped to <C-n>. Verified as the cross-editor standard
+(VS Code, Zed, RubyMine, Sublime, blink.cmp, nvim-cmp, kickstart/LazyVim/
+AstroNvim/NvChad). Helix is the outlier at <C-x>. The NUL-collision folklore was
+TESTED, not assumed: raw 0x00 fires the <C-Space> mapping (not <Nul>) under
+xterm-256color and screen-256color, and through tmux 3.5a. Caveats: real Vim
+still needs <C-@>, Windows terminals have open bugs, macOS may claim it for
+input-source switching. <C-n>/<C-x><C-o> stay as the unambiguous fallbacks.
+NOT copied from the "manual-only gurus" folklore — checked, and ThePrimeagen,
+TJ DeVries and folke all leave autocompletion ON. This is a personal preference,
+landing on the editors' own default.
+
+### Command line: MANUAL too (revised 2026-09-14)
+Was: wildtrigger() on CmdlineChanged + wildmode=noselect:lastused,full, i.e. the
+menu appeared as you typed (the recipe from :h cmdline-autocompletion).
+Now: no autocmd; <Tab> opens the menu, which is Vim's default AND every shell's.
+wildmode=full:lastused — "noselect" was there so <CR> would not accept a
+preselected match while the menu auto-showed; with <Tab> as the trigger it would
+just cost a second <Tab> to pick the first match. wildoptions keeps pum+fuzzy.
+Separate mechanism from insert mode: :h completeopt says it does not apply to
+cmdline-completion; 'wildoptions'/'wildmode' govern it.
 
 ### Statusline: BUILT-IN. Colorscheme: BUILT-IN default (user likes the grey/green they have).
 0.12 default statusline already shows filename, modified/RO, LSP progress, ◐ busy indicator,

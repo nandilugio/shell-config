@@ -46,31 +46,47 @@ vim.o.splitbelow = true
 
 -- Completion: Neovim 0.12 does this natively, so no completion plugin.
 --
--- Sources come from 'complete', in order. "o" is the one that matters: it means
--- 'omnifunc', which the LSP client sets on attach, so the menu reaches the
--- language server. Without it you get buffer words and nothing else.
+-- Asked for, never volunteered. 'autocomplete' would show the menu on a pause,
+-- but a menu that appears while you are still thinking interrupts more than it
+-- helps. Off is also the default in both Vim and Neovim — the option arrived in
+-- Vim 9.1.1590 and Neovim ported it, and neither turns it on.
 --
--- The menu waits for a pause rather than following every keystroke, which is
--- what 'autocompletedelay' is for — set above typing speed so it appears when
--- you stop to think, not mid-word. <C-n> summons it sooner, and <C-x><C-o>
--- asks the language server alone.
+-- The trigger is Vim's own: <C-n> and <C-p> walk the sources in 'complete',
+-- and <C-x><C-o> asks the language server alone. They need no mapping and
+-- work in any vi you sit down at.
 --
--- Spell every flag out. The docs say 'autocomplete' implies "noselect" and
--- that "menu"/"menuone" no longer matter, but in practice leaving them out
--- gets the first candidate completing itself as you type and reinserting
--- after a backspace. Written in full it behaves: the menu appears, nothing is
--- selected, and what you typed is left alone until you choose with <C-n>.
--- (fuzzy and preinsert are mutually exclusive; fuzzy wins here.)
-vim.o.autocomplete = true
-vim.o.autocompletedelay = 500
+-- Turning autotrigger off costs nothing else: vim.lsp.completion.enable() only
+-- skips an InsertCharPre autocommand, so the language server, its snippets and
+-- its auto-imports all still arrive through the keys above.
+--
+-- Sources come from 'complete', in order. "o" means 'omnifunc', which the LSP
+-- client sets on attach — without it the menu never reaches the language
+-- server. "noselect" opens the menu with nothing highlighted, so the first
+-- candidate is never inserted on your behalf.
+vim.o.autocomplete = false
 vim.o.complete = ".,w,b,u,o"
 vim.o.completeopt = "menu,menuone,popup,noselect,fuzzy"
 
+-- <C-Space> is the cross-editor key, but many terminals never send it: it is
+-- the NUL byte, and emacs-style readline, some tmux configurations and macOS
+-- input-source switching all eat it before Neovim sees it. <C-n> is the one
+-- that always arrives, so nothing depends on this working.
+vim.keymap.set("i", "<C-Space>", "<C-n>", { desc = "Completion menu" })
+
+-- Esc with the menu open keeps whatever is selected, which turns a glance at
+-- the list into an edit you did not ask for. Make it dismiss instead: <C-e>
+-- restores what you actually typed, and a second Esc leaves insert mode.
+-- With nothing selected the menu is only a suggestion, so Esc goes straight
+-- out and insert mode ends in one press, as it always has.
+vim.keymap.set("i", "<Esc>", function()
+  return vim.fn.complete_info({ "selected" }).selected ~= -1 and "<C-e>" or "<Esc>"
+end, { expr = true, desc = "Dismiss completion, else leave insert mode" })
+
 -- <CR> accepts only once something is actually selected. The menu opens with
--- nothing highlighted, so typing straight through it and pressing Enter still
--- gives a newline: the popup never changes what ordinary typing does. Press
--- <C-n> first and Enter accepts, which is the state where you are choosing
--- from the list rather than writing.
+-- nothing highlighted, so pressing Enter with it open still gives a newline:
+-- the popup never changes what ordinary typing does. Move to a candidate with
+-- <C-n> and Enter accepts, which is the state where you are choosing from the
+-- list rather than writing.
 --
 -- Every other editor accepts on Enter, so this keeps the habit portable.
 -- <C-y> accepts regardless, and <C-e> dismisses without accepting.
@@ -83,20 +99,16 @@ vim.o.foldmethod = "expr"
 vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.o.foldlevel = 99
 
--- Command-line completion, arranged to match insert mode: the menu appears as
--- you type, <C-n>/<C-p> move through it, <C-y> accepts and <C-e> dismisses.
--- Those last three are already built in here — only the auto-showing needs
--- setting up, which is what wildtrigger() is for. See :h cmdline-autocompletion.
+-- Command-line completion, on the same terms as insert mode: asked for, not
+-- volunteered. <Tab> is the trigger, which is both Vim's default and what
+-- every shell does, so the habit is already yours. A popup menu rather than a
+-- single line of matches, and fuzzy, so :e cfg finds config.
 --
--- "noselect" keeps <CR> executing the command rather than accepting whatever
--- happens to be highlighted. "tagfile" is part of the default and kept.
-vim.o.wildmode = "noselect:lastused,full"
+-- "lastused" sorts buffer names by recency. "tagfile" is part of the default
+-- and kept. <C-n>/<C-p> walk the menu once it is open, <C-y> accepts and
+-- <C-e> dismisses — the same keys as insert mode.
+vim.o.wildmode = "full:lastused"
 vim.o.wildoptions = "pum,fuzzy,tagfile"
-
-vim.api.nvim_create_autocmd("CmdlineChanged", {
-  pattern = { ":", "/", "?" },
-  callback = function() vim.fn.wildtrigger() end,
-})
 
 -- With the menu open <Up>/<Down> would walk it; keep them on history instead
 -- and leave the menu to <C-n>/<C-p> and <Tab>.
