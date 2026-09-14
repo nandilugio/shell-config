@@ -1,0 +1,83 @@
+macos-option-as-alt = true
+
+# Attach every new surface to the 'main' tmux session, creating it if needed.
+# The PATH prefix is needed because tmux is Homebrew-only and not on the
+# default PATH. Mirrors the previous iTerm launch command.
+command = /bin/sh -c 'PATH=/opt/homebrew/bin:$PATH ~/bin/n.tmux-new-terminal-window'
+
+# Tmux keeps sessions alive, so the close prompt guards nothing
+confirm-close-surface = false
+
+#### Appearance ####
+
+# Matches the previous iTerm setup (iTerm named it FiraMonoNFM-Regular 13).
+# FiraMono ships no italic face, so Ghostty synthesizes one by slanting the
+# regular face; this is on by default via font-synthetic-style.
+font-family = FiraMono Nerd Font Mono
+font-size = 13
+
+# FiraMono has no italic face and synthesis isn't kicking in, so borrow one
+# from Meslo (a Menlo derivative; metrics are close enough to mix)
+font-family-italic = MesloLGS Nerd Font Mono
+font-family-bold-italic = MesloLGS Nerd Font Mono
+
+theme = Builtin Tango Dark
+
+# Match the scroll speed of a notched wheel to the trackpad. macOS momentum
+# on the precision path can't be disabled from config.
+mouse-scroll-multiplier = precision:1,discrete:1
+
+#### Remove ghostty defaults that shadow tmux bindings ####
+
+# Default: ESC b / ESC f, the readline word-backward/word-forward sequences
+# Shadows: Tmux switching to left / right panes
+keybind = alt+left=unbind
+keybind = alt+right=unbind
+
+# Default: Ghostty splits we don't use in favor of tmux
+# Collision: Tmux multiplexing
+keybind = super+d=unbind
+keybind = super+shift+d=unbind
+keybind = super+t=unbind
+#keybind = super+w=unbind
+#keybind = super+n=unbind
+
+# Default: Zooms a Ghostty split
+# Collision: Tmux zoom (prefix z)
+keybind = super+shift+enter=unbind
+
+# Default: Switches Ghostty tabs
+# Shadows: A real terminal keystroke tmux and TUIs may want
+keybind = ctrl+tab=unbind
+keybind = ctrl+shift+tab=unbind
+
+# Default: Clears Ghostty's screen
+# Collision: Tmux panel clearing
+keybind = super+k=unbind
+
+# Default: Searches Ghostty's scrollback
+# Collision: Tmux copy mode search
+keybind = super+f=unbind
+keybind = super+e=unbind
+keybind = super+shift+f=unbind
+keybind = super+g=unbind
+keybind = super+shift+g=unbind
+
+# Default: Scrolls Ghostty's scrollback
+# Collision: Tmux copy mode scrolling
+keybind = super+home=unbind
+keybind = super+end=unbind
+keybind = super+page_up=unbind
+keybind = super+page_down=unbind
+keybind = super+j=unbind
+
+# Default: Selects Ghostty's whole screen
+# Collision: Tmux copy mode selection
+keybind = super+a=unbind
+
+# Default: Jumps between shell prompts via OSC 133
+# Collision: Tmux owns the pane, so these act on Ghostty's view of it
+keybind = super+arrow_up=unbind
+keybind = super+arrow_down=unbind
+keybind = super+shift+arrow_up=unbind
+keybind = super+shift+arrow_down=unbind
