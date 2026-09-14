@@ -154,6 +154,7 @@ gg,G  {n}G      file start, end, line n         H,M,L  screen top, mid, bottom
 <C-d>,<C-u>     half page      <C-f>,<C-b>  full page      zz,zt,zb  cursor to
 
 d c y  > < =    delete, change, yank; indent, dedent, reindent
+                what you yank flashes, so you can see what it took
 gu gU g~        lower, upper, swap case         gq  format
 x s  p P        delete, substitute a char; put after, before
 v V <C-v>       visual char, line, block        gv  reselect

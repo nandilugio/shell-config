@@ -1,4 +1,6 @@
--- Editor behaviour. No plugins, no keymaps.
+-- Editor behaviour: options, and the few mappings and autocommands that are
+-- part of an option rather than part of the keymap scheme. Nothing here needs
+-- a plugin. Every binding you would go looking for is in keymaps.lua.
 
 -- Leaders must be set before any mapping is defined: Vim captures the value at
 -- definition time, so changing them later would not affect existing maps.
@@ -39,6 +41,14 @@ vim.o.breakindent = true
 vim.o.showmode = false -- the statusline has a mode block
 vim.o.list = true
 vim.opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
+
+-- Flash what was just yanked. Yanking is the one edit that leaves no trace in
+-- the buffer, so without this there is nothing to confirm that `yap` took the
+-- paragraph you meant. Built in; the defaults are IncSearch for 150ms.
+vim.api.nvim_create_autocmd("TextYankPost", {
+  desc = "Highlight yanked text",
+  callback = function() vim.hl.on_yank() end,
+})
 
 -- Splits open where the eye expects them
 vim.o.splitright = true
