@@ -1,7 +1,23 @@
 #!/bin/bash
 
-#~/bin/n.tmux-kill-detached
-#tmux
+# Terminal launch command for iTerm and Ghostty (see their configs).
+#
+# Attaches to the session used most recently rather than a fixed name, so a new
+# window resumes wherever the last one left off. Only when the server has no
+# sessions at all (or isn't running) is a new one created.
+#
+# Session names may contain spaces and may start with a character tmux reads as
+# a target sigil (`%` pane, `$` session), so the name is split off on a tab and
+# passed as `=name`, which forces an exact match instead.
+#
+# No `set -e`: if attaching fails the terminal must still end up with a shell
+# rather than a window that closes instantly.
 
-tmux new-session -A -s main
+last=$(tmux list-sessions -F '#{session_last_attached}	#{session_name}' 2>/dev/null \
+  | sort -rn | head -1 | cut -f2-)
 
+if [ -n "$last" ]; then
+  exec tmux attach-session -t "=$last"
+fi
+
+exec tmux new-session
