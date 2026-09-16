@@ -7,15 +7,18 @@
 --
 -- Detection is tested through scan() and cells(), where "how many tables" and
 -- "how many cells" are the natural questions. Everything else goes through the
--- public surface: align() on a scratch buffer, and render as it lands on
--- screen, because the screen is the only place buffer text and virtual text
--- are combined — a wrong width shows up there as a crooked pipe, not an error.
+-- public surface: align() on a scratch buffer, and the padding as it lands on
+-- screen, because the screen is the only place buffer text and virtual text are
+-- combined — a wrong width shows up there as a crooked pipe, not an error.
+--
+-- The padding is drawn per frame and never stored, so there are no extmarks to
+-- count between redraws: "is it rendered" is answered by looking at the screen,
+-- which is also the only honest question to ask of a decoration provider.
 
 vim.opt.rtp:prepend(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h:h"))
 
 local md = require("mdtable")
 local scan, cells = md._internal.scan, md._internal.cells
-local ns = vim.api.nvim_get_namespaces().mdtable
 
 -- One buffer line must stay one screen line, or a wide table wraps and the rows
 -- below it are no longer where the checks expect them.
@@ -52,6 +55,8 @@ local function tables(src)
   return #scan(lines(src))
 end
 
+local TABLE_SRC = "| a | b |\n|---|---|\n| longer | x |"
+
 -- A scratch buffer holding `src`, made current, with its filetype set last so
 -- the FileType autocmd sees a buffer that already has its lines.
 local function buffer(src, filetype)
@@ -62,15 +67,38 @@ local function buffer(src, filetype)
   return buf
 end
 
-local function marks(buf)
-  return #vim.api.nvim_buf_get_extmarks(buf, ns, 0, -1, {})
+-- What a buffer's rows look like once drawn: its text with the padding marks
+-- inserted where they sit.
+--
+-- Read from the extmarks rather than off the screen with screenstring(), which
+-- needs an attached UI that `nvim -l` does not have. Same marks the terminal
+-- draws, one step short of the pixels.
+local function drawn(buf)
+  local ns = vim.api.nvim_get_namespaces().mdtable
+  local out = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+
+  local by_line = {}
+  for _, m in ipairs(vim.api.nvim_buf_get_extmarks(buf, ns, 0, -1, { details = true })) do
+    local row, col, det = m[2] + 1, m[3], m[4]
+    by_line[row] = by_line[row] or {}
+    table.insert(by_line[row], { col, det.virt_text[1][1] })
+  end
+
+  for row, marks in pairs(by_line) do
+    -- Back to front, so the earlier byte offsets stay valid.
+    table.sort(marks, function(a, b) return a[1] > b[1] end)
+    for _, m in ipairs(marks) do
+      out[row] = out[row]:sub(1, m[1]) .. m[2] .. out[row]:sub(m[1] + 1)
+    end
+  end
+  return out
 end
 
--- Screen columns of the pipes in a rendered line. Two rows are aligned when
--- these agree; comparing widths alone would miss one cell padded too much and
--- another too little cancelling out. Measured from the display width of the
--- prefix rather than by stepping characters, because a combining accent or a
--- joined emoji is several bytes that render as one or two columns.
+-- Screen columns of the pipes in a drawn line. Two rows are aligned when these
+-- agree; comparing widths alone would miss one cell padded too much and another
+-- too little cancelling out. Measured from the display width of the prefix
+-- rather than by stepping characters, because a combining accent or a joined
+-- emoji is several bytes that render as one or two columns.
 local function pipes(s)
   local at = {}
   for i = 1, #s do
@@ -79,17 +107,11 @@ local function pipes(s)
   return table.concat(at, ",")
 end
 
--- True when every row of `buf`, as drawn, has its pipes where the first row
--- does. Switches to the buffer only if it is not already current, so a test
--- that has just waited for the timer is not rescued by BufEnter.
+-- True when every row of `buf`, as drawn, has its pipes where the first does.
 local function screen_aligned(buf)
-  if vim.api.nvim_get_current_buf() ~= buf then vim.api.nvim_set_current_buf(buf) end
-  vim.cmd("redraw")
   local first
-  for row = 1, vim.api.nvim_buf_line_count(buf) do
-    local s = {}
-    for col = 1, vim.o.columns do s[#s + 1] = vim.fn.screenstring(row, col) end
-    local p = pipes((table.concat(s):gsub("%s+$", "")))
+  for _, line in ipairs(drawn(buf)) do
+    local p = pipes(line)
     first = first or p
     if p ~= first then return false end
   end
@@ -98,6 +120,12 @@ end
 
 local function renders_aligned(src)
   return screen_aligned(buffer(src))
+end
+
+-- True when the buffer is drawn exactly as it is stored: no padding anywhere.
+local function drawn_bare(buf)
+  return table.concat(drawn(buf), "\n")
+    == table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
 end
 
 -- The buffer text after align() with the cursor on the first line.
@@ -263,6 +291,45 @@ check("an unclosed fence swallows the rest", tables([[
 |---|---|
 ]]), 0)
 
+-- CommonMark 4.5: a closing fence carries nothing but its marker, so a fence
+-- with an info string opens a block and never closes one. Getting this wrong
+-- inverts the fence state and stops every table below from rendering.
+check("a fence with an info string does not close a block", tables([[
+```
+```lua
+| a | b |
+|---|---|
+| 1 | 2 |
+```
+]]), 0)
+
+check("a closing fence may be followed by blanks", tables([[
+```
+| a | b |
+```
+
+| c | d |
+|---|---|
+| 1 | 2 |
+]]), 1)
+
+-- Also 4.5: a backtick fence's info string may not contain a backtick, so this
+-- line is not a fence and the table below it is real.
+check("backticks after the run are not a fence", tables([[
+``` ``
+| a | b |
+|---|---|
+| 1 | 2 |
+]]), 1)
+
+check("a tilde fence may carry backticks", tables([[
+~~~ ``
+| a | b |
+|---|---|
+| 1 | 2 |
+~~~
+]]), 0)
+
 -- ── Splitting cells ─────────────────────────────────────────────────────────
 
 check("the outer pipes are not columns", #cells("| a | b | c |"), 3)
@@ -423,8 +490,8 @@ check("render leaves an already padded table alone", (function()
 | ------ | --- |
 | longer | x   |
 ]])
-  return marks(buf)
-end)(), 0)
+  return drawn_bare(buf)
+end)(), true)
 
 -- Padding can only add columns, so whitespace the author already wrote counts
 -- towards what a cell needs, wherever it is. None of these may assume the
@@ -502,6 +569,12 @@ check("a tab in an indented table", renders_aligned("  | asdf | wer |\n  |---|--
 -- they are.
 check("a tab in a cell after a padded cell", renders_aligned("| aaaaaaaaaa | bbbb |\n|---|---|\n| x |\ty |"), true)
 
+-- Right and centre alignment put padding BEFORE the text, which moves a tab
+-- inside it and changes its width. The content measure normalises tabs for
+-- exactly this reason.
+check("a tab in a right-aligned cell", renders_aligned("| aaaaaaaaaa | b |\n|----------:|---|\n| x\ty | z |"), true)
+check("a tab in a centred cell", renders_aligned("| aaaaaaaaaa | b |\n|:--------:|---|\n| x\ty | z |"), true)
+
 -- With 'list' on, a tab is drawn as listchars says, and strdisplaywidth()
 -- follows the same window option.
 check("a tab with 'list' on", (function()
@@ -574,6 +647,32 @@ check("no trailing pipe", renders_aligned([[
 
 check("a very long cell", renders_aligned("| a | b |\n|---|---|\n| " .. ("x"):rep(200) .. " | y |"), true)
 
+-- A cell wider than the window. Widths must not depend on how much of the line
+-- fits on screen: strdisplaywidth() counts the extra rows a wrapped line takes,
+-- which made a long cell measure wider than it is, so its column was padded to
+-- a width no other row reached.
+check("a cell wider than the window", (function()
+  local columns = vim.o.columns
+  vim.o.columns = 80
+  local ok = renders_aligned(
+    "| a | b |\n|---|---|\n| " .. ("x"):rep(150) .. " | y |\n| short | z |"
+  )
+  vim.o.columns = columns
+  return ok
+end)(), true)
+
+-- Same, through the rewrite: both halves share width(), so both were wrong.
+check("align is unaffected by the window width", (function()
+  local src = "| a | b |\n|---|---|\n| " .. ("x"):rep(150) .. " | y |"
+  local columns = vim.o.columns
+  vim.o.columns = 80
+  local narrow = aligned(src)
+  vim.o.columns = 400
+  local wide = aligned(src)
+  vim.o.columns = columns
+  return narrow == wide
+end)(), true)
+
 -- Blockquotes are container blocks, so a table inside one is still a table.
 
 check("a table in a blockquote is found", tables([[
@@ -608,73 +707,196 @@ check("align keeps the blockquote marker", aligned([[
 > | longer | 2   |
 ]]))
 
+-- Each row keeps its own prefix. Rewriting one row's ">" markers onto another
+-- would change the text, not just its padding.
+check("align keeps each row's own prefix", aligned([[
+> | a | b |
+>> |---|---|
+> | longer | 2 |
+]]), text([[
+> | a      | b   |
+>> | ------ | --- |
+> | longer | 2   |
+]]))
+
+-- Bound globally, so in a read-only buffer with no table it must say nothing.
+check("align is silent in a read-only buffer with no table", (function()
+  local buf = buffer("Just prose.\nNo table here.")
+  vim.bo[buf].modifiable = false
+  local said = {}
+  local notify = vim.notify
+  vim.notify = function(msg) said[#said + 1] = msg end
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+  md.align()
+  vim.notify = notify
+  return said
+end)(), {})
+
+check("align warns on a table it cannot write", (function()
+  local buf = buffer(TABLE_SRC)
+  vim.bo[buf].modifiable = false
+  local said = {}
+  local notify = vim.notify
+  vim.notify = function(msg) said[#said + 1] = msg end
+  vim.api.nvim_win_set_cursor(0, { 1, 0 })
+  md.align()
+  vim.notify = notify
+  return #said
+end)(), 1)
+
 -- ── Wiring ──────────────────────────────────────────────────────────────────
 
-check("markdown renders on open", (function()
-  local buf = buffer("| a | b |\n|---|---|\n| longer | x |")
-  return vim.b[buf].mdtable_on == true and marks(buf) > 0
+local TABLE = "| a | b |\n|---|---|\n| longer | x |"
+
+check("markdown is padded on open", (function()
+  local buf = buffer(TABLE)
+  return vim.b[buf].mdtable_on == true and screen_aligned(buf)
 end)(), true)
 
 check("other filetypes are left alone", (function()
-  local buf = buffer("| a | b |\n|---|---|\n| longer | x |", "lua")
-  return vim.b[buf].mdtable_on == nil and marks(buf) == 0
+  local buf = buffer(TABLE, "lua")
+  return vim.b[buf].mdtable_on == nil and drawn_bare(buf)
 end)(), true)
 
-check("toggle clears and restores", (function()
-  local buf = buffer("| a | b |\n|---|---|\n| longer | x |")
-  md.toggle(buf)
-  local off = marks(buf)
-  md.toggle(buf)
-  return off == 0 and marks(buf) > 0
-end)(), true)
-
-check("the file is never modified by rendering", (function()
-  local buf = buffer("| a | b |\n|---|---|\n| longer | x |")
+check("the buffer is never modified by drawing", (function()
+  local buf = buffer(TABLE)
+  drawn(buf)
   return vim.bo[buf].modified
 end)(), false)
 
--- Edits re-render once they settle, not once per change.
-check("edits re-render after a pause", (function()
-  local buf = buffer("| a | b |\n|---|---|\n| longer | x |")
-  for i = 1, 20 do
-    vim.api.nvim_buf_set_lines(buf, 2, 3, false, { "| " .. ("y"):rep(i) .. " | x |" })
-    vim.api.nvim_exec_autocmds("TextChanged", { buffer = buf })
-  end
-  vim.wait(400)
+-- Typing fires TextChanged, which re-pads.
+check("an edit is picked up", (function()
+  local buf = buffer(TABLE)
+  vim.api.nvim_buf_set_lines(buf, 2, 3, false, { "| a much longer value | x |" })
+  vim.api.nvim_exec_autocmds("TextChanged", { buffer = buf })
   return screen_aligned(buf)
 end)(), true)
 
--- TextChanged does not fire for a buffer that is not current, so an edit made
--- through the API while another buffer is showing must be caught up on entry.
-check("a buffer edited in the background is re-rendered on entry", (function()
-  local bg = buffer("| a | b |\n|---|---|\n| 1 | 2 |")
+-- A buffer edited while another is current gets no TextChanged, so it catches
+-- up when a window shows it.
+check("an edit from another buffer is picked up on entry", (function()
+  local bg = buffer(TABLE)
   buffer("elsewhere", "text")
-  vim.api.nvim_buf_set_lines(bg, 2, 3, false, { "| a much longer value | 2 |" })
+  vim.api.nvim_buf_set_lines(bg, 2, 3, false, { "| a much longer value | x |" })
+  vim.api.nvim_set_current_buf(bg)
+  vim.api.nvim_exec_autocmds("BufWinEnter", { buffer = bg })
   return screen_aligned(bg)
 end)(), true)
 
--- A deferred render runs with whatever buffer is current then; widths must
--- still follow the dirty buffer's own 'tabstop'.
-check("a deferred render uses the edited buffer's tabstop", (function()
-  local bg = buffer("| asdf | wer |\n|---|---|\n|\t1 | 2 |")
-  vim.bo[bg].tabstop = 4
+-- Widths follow 'tabstop', which is the buffer's own wherever it is drawn.
+-- Widths follow the measured buffer's 'tabstop', not whichever buffer happens
+-- to be current when the render runs.
+check("tabstop comes from the buffer being rendered", (function()
+  local buf = buffer("| a | b |\n|---|---|\n|\tx | y |")
+  vim.bo[buf].tabstop = 4
+  local narrow = drawn(buf)
+
   local other = buffer("elsewhere", "text")
-  vim.bo[other].tabstop = 8
-  vim.api.nvim_buf_set_lines(bg, 2, 3, false, { "|\t1 | 22 |" })
-  vim.api.nvim_exec_autocmds("TextChanged", { buffer = bg })
-  vim.wait(300)
-  -- Entering bg must not re-render (the deferred render recorded the tick),
-  -- so what is checked is what the timer drew.
-  return screen_aligned(bg)
+  vim.bo[other].tabstop = 16
+  vim.b[buf].mdtable_tick = nil
+  md._internal.render(buf)
+
+  return table.concat(drawn(buf), "\n") == table.concat(narrow, "\n")
 end)(), true)
 
-check("setup enables buffers that are already open", (function()
-  local buf = buffer("| a | b |\n|---|---|\n| longer | x |", "rmd")
-  local before = marks(buf)
+check("a change to tabstop is picked up", (function()
+  local buf = buffer("| asdf | wer |\n|---|---|\n|\t1 | 2 |")
+  vim.bo[buf].tabstop = 4
+  local at4 = screen_aligned(buf)
+  vim.bo[buf].tabstop = 8
+  return at4 and screen_aligned(buf)
+end)(), true)
+
+check("a change to list is picked up", (function()
+  local buf = buffer("| asdf | wer |\n|---|---|\n|\t1 | 2 |")
+  vim.wo.list = true
+  local listed = screen_aligned(buf)
+  vim.wo.list = false
+  return listed and screen_aligned(buf)
+end)(), true)
+
+-- ── Turning it off and on ───────────────────────────────────────────────────
+
+check("toggle clears and restores", (function()
+  local buf = buffer(TABLE)
+  md.toggle(buf)
+  local off = drawn_bare(buf)
+  md.toggle(buf)
+  return off and screen_aligned(buf)
+end)(), true)
+
+-- b:mdtable_on survives a reload, so re-detecting the filetype must not undo
+-- what the user asked for.
+check("re-detecting the filetype keeps a toggle off", (function()
+  local buf = buffer(TABLE)
+  md.disable(buf)
+  vim.bo[buf].filetype = "markdown"
+  return vim.b[buf].mdtable_on == false and drawn_bare(buf)
+end)(), true)
+
+check("re-detecting the filetype keeps a toggle on", (function()
+  local buf = buffer(TABLE, "text")
+  md.enable(buf)
+  vim.bo[buf].filetype = "text"
+  return vim.b[buf].mdtable_on == true and screen_aligned(buf)
+end)(), true)
+
+-- ...but a filetype the user never spoke for follows the filetype, in both
+-- directions.
+check("leaving the filetype list stops the padding", (function()
+  local buf = buffer(TABLE)
+  local on = screen_aligned(buf)
+  vim.bo[buf].filetype = "text"
+  return on and vim.b[buf].mdtable_on == nil and drawn_bare(buf)
+end)(), true)
+
+check("entering the filetype list starts it", (function()
+  local buf = buffer(TABLE, "text")
+  local off = drawn_bare(buf)
+  vim.bo[buf].filetype = "markdown"
+  return off and vim.b[buf].mdtable_on == true and screen_aligned(buf)
+end)(), true)
+
+check("setup chooses the filetypes", (function()
   md.setup({ filetypes = { "markdown", "rmd" } })
-  local after = marks(buf)
+  local opted = buffer(TABLE, "rmd")
+  local on = screen_aligned(opted)
   md.setup({ filetypes = { "markdown" } })
-  return before == 0 and after > 0
+  local plain = buffer(TABLE, "rmd")
+  return on and drawn_bare(plain)
+end)(), true)
+
+-- ── Insert mode ─────────────────────────────────────────────────────────────
+-- Padding shifts the columns under the cursor, so it must not be drawn while
+-- typing. It is a per-frame check on the mode rather than a pair of
+-- autocommands, which is what makes every way out of insert mode work,
+-- including <C-c>, for which Neovim fires no InsertLeave.
+--
+-- `nvim -l` has no main loop, so insert mode cannot be entered here: neither
+-- feedkeys() nor nvim_input() changes the mode. The gate is checked directly
+-- instead, with mode() stubbed — one step short of the keystroke.
+
+local function drawn_in_mode(buf, mode)
+  local real = vim.fn.mode
+  vim.fn.mode = function() return mode end
+  md._internal.render(buf)
+  local padded = not drawn_bare(buf)
+  vim.fn.mode = real
+  md._internal.render(buf)
+  return padded
+end
+
+check("no padding while typing", drawn_in_mode(buffer(TABLE), "i"), false)
+check("padding in normal mode", drawn_in_mode(buffer(TABLE), "n"), true)
+check("padding in visual mode", drawn_in_mode(buffer(TABLE), "v"), true)
+check("padding in replace mode", drawn_in_mode(buffer(TABLE), "R"), true)
+
+-- Only the buffer being typed in loses its padding; one shown elsewhere keeps
+-- it, which is why the check is "is this the current buffer".
+check("another buffer keeps its padding while one is in insert", (function()
+  local other = buffer(TABLE)
+  buffer(TABLE) -- now current
+  return drawn_in_mode(other, "i")
 end)(), true)
 
 -- ── Report ──────────────────────────────────────────────────────────────────

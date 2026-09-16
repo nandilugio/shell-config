@@ -37,12 +37,22 @@ Reading and writing are different problems, so there are two operations:
 | **render** | automatic | Pads the columns on screen with inline virtual text. The buffer is untouched, so it is safe on anything you are only reading. On by default for `markdown`. |
 | **align** | on demand | Pads the table under the cursor **in the buffer** — a real, undoable edit, for files you own. One undo step. |
 
-Both measure with the same code, so what render draws is exactly what align
-would write.
+Both measure with the same code, so **the pipes land in the same columns
+either way**. They differ in what they are allowed to do to get there:
 
-Render clears itself in insert mode and comes back when you leave: inline
-padding shifts the real columns, so the cursor would sit at a different screen
-column than the character under it while you type.
+- **render may only add.** Whatever you wrote stays where it is, so a cell
+  written `|   3 |` keeps those three spaces and gets the rest of its padding
+  around them. That is what makes it safe on a file it must not touch.
+- **align rewrites.** Each cell is rebuilt from its trimmed text, so the text
+  lands where the alignment says rather than wherever stray whitespace left it.
+
+So pressing `,t` on a table that already looks aligned can still shift text —
+to its canonical position. The columns do not move; what sits inside them does.
+That is `,t` doing its job: it is a formatter, and the display is not.
+
+Padding is not drawn in the buffer you are typing in: it shifts the real
+columns, so the cursor would sit at a different screen column than the
+character under it. It comes back however you leave insert mode.
 
 ## Install
 
@@ -68,8 +78,8 @@ require("mdtable").setup()
 { "<you>/mdtable.nvim", ft = "markdown", opts = {} }
 ```
 
-`setup()` also enables buffers that are already open, so lazy-loading on
-`ft = "markdown"` works: the buffer that triggered the load is rendered.
+Lazy-loading on `ft = "markdown"` works: the padding is drawn on the next
+redraw, so the buffer that triggered the load gets it with no catching up.
 
 ## Configuration
 
@@ -91,13 +101,18 @@ mdtable creates no keymaps. Bind what you use:
 
 | Command | Function | Does |
 |---|---|---|
-| `:MdTableToggle` | `require("mdtable").toggle(buf?)` | Turn rendering on or off for a buffer |
+| `:MdTableToggle` | `require("mdtable").toggle(buf?)` | Turn padding on or off for a buffer |
 | `:MdTableAlign` | `require("mdtable").align()` | Pad the table under the cursor in the buffer |
-| | `require("mdtable").enable(buf?)` | Turn rendering on |
-| | `require("mdtable").disable(buf?)` | Turn rendering off |
+| | `require("mdtable").enable(buf?)` | Turn padding on |
+| | `require("mdtable").disable(buf?)` | Turn padding off |
 
-`buf` defaults to the current buffer. `align()` does nothing outside a table,
-so it is safe to bind globally.
+`buf` defaults to the current buffer. `align()` does nothing outside a table —
+not even a warning — so it is safe to bind globally.
+
+Turning it on or off for a buffer sticks: re-reading the file, or anything else
+that re-runs filetype detection, leaves your choice alone. A buffer you have
+not chosen for follows its filetype in both directions, so `:set ft=text` stops
+the padding and `:set ft=markdown` starts it.
 
 ```lua
 vim.keymap.set("n", "<leader>um", function() require("mdtable").toggle() end, { desc = "Markdown table alignment" })
@@ -126,9 +141,13 @@ right-aligned cell — the text cannot reach its edge, but the pipes still meet.
 
 **Width is display width.** CJK, emoji, combining marks and joined emoji are
 measured as the cells they occupy. Tabs are measured where they sit, since a
-tab reaches the next multiple of `'tabstop'` from its own position. `align()`
-turns tabs into spaces, so that the alignment it writes survives being read
-back under any `'tabstop'`.
+tab reaches the next multiple of the buffer's `'tabstop'` from its own
+position. `align()` turns tabs into spaces, so the alignment it writes survives
+being read back under any `'tabstop'`.
+
+Width is the width of the *text*, not of the text in your window: a cell wider
+than the window still measures what it is. (`'vartabstop'` is not honoured —
+tabs are measured against `'tabstop'` alone.)
 
 **Escapes.** `\|` inside a cell is not a delimiter. `\\|` is an escaped
 backslash followed by a delimiter that still splits.
@@ -145,10 +164,10 @@ cells, long rows add a column, nothing is dropped.
 the indent or the `>` markers, so a table inside a list item or a quote stays
 inside it.
 
-**Nothing runs when nothing changed.** A render records the buffer's
-`changedtick`; re-entering a buffer or leaving insert mode without typing costs
-nothing. Prose is nearly free to scan — cost scales with table cells, at roughly
-2 µs each (about 12 ms for a 2000-row, 3-column table).
+**Nothing runs when nothing changed.** Padding is placed for the whole buffer
+and replaced when the text or `'tabstop'` changes; a re-render that would change
+nothing costs about 3 µs. A full render of a 2000-row table is about 8 ms, and
+prose is nearly free — the cost is in table cells, not lines.
 
 **Redraws are coalesced.** A render walks the whole buffer (~10 ms on a
 2000-row table), so normal-mode edits restart a 150 ms timer and only the last
@@ -191,9 +210,9 @@ machine with no compiler. What follows from that:
 - **One inline-padding layer at a time.** A plugin that also pads tables with
   virtual text (render-markdown.nvim, for one) will double the padding. Use one
   or the other.
-- **Inline padding shifts the cursor's screen column.** Render clears itself in
-  insert mode for that reason. If it gets in the way in normal mode,
-  `:MdTableToggle` turns it off for the buffer.
+- **Inline padding shifts the cursor's screen column.** It is not drawn in the
+  buffer you are typing in for that reason. If it gets in the way in normal
+  mode, `:MdTableToggle` turns it off for the buffer.
 
 ## Why not a markdown rendering plugin
 
@@ -210,6 +229,11 @@ nvim -l lua/mdtable/test.lua
 ```
 
 No framework. Exit code is 0 when all pass. Detection is tested through the
-scanner; everything else through the public functions on scratch buffers, with
-rendering checked on the actual screen — the only place buffer text and virtual
-text are combined.
+scanner, `align()` through the buffer it rewrites, and the padding by reading
+back the extmarks it places and applying them to the buffer's own text.
+
+Two things `nvim -l` cannot reach, so the tests stop one step short of them:
+`screenstring()` sees bare text, because marks are only drawn when a UI is
+attached, and insert mode cannot be entered without a main loop. Both are
+checked at the layer below — the marks themselves, and the gate that decides
+whether to place them.

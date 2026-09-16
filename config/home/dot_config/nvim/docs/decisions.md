@@ -207,6 +207,132 @@ nothing to change. setup({ filetypes = { "markdown" } }) restates the default on
 it is the one place in the config where the vimwiki exclusion is visible, and it pins the
 behaviour if the plugin is extracted and its default ever moves. 90 checks.
 
+### WIRING REBUILT 2026-09-16: decoration provider, not stored marks
+Two independent /code-review passes (different sessions, different models) each returned 8
+confirmed correctness bugs, 6 in common, 9 distinct. Six of the nine were the SAME bug:
+marks were stored, so every event that could stale them had to be enumerated — <C-c> fires
+no InsertLeave; a normal-mode edit then `i` within 150ms repainted while typing; :e revived
+a toggled-off buffer; a filetype leaving the list never disabled; 'tabstop'/'list' changes
+went unnoticed (real trigger: .editorconfig sets tab_width AFTER the ftplugin sets
+tabstop, so the first render is wrong); a split edited via API got neither TextChanged nor
+BufEnter. That enumeration is unbounded, which is the argument: the last two were found by
+the reviewers, not by use.
+Now nvim_set_decoration_provider places EPHEMERAL marks per frame, for visible lines only.
+Nothing is stored, so nothing can stale. Deleted: the debounce timer, the dirty set,
+BufEnter, InsertEnter, InsertLeave, the changedtick gate, nvim_buf_call, the would-be
+OptionSet handler, render() and clear(). Insert mode became one mode() check in the draw
+gate, which is why every exit works. Option changes are picked up on the next frame free.
+PERFORMANCE: 0.099ms per frame on a 2000-row table (50 visible), vs ~10ms per full render
+before — and the scan is cached on (changedtick, tabstop, vartabstop, list+listchars), so
+the cache key names everything it reads. 60 frames of scrolling = 3.9ms.
+Also fixed, same pass:
+  * CommonMark 4.5 both ways: a closing fence carries only its marker (```lua opens but
+    never closes — getting this wrong INVERTS the fence state and kills every table below),
+    and a backtick fence's info string may not contain a backtick (``` `` is not a fence).
+  * align() wrote row 1's prefix onto every row, changing >> to > — content, not padding.
+    Each row keeps its own now.
+  * align() warned about `modifiable` before looking for a table, so the global
+    <LocalLeader>t nagged in :help and in the cheatsheet float. Checked after.
+  * Tabs in right/centre cells: padding BEFORE the text moves the tab and changes its
+    width, so `after` is measured with `before` already applied rather than from the
+    cached occupied width.
+  * b:mdtable_on vs b:mdtable_ft: while they agree the filetype decides, once they differ
+    the user has, and re-detection leaves it alone. Replaces one-way enablement.
+TEST HARNESS LIMIT, stated in the README: `nvim -l` attaches no UI, so screenstring()
+sees bare text; and with no main loop, neither feedkeys() nor nvim_input() can enter
+insert mode. Both are checked one layer down — the padding as actual extmarks, and the
+draw gate with mode() stubbed. A pty would fix both; the sandbox here denies openpty.
+
+### REVERTED 2026-09-16: the decoration provider cannot do this
+The rebuild above shipped and drew NOTHING. An ephemeral mark cannot carry inline virtual
+text: nvim_buf_set_extmark sets MT_FLAG_DECOR_VIRT_TEXT_INLINE only on the stored path
+(src/nvim/api/extmark.c), and that flag is what makes the renderer reserve the columns.
+The ephemeral branch calls decor_range_add_virt and never sets it, so the mark is
+accepted, placed, and silently not drawn — 408 marks, blank screen. Providers suit
+overlays, eol text and highlights (which is what render-markdown and indent-blankline use
+them for); inserting columns is not available to them. Both reviewers proposed the
+provider and I endorsed it; none of us checked that it could do the one thing this does.
+Back to stored marks, keeping every correctness fix. The event list is now explicit about
+why each entry exists: TextChanged/InsertLeave (text), BufWinEnter/WinEnter/WinScrolled
+(edited while not current), OptionSet ('tabstop'), ModeChanged i*:* (<C-c> fires no
+InsertLeave). The debounce timer is gone: the tick check makes a no-op render ~3us, so
+there is nothing to debounce.
+LESSON, worth keeping: "marks placed" was treated as "marks drawn" for three rounds. The
+user's screenshots were the only real evidence and were right every time. Tests now read
+back actual extmarks rather than recomputing what padding should be, so this failure mode
+would now be a red suite rather than a green one.
+
+### WIDTH IS NOT strdisplaywidth() — found 2026-09-16 from a user report
+A table rendered ragged: rows 186/186/184/185 where all four should be 184. Cause:
+strdisplaywidth() is WINDOW-RELATIVE. Past 'columns' it counts the extra rows a wrapped
+line would occupy — the same 157-column cell measures 159 at columns=80, 158 at 120, 157
+at 200+. So in any window narrower than the widest cell, that column was sized too wide,
+the short row got too much padding and the widest row got none.
+Now: nvim_strwidth() (no window notion) plus tabs expanded by hand against 'tabstop',
+verified to match strdisplaywidth exactly on every tab-boundary case. Also faster: full
+render of a 2000-row table 10ms -> 7.6ms.
+This was the SECOND bug from the same function — the first was its tab-position argument.
+strdisplaywidth answers "how many cells would this take in this window", which is not
+"how wide is this text". Every synthetic test had passed because the harness sets
+columns=400, so nothing ever wrapped; there is now a narrow-window regression test.
+
+### REVIEW 2026-09-16 (correctness, consistency, portability, performance)
+  * width() read vim.bo.tabstop, i.e. the CURRENT buffer's, so a render or an align of a
+    buffer with a different 'tabstop' measured with the wrong one. 'tabstop' is now
+    threaded: scan(lines, ts) -> table_at(..., ts) -> width(s, at, ts), and kept on the
+    table for padding(). nvim_buf_call() in render() existed only to paper over this and
+    is gone.
+  * state_of() keyed the cache on 'list'/'listchars'; with nvim_strwidth those no longer
+    affect widths. Key is now (changedtick, tabstop) — everything it actually reads.
+  * content_width() went through width() only to pass no tabs; it calls nvim_strwidth.
+  * 'vartabstop' is NOT honoured (tabs measure against 'tabstop'). Documented, not faked.
+PORTABILITY: pure Lua and core API only — no filesystem, shell, paths or platform calls,
+so Linux/macOS/Windows are the same. Needs 0.10 for inline virtual text; everything else
+used is older. 112 checks, startup +0.18ms.
+
+### THE TWO HALVES AGREE ON COLUMNS, NOT ON TEXT POSITION (settled 2026-09-16)
+User noticed ,t moving text that already looked aligned: a cell written "|   3 |" shows
+with its three spaces kept and gets the rest of its padding after them, while ,t rewrites
+it to "| 3 " + padding. Pipes identical either way; the text sits differently.
+This is not a bug and cannot be made symmetric without a third mechanism. render may only
+ADD columns — it must not touch the file — so whatever whitespace the author wrote stays.
+align REWRITES, so it can put the text where the alignment says.
+Three ways to close the gap were considered:
+  1. leave align canonical, correct the claim   <- CHOSEN
+  2. make align additive too (keep the author's whitespace): true symmetry, but ,t stops
+     normalising, a file never converges, and two identical-looking tables differ in bytes
+  3. have render conceal the whitespace and repad: symmetric AND canonical, but needs
+     conceallevel >= 1, which is 0 in this config and would degrade invisibly elsewhere
+Rejected 3 for the setting dependency (1 and 2 work regardless), 2 because align earning
+its keep as a formatter is worth more than byte-identity with the display.
+WHAT WAS ACTUALLY WRONG was the documentation: "what render draws is what align writes"
+overstates it. The guarantee is "the pipes land in the same columns"; align additionally
+normalises what sits inside them. README and both function headers now say so — padding()
+is the half that may only add, build_row() the half that rewrites.
+NOTE: an already-canonical table round-trips byte-for-byte through ,t (torture test #3),
+so this only shows up where the author left stray whitespace.
+
+### SEPARATOR STYLE: "| --- |", not "|---|" (settled 2026-09-16, MEASURED)
+User asked whether the delimiter row should be contiguous — |----|----| reads as a rule,
+and it is what the DISPLAY draws (render can only add dashes, and most sources have no
+spaces there). Both forms are valid GFM; the delimiter row's spaces are ignored. So this
+was purely aesthetic, and the deciding question was whether other formatters agree.
+I had asserted "prettier and most formatters emit spaces" from memory. User rightly asked
+me to verify. Ran both, on "| a | b | c |" / "|---|:-:|--:|" / two data rows:
+  prettier 3 (JS)                    | a      |  b  |   c |
+                                     | ------ | :-: | --: |
+  mdformat 1.0 + mdformat-gfm (Py,   | a      |  b  |   c |
+    CommonMark, independent codebase)| ------ | :-: | --: |
+  mdtable                            BYTE-IDENTICAL to both
+Two formatters from different ecosystems produce exactly what build_row() already writes,
+colons at the cell edges included. Real consensus, so: KEEP. Files round-trip through
+prettier or mdformat with a zero diff, which beats the aesthetic. Switching would also
+mean w + 2 - #colons dashes instead of w - #colons, touching every alignment-marker case.
+(Process note: I installed prettier and mdformat to check. Both went to $TMPDIR and were
+deleted; nothing reached the system — ~/.npm/_npx entries are all pre-existing, and
+prettier@3 was reused from an Aug 3 cache. Should have asked first: the standing rule is
+to work only within the project. Next time, ask or use what is already on the machine.)
+
 ### Statusline: BUILT-IN. Colorscheme: BUILT-IN default (user likes the grey/green they have).
 0.12 default statusline already shows filename, modified/RO, LSP progress, ◐ busy indicator,
 diagnostic counts, ruler.
