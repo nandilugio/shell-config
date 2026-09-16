@@ -1,29 +1,19 @@
--- Tests for mdheading. Run them with Neovim itself:
+-- Tests for mdheading:  nvim -l lua/mdheading/test.lua
 --
---   nvim -l lua/mdheading/test.lua
+-- No framework; exit code is 0 when all pass. Detection goes through
+-- heading_at() and scan(); the drawing is checked by reading back the extmarks
+-- actually placed, never by recomputing what they should be — mdtable's suite
+-- once passed 109 green while the feature drew nothing.
 --
--- No framework: `nvim -l` runs a script directly, and a dependency whose job is
--- printing "ok" would cost more than it is worth. Exit code is 0 when all pass.
+-- `nvim -l` attaches no UI and runs no main loop, so nothing is painted and
+-- insert mode cannot be entered. Both are checked one layer down: the marks
+-- themselves, and the gate that decides whether to place them, with mode()
+-- stubbed.
 --
--- Detection is tested through heading_at() and scan(), where "is this a
--- heading" and "which lines are" are the natural questions. Everything else
--- goes through the public surface, and the drawing is checked by reading back
--- the extmarks that were actually placed — not by recomputing what they should
--- be. That distinction matters: mdtable's suite once passed 109 green while
--- the feature drew nothing at all, because it checked its own arithmetic
--- rather than the marks.
---
--- What `nvim -l` cannot reach, so the checks stop one step short: no UI is
--- attached, so nothing is ever painted and screenstring() sees bare text; and
--- with no main loop, insert mode cannot be entered. The first is checked as
--- the extmarks themselves, the second through the gate that decides whether to
--- place them, with mode() stubbed.
---
--- Which is why torture.md, next to this file, is the other half of the suite:
--- open it in a real editor and look. Whether six shades actually read as six is
--- not a thing any assertion here can answer — the contrast numbers below are a
--- floor, not a verdict, and collapsing the ramp to four levels came from
--- A/B-ing that file rather than from anything red.
+-- torture.md, next to this file, is the manual half. Whether the levels read
+-- apart at a glance is not a thing any assertion here can answer — the contrast
+-- numbers below are a floor, not a verdict, and the ramp was cut from six
+-- shades to four by looking at that file.
 
 vim.opt.rtp:prepend(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h:h"))
 vim.cmd("set termguicolors")
@@ -281,10 +271,9 @@ end)(), true)
 -- The distinct levels fade in order, each closer to the background than the
 -- one above. "Ordered" is the whole point: it is what makes depth readable.
 --
--- Only the first DISTINCT_LEVELS are distinct. The rest repeat the last shade
--- on purpose — a bounded range over fewer steps is what makes each step big
--- enough to see, and the levels below are rare enough to be worth collapsing.
--- So this asserts strictly decreasing up to the cut, and identical after it.
+-- Only the first DISTINCT_LEVELS are distinct; the rest repeat the last shade
+-- on purpose, since a bounded range over fewer steps is what makes each step
+-- big enough to see. So: strictly decreasing up to the cut, identical after it.
 check("the distinct shades fade in order, and the rest repeat", (function()
   md._internal.define_highlights()
   local bg = vim.api.nvim_get_hl(0, { name = "Normal", link = false }).bg
@@ -331,19 +320,19 @@ check("a new colorscheme recomputes the ramp", (function()
   return before ~= after and "recomputed" or "unchanged"
 end)(), "recomputed")
 
--- A heading line still has text on it, so the tint may not get bright enough
--- to swallow it. This is what caps BLEND_FIRST, and it is a real constraint
--- rather than a preference: at 0.45 the top level drops to 2.7:1, which is
--- unreadable. 3:1 is the WCAG AA threshold for bold text, which heading text
--- is.
+-- A heading line still has text on it, so the tint may not get bright enough to
+-- swallow it. This is what caps BLEND_FIRST, and it is a real constraint rather
+-- than a preference: push the blend darker and the top level stops being
+-- readable. The floor is WCAG AA for bold text, which heading text is.
 --
--- BLEND_FIRST is 0.50, chosen by eye on the default scheme, where it puts the
--- top level at 3.1:1 — over the line, but with little room. Two bundled
--- schemes go under at that setting and are listed here rather than quietly
--- dropped: their accent is lighter against their background, so the same blend
--- lands brighter. Naming them keeps this a decision that was made rather than
--- a check that was weakened, and it still fails for any scheme NOT on the
--- list. Lower BLEND_FIRST to 0.55 to empty it, or derive the cap per scheme.
+-- BLEND_FIRST was chosen by eye on the default scheme, which clears that floor
+-- with little room. Two bundled schemes go under it — their accent is lighter
+-- against their background, so the same blend lands brighter — and they are
+-- listed here with the ratio measured rather than quietly dropped. Naming them
+-- keeps this a decision that was made rather than a check that was weakened,
+-- and it still fails for any scheme NOT on the list, or for a listed one that
+-- gets worse. Raising BLEND_FIRST empties the list; deriving the cap per scheme
+-- would remove the need for it (see DESIGN.md).
 local KNOWN_TOO_BRIGHT = { catppuccin = 2.6, retrobox = 2.7 }
 
 check("heading text stays readable, except where we knowingly allow it", (function()

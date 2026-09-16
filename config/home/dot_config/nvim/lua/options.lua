@@ -1,9 +1,7 @@
--- Editor behaviour: options, and the few mappings and autocommands that are
--- part of an option rather than part of the keymap scheme. Nothing here needs
--- a plugin. Every binding you would go looking for is in keymaps.lua.
+-- Options, and the few mappings and autocommands that belong to an option
+-- rather than to the keymap scheme. Every other binding is in keymaps.lua.
 
--- Leaders must be set before any mapping is defined: Vim captures the value at
--- definition time, so changing them later would not affect existing maps.
+-- Before any mapping: Vim captures the leader at definition time.
 vim.g.mapleader = " "
 vim.g.maplocalleader = ","
 
@@ -42,9 +40,8 @@ vim.o.showmode = false -- the statusline has a mode block
 vim.o.list = true
 vim.opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
 
--- Flash what was just yanked. Yanking is the one edit that leaves no trace in
--- the buffer, so without this there is nothing to confirm that `yap` took the
--- paragraph you meant. Built in; the defaults are IncSearch for 150ms.
+-- Yanking is the one edit that leaves no trace in the buffer, so nothing else
+-- confirms that `yap` took the paragraph you meant.
 vim.api.nvim_create_autocmd("TextYankPost", {
   desc = "Highlight yanked text",
   callback = function() vim.hl.on_yank() end,
@@ -54,52 +51,39 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 vim.o.splitright = true
 vim.o.splitbelow = true
 
--- Completion: Neovim 0.12 does this natively, so no completion plugin.
+-- Completion is native in 0.12, so no plugin.
 --
--- Asked for, never volunteered. 'autocomplete' would show the menu on a pause,
--- but a menu that appears while you are still thinking interrupts more than it
--- helps. Off is also the default in both Vim and Neovim — the option arrived in
--- Vim 9.1.1590 and Neovim ported it, and neither turns it on.
+-- Asked for, never volunteered: a menu that appears while you are still
+-- thinking interrupts more than it helps. Off is also Vim's and Neovim's own
+-- default. The trigger is Vim's: <C-n>/<C-p> walk 'complete', <C-x><C-o> asks
+-- the language server alone — no mapping needed, and they work in any vi.
 --
--- The trigger is Vim's own: <C-n> and <C-p> walk the sources in 'complete',
--- and <C-x><C-o> asks the language server alone. They need no mapping and
--- work in any vi you sit down at.
+-- Costs nothing: autotrigger off only skips an InsertCharPre autocommand, so
+-- snippets and auto-imports still arrive through those keys.
 --
--- Turning autotrigger off costs nothing else: vim.lsp.completion.enable() only
--- skips an InsertCharPre autocommand, so the language server, its snippets and
--- its auto-imports all still arrive through the keys above.
---
--- Sources come from 'complete', in order. "o" means 'omnifunc', which the LSP
--- client sets on attach — without it the menu never reaches the language
--- server. "noselect" opens the menu with nothing highlighted, so the first
+-- In 'complete', "o" is 'omnifunc', which the LSP client sets on attach —
+-- without it the menu never reaches the server. "noselect" means the first
 -- candidate is never inserted on your behalf.
 vim.o.autocomplete = false
 vim.o.complete = ".,w,b,u,o"
 vim.o.completeopt = "menu,menuone,popup,noselect,fuzzy"
 
--- <C-Space> is the cross-editor key, but many terminals never send it: it is
--- the NUL byte, and emacs-style readline, some tmux configurations and macOS
--- input-source switching all eat it before Neovim sees it. <C-n> is the one
--- that always arrives, so nothing depends on this working.
+-- The cross-editor key, but many terminals never send it — it is the NUL byte,
+-- which readline, some tmux configs and macOS input switching all eat. Nothing
+-- depends on it working; <C-n> always arrives.
 vim.keymap.set("i", "<C-Space>", "<C-n>", { desc = "Completion menu" })
 
--- Esc with the menu open keeps whatever is selected, which turns a glance at
--- the list into an edit you did not ask for. Make it dismiss instead: <C-e>
--- restores what you actually typed, and a second Esc leaves insert mode.
--- With nothing selected the menu is only a suggestion, so Esc goes straight
--- out and insert mode ends in one press, as it always has.
+-- Esc with the menu open would keep what is selected, turning a glance at the
+-- list into an edit you did not ask for. <C-e> restores what you typed; a
+-- second Esc leaves insert. With nothing selected, Esc behaves as it always has.
 vim.keymap.set("i", "<Esc>", function()
   return vim.fn.complete_info({ "selected" }).selected ~= -1 and "<C-e>" or "<Esc>"
 end, { expr = true, desc = "Dismiss completion, else leave insert mode" })
 
--- <CR> accepts only once something is actually selected. The menu opens with
--- nothing highlighted, so pressing Enter with it open still gives a newline:
--- the popup never changes what ordinary typing does. Move to a candidate with
--- <C-n> and Enter accepts, which is the state where you are choosing from the
--- list rather than writing.
---
--- Every other editor accepts on Enter, so this keeps the habit portable.
--- <C-y> accepts regardless, and <C-e> dismisses without accepting.
+-- Accepts only once something is selected, so the popup never changes what
+-- ordinary typing does: Enter still gives a newline unless you moved to a
+-- candidate. Every other editor accepts on Enter, so the habit stays portable.
+-- <C-y> accepts regardless, <C-e> dismisses.
 vim.keymap.set("i", "<CR>", function()
   return vim.fn.complete_info({ "selected" }).selected ~= -1 and "<C-y>" or "<CR>"
 end, { expr = true, desc = "Accept selected completion, else newline" })
@@ -109,19 +93,14 @@ vim.o.foldmethod = "expr"
 vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.o.foldlevel = 99
 
--- Command-line completion, on the same terms as insert mode: asked for, not
--- volunteered. <Tab> is the trigger, which is both Vim's default and what
--- every shell does, so the habit is already yours. A popup menu rather than a
--- single line of matches, and fuzzy, so :e cfg finds config.
---
--- "lastused" sorts buffer names by recency. "tagfile" is part of the default
--- and kept. <C-n>/<C-p> walk the menu once it is open, <C-y> accepts and
--- <C-e> dismisses — the same keys as insert mode.
+-- Same terms as insert mode, with <Tab> as the trigger (Vim's default, and
+-- every shell's). Popup rather than a line of matches, and fuzzy, so :e cfg
+-- finds config. "lastused" sorts buffers by recency. Once open, the keys are
+-- insert mode's: <C-n>/<C-p>, <C-y>, <C-e>.
 vim.o.wildmode = "full:lastused"
 vim.o.wildoptions = "pum,fuzzy,tagfile"
 
--- With the menu open <Up>/<Down> would walk it; keep them on history instead
--- and leave the menu to <C-n>/<C-p> and <Tab>.
+-- Keep <Up>/<Down> on history; the menu is <C-n>/<C-p> and <Tab>.
 for _, key in ipairs({ "<Up>", "<Down>" }) do
   vim.keymap.set("c", key, function()
     return vim.fn.wildmenumode() == 1 and ("<C-E>" .. key) or key
@@ -131,14 +110,13 @@ end
 -- Recursive 'path' so :find works as a fallback where fzf is absent.
 vim.o.path = vim.o.path .. ",**"
 
--- Prefer ripgrep for :grep when present; both fill the quickfix list, which
--- ]q / [q navigate.
+-- Both fill the quickfix list, which ]q / [q navigate.
 if vim.fn.executable("rg") == 1 then
   vim.o.grepprg = "rg --vimgrep --smart-case"
   vim.o.grepformat = "%f:%l:%c:%m"
 end
 
--- Undo history is deliberately not persisted.
+-- Undo history is not persisted, on purpose.
 -- vim.o.undofile = true
 
 -- Bundled with Neovim: no plugin, no churn.

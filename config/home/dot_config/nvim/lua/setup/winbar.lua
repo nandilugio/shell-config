@@ -1,18 +1,12 @@
--- Winbar: where you are inside the file.
---
--- 'winbar' is a built-in option, evaluated like 'statusline', drawn at the top
--- of each window. It carries the breadcrumb — Sideqik › SerializeSupport ›
--- serialize — which in a deep file answers "what am I inside?" without
--- scrolling up to find out.
+-- Where you are inside the file: Sideqik › SerializeSupport › serialize.
+-- 'winbar' is built in and evaluated like 'statusline'.
 --
 -- The symbol tree comes from the language server, which is slow to ask, so it
--- is fetched on a pause and cached per buffer; the winbar itself only reads
--- the cache.
+-- is fetched on a pause and cached per buffer; the bar only reads the cache.
 
 local M = {}
 
--- Symbol kinds worth naming. Variables and fields would make the trail noisy
--- without saying much.
+-- Variables and fields would make the trail noisy without saying much.
 local WANTED = {
   Class = true, Method = true, Function = true, Module = true,
   Namespace = true, Struct = true, Interface = true, Constructor = true,
@@ -40,7 +34,7 @@ local function refresh(buf)
     textDocument = vim.lsp.util.make_text_document_params(buf),
   }, function(err, symbols)
     if err or not symbols then return end
-    -- The reply is asynchronous; the current window may show another buffer by now.
+    -- Asynchronous: the window may show another buffer by now.
     local win = vim.fn.bufwinid(buf)
     if win == -1 then return end
     local line = vim.api.nvim_win_get_cursor(win)[1] - 1
@@ -54,15 +48,14 @@ vim.api.nvim_create_autocmd({ "CursorHold", "BufEnter" }, {
 })
 
 function M.render()
-  -- %#..# with no closing %* paints to the end of the line, so the whole bar
-  -- carries the colour rather than just the text. An empty trail still paints
-  -- the bar: turning the option on and off would change the window height and
-  -- shove the buffer around while you move.
+  -- %#..# with no closing %* paints to the end of the line. An empty trail
+  -- still paints: toggling the option would change the window height and shove
+  -- the buffer around as the cursor moves.
   return "%#WinBarPath# " .. (vim.b.winbar_trail or "") .. " "
 end
 
--- The whole bar takes the cursor line's background, so it reads as part of
--- the same "where you are" cue rather than as another band of chrome.
+-- The cursor line's background, so it reads as the same "where you are" cue
+-- rather than another band of chrome.
 local function set_highlight()
   vim.api.nvim_set_hl(0, "WinBarPath", {
     fg = vim.api.nvim_get_hl(0, { name = "Comment", link = false }).fg,
@@ -72,10 +65,9 @@ end
 set_highlight()
 vim.api.nvim_create_autocmd("ColorScheme", { callback = set_highlight })
 
--- Enabled once, when a language server that can supply symbols attaches. That
--- is both the condition for ever having a breadcrumb and a stable one: gating
--- on the trail itself would add and remove a screen line as the cursor moves,
--- which shifts the buffer under you.
+-- Enabled when a server that can supply symbols attaches — stable, whereas
+-- gating on the trail itself would add and remove a screen line as the cursor
+-- moves.
 vim.api.nvim_create_autocmd("LspAttach", {
   callback = function(args)
     local client = vim.lsp.get_client_by_id(args.data.client_id)

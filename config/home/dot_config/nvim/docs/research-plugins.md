@@ -163,7 +163,9 @@ Tested: `set completeopt=menu,popup,noinsert,fuzzy` accepted.
    vim-unimpaired 0/yr, vim-fugitive 1/yr. FINISHED, not abandoned (tpope still responds to issues).
    Distinguish from telescope-ui-select (0/yr) which may be genuinely unmaintained.
 3. **fzf-lua 508 commits/yr** contradicts its "stable/mature" reputation. Very active.
-   Telescope 64/yr is CALMER than fzf-lua by 8x. Reassess the "telescope is dying" narrative against this.
+   Telescope 64/yr is CALMER than fzf-lua by 8x. The "telescope is in maintenance mode" quote
+   is MISATTRIBUTED — no maintainer said it; it is from a different person about
+   telescope-file-browser, 2022. The case against telescope is deps + LOC, not abandonment.
 4. **nvim-treesitter's 1 commit/yr is FROZEN master, NOT done** — the action moved to `main` branch.
    This is rewrite risk, not stability. Must decide master(frozen) vs main(new API).
 5. nvim-lspconfig 623/yr is high BUT it's a data repo (415 server configs) — churn is

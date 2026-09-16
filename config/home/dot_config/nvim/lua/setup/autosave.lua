@@ -1,12 +1,9 @@
--- Autosave, replacing save.nvim (unmaintained since 2024, ran on every
--- text change). Two modes, toggled rather than cycled:
+-- Autosave, replacing save.nvim (unmaintained since 2024, ran on every text
+-- change). Off by default; on, it writes when the buffer loses focus or you
+-- leave insert.
 --
---   off   (default) nothing is written unless you ask
---   on    write the buffer when it loses focus or you leave insert mode
---
--- Deliberately not "save on every keystroke": that fights format-on-save,
--- file watchers and test runners, and makes every intermediate state a real
--- file on disk.
+-- NOT on every keystroke: that fights format-on-save, file watchers and test
+-- runners, and makes every intermediate state a real file on disk.
 
 local M = { enabled = false }
 

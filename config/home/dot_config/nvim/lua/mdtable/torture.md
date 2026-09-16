@@ -3,11 +3,12 @@
 Keys: `,t` aligns the table under the cursor **in the buffer**.
 `<Space>um` toggles the display padding off and on.
 
-How to use this file: read down it once with padding on and check each table
-looks right. Then put the cursor in each table and press `,t` — the text should
-end up looking the way it already looked, because both halves measure the same
-way. `u` undoes it. Anything where `,t` *moves* things is a bug worth telling
-me about.
+Read down it once with padding on and check each table looks right. Then put the
+cursor in each and press `,t`: the pipes must not move, since both halves measure
+the same way. `u` undoes it.
+
+Text inside the columns *may* shift — `,t` normalises whitespace the display
+leaves alone. A pipe that moves is a bug.
 
 Tables 18-20 at the end should NOT be padded at all.
 

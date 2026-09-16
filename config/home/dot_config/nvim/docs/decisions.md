@@ -1,6 +1,6 @@
 # FINAL DECISIONS — nvim 0.12.5 config rebuild
-Agreed with user 2026-09-10. Companions: keymaps.md · plugins.md ·
-language-servers.md · research-plugins.md · research-keybindings.md
+Agreed with user 2026-09-10. Companions: keymaps.md · language-servers.md ·
+research-plugins.md · research-keybindings.md
 
 ## GUIDING PRINCIPLES (user's words)
 - "small, do one thing right, mostly done, very little churn and surface for vulnerabilities"

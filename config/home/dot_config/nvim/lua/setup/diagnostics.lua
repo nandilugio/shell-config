@@ -25,7 +25,7 @@ vim.diagnostic.config({
 -- Virtual lines are the most readable way to show a diagnostic and the most
 -- intrusive: a file with many warnings becomes mostly warnings. Rather than a
 -- plain on/off, <leader>ud steps down through how much is shown, which is
--- usually the thing you actually want when a file gets noisy.
+-- usually what you want when a file gets noisy.
 local LEVELS = {
   { label = "all", min = vim.diagnostic.severity.HINT },
   { label = "warnings and errors", min = vim.diagnostic.severity.WARN },

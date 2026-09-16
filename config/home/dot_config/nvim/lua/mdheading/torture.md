@@ -2,15 +2,16 @@
 
 `<Space>uH` toggles the heading colours. `<Space>um` and `,t` still drive mdtable.
 
-How to use this file: read down it once and check every section does what its
-title says. Sections 1-11 should be tinted. Sections 12-16 are the ones that
-must NOT be tinted — those are where a line scanner earns its keep, and where
-a bug would hide.
+Read down it once and check every section does what its title says. Sections
+1-11 should be tinted; 12-16 must NOT be, and that is where a line scanner earns
+its keep.
 
-There are 16 sections and about 100 heading-shaped lines, of which 64 should
-actually be coloured — 57 above the "must NOT" divider, plus the seven section
-titles below it. Anything else tinted after that divider, or left plain before
-it, is a bug worth telling me about.
+Every heading-shaped line above the "must NOT" divider should be coloured, and
+below it only the section titles themselves. Anything else tinted after the
+divider, or left plain before it, is a bug.
+
+NOTE: levels 5 and 6 share level 4's shade by design, so `####`, `#####` and
+`######` are deliberately identical.
 
 ---
 
@@ -43,8 +44,8 @@ More prose. The tint is doing the work here.
 
 ###### Six again
 
-If this one reads as "no tint at all" rather than "the faintest tint", the
-range wants narrowing. That is the main thing this file is asking you.
+If this reads as "no tint at all" rather than "the faintest tint", the range
+wants narrowing. It shares level 4's shade, so 4, 5 and 6 should match exactly.
 
 ## 3. Boundaries of the syntax
 

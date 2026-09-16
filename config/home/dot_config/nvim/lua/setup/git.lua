@@ -1,20 +1,15 @@
--- Git, but only the part that belongs in the editor.
---
--- Commits, rebases and history are lazygit's job, in a tmux pane. What an
--- editor uniquely offers is the ambient layer: which lines changed, jumping
--- between hunks, staging one without leaving the buffer.
+-- Only the part that belongs in the editor: which lines changed, hunk
+-- navigation, staging without leaving the buffer. Commits, rebases and history
+-- are lazygit's job, in a tmux pane.
 
 local ok, gitsigns = pcall(require, "gitsigns")
 if ok then
   gitsigns.setup({
-    -- Diff characters rather than gitsigns' default bars. A bar says only
-    -- "something changed here" and leaves the colour to carry the meaning;
-    -- + ~ - say which, and read the same way as diff output, git add -p and
-    -- every review tool.
+    -- Diff characters rather than gitsigns' bars, which leave the colour to
+    -- carry the meaning; + ~ - read like diff output and git add -p.
     --
-    -- Plain UTF-8, no Nerd Font: these live in the Basic Multilingual Plane
-    -- and render in any modern monospace font. ‾ marks a deletion above the
-    -- first line, ≃ a line both changed and partly deleted.
+    -- Plain UTF-8, no Nerd Font. ‾ is a deletion above the first line, ≃ a
+    -- line both changed and partly deleted.
     signs = {
       add = { text = "+" },
       change = { text = "~" },
@@ -27,16 +22,14 @@ if ok then
   })
 end
 
--- RuboCop via :make, because ruby-lsp cannot always provide it: on a Ruby 2.x
--- project the server runs under a newer interpreter and so cannot reach the
--- project's own rubocop. Neovim ships the compiler definition; results land in
--- the quickfix list, which ]q and [q navigate.
+-- RuboCop via :make, because on Ruby 2.x the server runs under a newer
+-- interpreter and cannot reach the project's own rubocop. Neovim ships the
+-- compiler definition; results land in the quickfix list.
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "ruby",
   callback = function(args)
     vim.cmd("compiler rubocop")
-    -- Search upward from the file, not the working directory: they differ
-    -- whenever a file is opened by path from elsewhere.
+    -- From the file, not the cwd: they differ when opening by path.
     local gemfile = vim.fs.find("Gemfile", {
       upward = true,
       path = vim.fs.dirname(vim.api.nvim_buf_get_name(args.buf)),

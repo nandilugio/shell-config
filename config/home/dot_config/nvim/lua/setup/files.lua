@@ -1,18 +1,12 @@
--- File browsing.
---
--- mini.files shows a directory as an editable buffer: rename a line to rename
--- the file, delete a line to delete it, then `=` to apply. It replaces netrw,
--- which is deprecated and carries an unpatched code-execution path.
---
--- Its keys are Vim-shaped: h/l out and in, q close, m and ' marks, g? help.
+-- A directory as an editable buffer: rename a line to rename the file, then `=`
+-- to apply. Keys are Vim-shaped: h/l out and in, q close, g? help.
+-- Replaces netrw, which options.lua disables.
 
 local ok, files = pcall(require, "mini.files")
 if not ok then return end
 
--- mini.files falls back to Nerd Font glyphs when neither mini.icons nor
--- nvim-web-devicons is installed, and there is no plainer fallback behind
--- those — so it would show boxes on a machine without a patched font. This
--- prefix keeps to characters any monospace font has.
+-- Without mini.icons or nvim-web-devicons, mini.files falls back to Nerd Font
+-- glyphs, which are boxes without a patched font. These are plain UTF-8.
 local ICONS = {
   directory = { "▸ ", "MiniFilesDirectory" },
   lua = { "· " }, py = { "· " }, rb = { "· " }, js = { "· " }, ts = { "· " },

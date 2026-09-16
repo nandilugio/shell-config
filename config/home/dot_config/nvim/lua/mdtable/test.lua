@@ -1,25 +1,16 @@
--- Tests for mdtable. Run them with Neovim itself:
+-- Tests for mdtable:  nvim -l lua/mdtable/test.lua
 --
---   nvim -l lua/mdtable/test.lua
+-- No framework; exit code is 0 when all pass. Detection goes through scan() and
+-- cells(); everything else through the public surface, with the padding read
+-- back from the extmarks actually placed and applied to the buffer's own text,
+-- so a wrong width shows up as a crooked pipe.
 --
--- No framework: `nvim -l` runs a script directly, and a dependency whose job is
--- printing "ok" would cost more than it is worth. Exit code is 0 when all pass.
+-- READ BACK, NEVER RECOMPUTED. An earlier suite checked its own arithmetic
+-- instead and passed 109 green while the plugin drew nothing at all.
 --
--- Detection is tested through scan() and cells(), where "how many tables" and
--- "how many cells" are the natural questions. Everything else goes through the
--- public surface: align() on a scratch buffer, and the padding by reading back
--- the extmarks actually placed and applying them to the buffer's own text — a
--- wrong width shows up as a crooked pipe, not an error.
---
--- Read back, never recomputed. An earlier suite asked whether the arithmetic
--- was right rather than whether anything was drawn, and passed 109 green while
--- the plugin painted nothing at all. `nvim -l` attaches no UI, so screenstring()
--- cannot tell the difference; the marks can.
---
--- Which is why torture.md, next to this file, is the other half of the suite:
--- open it in a real editor and look. Wide characters, tabs and a cell wider
--- than the window are all things these checks measure but nobody here can see,
--- and the last two bugs in those came from reading it, not from a red suite.
+-- torture.md, next to this file, is the manual half: what these checks measure
+-- but cannot see — wide characters, tabs, a cell wider than the window. Both
+-- bugs found since the suite went green came from reading it.
 
 vim.opt.rtp:prepend(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h:h"))
 

@@ -1,11 +1,9 @@
 -- Syntax and folds from real parse trees.
 --
--- The `main` branch has a narrower job than the old one: it installs parsers
--- and ships queries, and Neovim's own vim.treesitter does the rest, so
--- highlighting is started per buffer below rather than by the plugin.
---
--- Parsers are compiled on install, so this needs a C compiler and the
--- tree-sitter CLI. Without them Neovim falls back to regex highlighting.
+-- The `main` branch only installs parsers and ships queries; vim.treesitter does
+-- the rest, so highlighting is started per buffer below. Parsers compile on
+-- install, so this needs a C compiler and the tree-sitter CLI; without them
+-- Neovim falls back to regex highlighting.
 
 local ok, ts = pcall(require, "nvim-treesitter")
 if not ok then return end

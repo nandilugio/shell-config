@@ -18,12 +18,8 @@
 
 local M = {}
 
--- Documentation for key chains that are not mappings themselves.
---
--- These create nothing: they only give which-key a label for a prefix, so that
--- pressing <leader> shows "find / git / toggle" instead of a bare letter. The
--- same applies to Vim's own prefixes, which are worth labelling precisely
--- because nobody defined them here and they are easy to forget.
+-- Labels only: these create no mappings, they give which-key a name for a
+-- prefix so <leader> shows "find / git / toggle" rather than bare letters.
 --
 --   { lhs, label, mode? }
 M.groups = {
@@ -36,8 +32,7 @@ M.groups = {
   { "<leader>x", "lists" },
   { "<LocalLeader>", "filetype" },
 
-  -- Built-in prefixes. Not ours, but the popup is where you look when you
-  -- have forgotten what lives under them.
+  -- Not ours, but the popup is where you look having forgotten them.
   { "g", "goto / extended" },
   { "gr", "LSP actions" },
   { "z", "folds, scroll, spelling" },
@@ -48,17 +43,17 @@ M.groups = {
 
 M.maps = {
 
-  -- ── Jump: g + letter ────────────────────────────────────────────────────
-  -- gd/gy/gI are the cross-editor convention (Helix, LazyVim, AstroNvim, Zed,
-  -- and IdeaVim ships gd natively). Vim's own gd already meant "goto local
-  -- declaration", so the LSP versions upgrade an existing meaning.
-  -- No `needs`: with no LSP attached these error politely, same as core's gr*.
+  -- ── Jump: g + letter ──────────────────────────────────────────────────────
+  -- The cross-editor convention (Helix, LazyVim, AstroNvim, Zed; IdeaVim ships
+  -- gd natively). Vim's gd already meant "goto local declaration", so these
+  -- deepen a meaning rather than replace one.
+  -- No `needs`: with no LSP these error politely, as core's gr* do.
   { "gd", vim.lsp.buf.definition, desc = "Definition" },
   { "gD", vim.lsp.buf.declaration, desc = "Declaration" },
   { "gy", vim.lsp.buf.type_definition, desc = "Type definition" },
   { "gI", vim.lsp.buf.implementation, desc = "Implementation" },
 
-  -- ── Iterate: [ and ] ────────────────────────────────────────────────────
+  -- ── Iterate: [ and ] ──────────────────────────────────────────────────────
   -- tpope's rule: "[ always comes before ]". Lowercase steps, capital jumps to
   -- the first/last. Core already provides ]d ]q ]b ]<Space> and friends.
   {
@@ -82,9 +77,9 @@ M.maps = {
     desc = "Previous warning",
   },
 
-  -- ── Find: <leader>f ─────────────────────────────────────────────────────
-  -- Falls back to :find / :grep, which fill the quickfix list that ]q / [q
-  -- already navigate. Same keys, less power.
+  -- ── Find: <leader>f ───────────────────────────────────────────────────────
+  -- Falls back to :find / :grep, which fill the quickfix list. Same keys,
+  -- less power.
   {
     "<leader><leader>",
     function() require("setup.fzf").buffers() end,
@@ -177,10 +172,9 @@ M.maps = {
     fallback = "grr",
   },
 
-  -- ── Git: <leader>g ──────────────────────────────────────────────────────
-  -- Hunk-level only. Commits, rebases and branches live in lazygit in tmux.
-  -- Without gitsigns these keep Vim's built-in meaning: next/previous change
-  -- in diff mode. Same concept, narrower scope.
+  -- ── Git: <leader>g ────────────────────────────────────────────────────────
+  -- Hunk-level only; lazygit does the rest. Without gitsigns these keep Vim's
+  -- own meaning: next/previous change in diff mode.
   { "]c", function() require("gitsigns").nav_hunk("next") end, desc = "Next hunk", needs = "mod:gitsigns", fallback = "]c" },
   { "[c", function() require("gitsigns").nav_hunk("prev") end, desc = "Previous hunk", needs = "mod:gitsigns", fallback = "[c" },
   {
@@ -210,14 +204,14 @@ M.maps = {
     needs = "mod:gitsigns",
   },
 
-  -- ── Toggle: <leader>u (ui) ──────────────────────────────────────────────
+  -- ── Toggle: <leader>u (ui) ────────────────────────────────────────────────
   -- Only the seven letters LazyVim and AstroNvim agree on.
   { "<leader>uw", "<Cmd>set wrap!<CR>", desc = "Wrap" },
   { "<leader>us", "<Cmd>set spell!<CR>", desc = "Spell" },
   { "<leader>ul", "<Cmd>set number!<CR>", desc = "Line numbers" },
   { "<leader>ur", "<Cmd>set relativenumber!<CR>", desc = "Relative numbers" },
-  -- Steps through all / warnings and errors / errors only / off, rather than
-  -- a plain on-off: a noisy file usually wants less, not none.
+  -- Steps all / warnings+errors / errors / off: a noisy file usually wants
+  -- less, not none.
   { "<leader>ud", function() require("setup.diagnostics").cycle() end, desc = "Diagnostics shown (cycle)" },
   {
     "<leader>uh",
@@ -229,40 +223,36 @@ M.maps = {
     function() vim.o.background = vim.o.background == "dark" and "light" or "dark" end,
     desc = "Background",
   },
-  -- The eighth letter, and not a shared convention: nothing else here renders
-  -- anything, so there was no letter to borrow. On by default for markdown, so
-  -- this is the way out when the padding is in the way.
+  -- The eighth letter, and not a convention: nothing else here renders
+  -- anything. On by default for markdown, so this is the way out.
   { "<leader>um", function() require("mdtable").toggle() end, desc = "Markdown table alignment" },
-  -- Capital H because <leader>uh is inlay hints. Both markdown toggles sit
-  -- under <leader>u for the same reason: they are display layers over a file
-  -- neither one changes.
+  -- Capital H because <leader>uh is inlay hints. Both markdown toggles live
+  -- under <leader>u: display layers over a file neither one changes.
   { "<leader>uH", function() require("mdheading").toggle() end, desc = "Markdown heading colours" },
 
-  -- ── Buffers and windows ─────────────────────────────────────────────────
-  -- <C-hjkl> for windows deliberately mirrors tmux's M-hjkl for panes: two
-  -- levels, two modifiers.
+  -- ── Buffers and windows ───────────────────────────────────────────────────
+  -- Mirrors tmux's M-hjkl for panes: two levels, two modifiers.
   { "<C-h>", "<C-w><C-h>", desc = "Window left" },
   { "<C-j>", "<C-w><C-j>", desc = "Window down" },
   { "<C-k>", "<C-w><C-k>", desc = "Window up" },
   { "<C-l>", "<C-w><C-l>", desc = "Window right" },
-  -- Same mnemonic as tmux's split bindings: | is a vertical divider, - a horizontal one.
+  -- tmux's mnemonic: | is a vertical divider, - a horizontal one.
   { "<leader>-", "<Cmd>split<CR>", desc = "Split below" },
   { "<leader>|", "<Cmd>vsplit<CR>", desc = "Split right" },
   { "<S-h>", "<Cmd>bprevious<CR>", desc = "Previous buffer" },
   { "<S-l>", "<Cmd>bnext<CR>", desc = "Next buffer" },
   { "<leader>bd", "<Cmd>bdelete<CR>", desc = "Delete buffer" },
 
-  -- ── Lists: <leader>x ────────────────────────────────────────────────────
-  -- The quickfix list is Vim's list of places — :make, :grep and the pickers
-  -- all fill it, and ]q / [q walk it. The location list is the same, scoped
-  -- to one window.
+  -- ── Lists: <leader>x ──────────────────────────────────────────────────────
+  -- Vim's list of places: :make, :grep and the pickers all fill it, ]q / [q
+  -- walk it. The location list is the same, scoped to one window.
   { "<leader>xq", "<Cmd>copen<CR>", desc = "Quickfix list" },
   { "<leader>xl", "<Cmd>lopen<CR>", desc = "Location list" },
   { "<leader>xd", vim.diagnostic.setqflist, desc = "Diagnostics to quickfix" },
 
-  -- ── Files ───────────────────────────────────────────────────────────────
-  -- netrw is disabled, so without mini.files the command line with completion
-  -- is the browser: Tab walks directories.
+  -- ── Files ─────────────────────────────────────────────────────────────────
+  -- netrw is disabled, so without mini.files the command line is the browser:
+  -- Tab walks directories.
   {
     "<leader>e",
     function() require("mini.files").open(vim.api.nvim_buf_get_name(0)) end,
@@ -271,44 +261,41 @@ M.maps = {
     fallback = ":edit ",
   },
 
-  -- ── Edit ────────────────────────────────────────────────────────────────
+  -- ── Edit ──────────────────────────────────────────────────────────────────
   -- = is Vim's own format operator, so <leader>= reads as "format everything".
   { "<leader>=", function() vim.lsp.buf.format({ timeout_ms = 2000 }) end, desc = "Format buffer", mode = { "n", "v" } },
 
-  -- ── F-keys: the only layer that transfers unchanged to other editors ────
-  -- Nvim binds only <F1>, so F2-F12 are free. These match VS Code, Visual
-  -- Studio and Zed, and cost nothing here.
+  -- ── F-keys: the only layer that transfers unchanged to other editors ──────
+  -- Only <F1> is bound, so F2-F12 are free. These match VS Code and Zed.
   { "<F2>", vim.lsp.buf.rename, desc = "Rename symbol" },
   { "<F12>", vim.lsp.buf.definition, desc = "Definition" },
   { "<S-F12>", vim.lsp.buf.references, desc = "References" },
 
-  -- ── Own namespace: <leader>o ────────────────────────────────────────────
+  -- ── Own namespace: <leader>o ──────────────────────────────────────────────
   -- Reserved. Nothing from any plugin or convention may claim these.
   {
     "<leader>ox",
     [[:%s/\s\+$//e<CR>:nohlsearch<CR>:echo "Cleared trailing whitespace"<CR>]],
     desc = "Clear trailing whitespace",
   },
-  -- vimwiki's own <leader>w* mappings are disabled in setup/wiki.lua because
-  -- they collide with the window namespace; these are the ones worth keeping.
+  -- vimwiki's <leader>w* are disabled in setup/wiki.lua (they collide with the
+  -- window namespace); these are the ones worth keeping.
   { "<leader>ow", "<Cmd>VimwikiIndex<CR>", desc = "Wiki index", needs = "cmd:VimwikiIndex" },
   { "<leader>od", "<Cmd>VimwikiMakeDiaryNote<CR>", desc = "Wiki diary today", needs = "cmd:VimwikiMakeDiaryNote" },
   { "<leader>oD", "<Cmd>VimwikiDiaryIndex<CR>", desc = "Wiki diary index", needs = "cmd:VimwikiDiaryIndex" },
   { "<leader>oh", function() require("setup.cheatsheet").open() end, desc = "Cheatsheet" },
   { "<leader>oa", function() require("setup.autosave").toggle() end, desc = "Autosave on/off" },
 
-  -- ── Filetype actions: <LocalLeader> ─────────────────────────────────────
-  -- Mapped globally rather than per-filetype: applying these is setup/keymaps'
-  -- job, and it has no ft field. The cost of that is that they must no-op
-  -- where they do not apply, which mdtable.align() does — outside a markdown
-  -- table there is nothing under the cursor to pad, and it returns silently.
+  -- ── Filetype actions: <LocalLeader> ───────────────────────────────────────
+  -- Global rather than per-filetype, since setup/keymaps has no ft field. The
+  -- cost is that they must no-op where they do not apply, which
+  -- mdtable.align() does.
   { "<LocalLeader>t", function() require("mdtable").align() end, desc = "Align markdown table" },
 
-  -- ── Odds and ends ───────────────────────────────────────────────────────
-  -- One key for "dismiss whatever is in the way": a hover or diagnostic float
-  -- if one is open, the search highlight otherwise. Neovim closes floats when
-  -- the cursor moves but not on a keypress, and after a plain K the cursor is
-  -- still in the buffer, so Esc has to reach across to them.
+  -- ── Odds and ends ─────────────────────────────────────────────────────────
+  -- One key for "dismiss whatever is in the way": a float if one is open, the
+  -- search highlight otherwise. Neovim closes floats when the cursor moves but
+  -- not on a keypress, so Esc has to reach across to them.
   {
     "<Esc>",
     function()

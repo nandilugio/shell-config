@@ -15,17 +15,15 @@ break.
 usually done, not abandoned. Preferred over a larger one that changes weekly,
 even when the larger one is more popular.
 
-**Few dependencies, not a sparse interface.** The aim is less to install and
-less that can break, not less on screen. Breadcrumbs, a mode-coloured
-statusline, diagnostics on their own lines, fuzzy completion and bordered
-floats are all here — from options Neovim already has, not from plugins that
-draw them.
+**Few dependencies, not a sparse interface.** The aim is less to install, not
+less on screen. Breadcrumbs, a mode-coloured statusline, diagnostics on their
+own lines, fuzzy completion and bordered floats are all here — from options
+Neovim already has, not from plugins that draw them.
 
 **Every external tool is optional.** Clone this onto a bare server and it
 works: bindings fall back to built-ins, and `:checkhealth config` says what is
-missing and what that costs. Nothing has to be installed for the editor to be
-usable — including fonts. Symbols stay within plain UTF-8, so nothing here
-needs a patched Nerd Font to render.
+missing and what that costs. That includes fonts — symbols stay within plain
+UTF-8, so nothing needs a patched Nerd Font.
 
 **Bindings should transfer.** Muscle memory is expensive to build, so it is
 spent on keys that also work in Helix, Zed, VS Code and RubyMine — not on keys
@@ -92,15 +90,14 @@ thing:
 Two are local rather than installed, both display layers over markdown that
 leave the file alone:
 
-- `lua/mdtable` aligns tables nobody padded — on screen by default, and in the
+- `lua/mdtable` aligns tables nobody padded — on screen by default, in the
   buffer on `,t`.
-- `lua/mdheading` tints heading lines by depth, strongest at `#`, so the visual
-  weight stops running backwards from the semantic weight. The colour is
-  derived from the current scheme, not configured.
+- `lua/mdheading` tints heading lines by depth, so the visual weight stops
+  running backwards from the semantic one. The colour is derived from the
+  current scheme.
 
-Neither has dependencies, and neither has an opinion about filetypes:
-`init.lua` passes the list in. Each has its own `README.md`;
-`docs/decisions.md` says why they are not `render-markdown`.
+Neither has dependencies or an opinion about filetypes: `init.lua` passes the
+list in. Each has its own `README.md` and `DESIGN.md`.
 
     nvim -l lua/mdtable/test.lua      # their tests, no framework needed
     nvim -l lua/mdheading/test.lua
@@ -110,23 +107,21 @@ Neither has dependencies, and neither has an opinion about filetypes:
 **No plugin manager.** `vim.pack` is built in and writes a committed lockfile.
 It has no lazy-loading, which at this size costs nothing you can feel.
 
-**No completion plugin.** `'completeopt'` plus `vim.lsp.completion` give
-fuzzy matching, snippets and auto-imports. The menu is asked for rather than
-volunteered — `<C-Space>` as in VS Code and Zed, or Vim's own `<C-n>` — and
-`<C-y>` accepts, as it has since Vim.
+**No completion plugin.** `'completeopt'` plus `vim.lsp.completion` give fuzzy
+matching, snippets and auto-imports. The menu is asked for rather than
+volunteered — `<C-Space>` as in VS Code and Zed, or Vim's `<C-n>` — and `<C-y>`
+accepts, as it has since Vim.
 
 **No `mason`.** It installs a second, untracked, editor-only copy of tools the
-system already manages, and Shopify warns against using it for `ruby-lsp` at
-all. Servers come from `uv`, `brew` and `gem`, so the shell and CI use the same
-binary.
+system already manages, and Shopify warns against using it for `ruby-lsp`.
+Servers come from `uv`, `brew` and `gem`, so shell, CI and editor share one binary.
 
-**No statusline, winbar or colorscheme plugin.** The bundled colorscheme is
-used as is. `setup/statusline.lua` builds on Neovim's default line — which
-already carries LSP progress and diagnostic counts — adding a mode block, the
-git branch and repository state, hunk counts and the attached servers.
-`setup/winbar.lua` draws breadcrumbs from the language server's symbol tree.
-Both colour themselves from groups the colorscheme already defines, so they
-follow it when it changes.
+**No statusline, winbar or colorscheme plugin.** The bundled colorscheme is used
+as is. `setup/statusline.lua` builds on Neovim's default line — already carrying
+LSP progress and diagnostic counts — adding a mode block, the git branch and
+repository state, hunk counts and the attached servers. `setup/winbar.lua` draws
+breadcrumbs from the language server's symbol tree. Both colour themselves from
+groups the colorscheme defines, so they follow it when it changes.
 
 **No `netrw`.** Deprecated upstream, and 0.12 still carries an unpatched path
 that executes code from `.netrwhist`. Disabled; `mini.files` replaces it.
@@ -176,14 +171,12 @@ the config portable, and it keeps every binding in one readable file.
 versions cannot disturb it. Virtualenvs are detected per project — `VIRTUAL_ENV`,
 then `CONDA_PREFIX`, then `.venv` — with no plugin.
 
-Ruby needs one trick. `ruby-lsp` requires Ruby ≥ 3 but does not have to *be*
-the project's Ruby, so a legacy codebase is analysed by a modern server: the
-newest rbenv Ruby with `ruby-lsp` installed is used. Where the Gemfile pins an
-old Ruby, Bundler refuses to compose a bundle, so `ruby-lsp/Gemfile` here is
-used instead: the project's own code is indexed, its gems are not. RuboCop
-still runs through `:make`, using the project's own gem and `.rubocop.yml`,
-into the quickfix list. Ruby 3 projects need none of this and the config needs
-no change when the migration happens.
+Ruby needs one trick. `ruby-lsp` requires Ruby ≥ 3 but does not have to *be* the
+project's Ruby, so a legacy codebase is analysed by a modern server: the newest
+rbenv Ruby with `ruby-lsp` installed. Where the Gemfile pins an old Ruby, Bundler
+refuses to compose a bundle, so `ruby-lsp/Gemfile` here is used instead — the
+project's code is indexed, its gems are not. RuboCop still runs through `:make`
+with the project's own gem and `.rubocop.yml`. Ruby 3 projects need none of this.
 
 ## Setting up elsewhere
 
@@ -200,7 +193,6 @@ RBENV_VERSION=3.x gem install ruby-lsp   # any Ruby >= 3; the newest is used
 
 ## Further reading
 
-`docs/` holds the notes behind these choices: what the ecosystem actually
-converged on, the churn and size measurements, and the awkward cases — netrw's
-unpatched code path, a Ruby 2.7 codebase. Useful when a decision here looks
-arbitrary.
+`docs/` holds the notes behind these choices: what the ecosystem converged on,
+the churn and size measurements, and the awkward cases — netrw's unpatched code
+path, a Ruby 2.7 codebase. Useful when a decision here looks arbitrary.

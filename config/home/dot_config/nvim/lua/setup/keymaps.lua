@@ -3,10 +3,9 @@
 local spec = require("keymaps")
 
 -- ── Requirements ────────────────────────────────────────────────────────────
--- A `needs` value names something the machine may not have. The prefix says
--- what kind, so the check never has to guess:
---   "fzf"           an executable on PATH
---   "mod:gitsigns"  a Lua module
+-- The prefix says what kind, so the check never guesses:
+--   "fzf"               an executable on PATH
+--   "mod:gitsigns"      a Lua module
 --   "cmd:VimwikiIndex"  an Ex command (Vimscript plugins define no module)
 
 local cache = {}

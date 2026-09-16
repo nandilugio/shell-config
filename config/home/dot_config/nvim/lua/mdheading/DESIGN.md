@@ -11,8 +11,9 @@ rebuild log had been carrying them.
 Added 2026-09-16. User's observation: markdown encodes depth in character count, so
 "######" looks heavier than "#" while meaning less — "I find ### more visually important
 than #, so that looks backwards" — and headings are hard to spot in messy text.
-Fix: a background colour per level, strongest at 1, fading to 6. One extmark per heading
-line with line_hl_group. Display only; the file is untouched.
+Fix: a background colour per level, strongest at 1, fading to 4 (levels 5 and 6 share the
+4th's shade — see the FINAL ROUND entry below). One extmark per heading line with
+line_hl_group. Display only; the file is untouched.
 
 COLOUR IS DERIVED, NOT CONFIGURED — and the derivation was MEASURED, not assumed:
   * All six @markup.heading.N.markdown groups are IDENTICAL in the default scheme

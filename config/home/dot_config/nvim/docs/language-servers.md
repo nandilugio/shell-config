@@ -17,7 +17,7 @@ it uses the newest rbenv Ruby >= 3 that has ruby-lsp installed.
   not a working command. It resolves to nothing under the current global Ruby.
   FIX: rbenv global 3.3.9 ; rbenv shell 3.3.9 && gem install ruby-lsp (repeat per Ruby used)
 
-### 2. Config uses removed API (also in plugins.md)
+### 2. Config uses removed API
   init.lua:959-972 mason-lspconfig `handlers` + require("lspconfig")[s].setup()
   => lua_ls settings verified NOT APPLIED.
 

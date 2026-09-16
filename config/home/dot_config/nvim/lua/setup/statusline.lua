@@ -1,37 +1,27 @@
--- Statusline.
+-- Built on 0.12's default (filename, %m %r, LSP progress, busy spinner,
+-- diagnostic counts, ruler), adding a mode block, git branch and hunk counts,
+-- attached servers, filetype, and a warning on unusual encodings.
 --
--- Built on Neovim 0.12's default, which already carries the filename, modified
--- and readonly flags, LSP progress, a busy spinner, diagnostic counts and the
--- ruler. This adds a mode block, the git branch and hunk counts, the attached
--- language servers, the filetype, and a warning when the encoding or line
--- endings are unusual.
---
--- Order follows the common convention — identity on the left, state on the
--- right — so it reads the same way as lualine, mini.statusline or VS Code:
+-- Identity left, state right, as lualine and VS Code do:
 --
 --   NORMAL  lua/setup/git.lua  master* ⇡ +1 ~2 -3    E:1 W:2  lua_ls  lua  42% 15:8
 --
--- The repository symbols are the ones the zsh prompt and the Claude Code
--- statusline already use, so all three read alike.
---
--- Everything is cheap: the whole line costs tens of microseconds to render.
--- The two expensive calls are avoided — the path is cached per buffer, and the
--- search count is only computed while a search is highlighted.
+-- The two costly calls are avoided: the path is cached per buffer, the search
+-- count computed only while a search is lit.
 
 local M = {}
 
--- Narrow windows drop detail rather than wrap. Widest thresholds go first, so
--- the order here is the order things disappear as a split gets smaller.
+-- Narrow windows drop detail rather than wrap; widest first, so this is the
+-- order things disappear.
 local WIDE = { indent = 120, lsp = 100, hunks = 80 }
 
 local function wide_enough(what)
   return vim.api.nvim_win_get_width(0) >= WIDE[what]
 end
 
--- ── Colours ────────────────────────────────────────────────────────────────
--- Derived from the colourscheme rather than hardcoded, and rebuilt when it
--- changes. Mode blocks invert: a semantic foreground becomes the background,
--- with the editor's own background as the text colour.
+-- ── Colours ─────────────────────────────────────────────────────────────────
+-- Derived from the colourscheme, rebuilt when it changes. Mode blocks invert: a
+-- semantic fg becomes the bg, with the editor's bg as the text.
 
 local function hl(group, field)
   return vim.api.nvim_get_hl(0, { name = group, link = false })[field]
@@ -41,9 +31,8 @@ local function set_highlights()
   local bg = hl("StatusLine", "bg")
   local dark = hl("Normal", "bg")
 
-  -- Each mode needs a visibly different block, so the sources are picked to be
-  -- distinct hues in practice rather than by name alone. StatusLine's own
-  -- foreground stands in for Normal, which keeps the resting state calm.
+  -- Distinct hues in practice, not by name. StatusLine's own fg stands in for
+  -- Normal, keeping the resting state calm.
   local modes = {
     StatuslineNormal = hl("StatusLine", "fg"),
     StatuslineInsert = hl("String", "fg"),
@@ -56,9 +45,8 @@ local function set_highlights()
     vim.api.nvim_set_hl(0, name, { fg = dark, bg = colour, bold = true })
   end
 
-  -- Coloured by importance, as Pure does: the path is identity and the arrows
-  -- are the one thing asking you to act, so both take the accent. The branch
-  -- sits between them as context and keeps the statusline's own foreground.
+  -- By importance, as Pure does: path and arrows take the accent, the branch
+  -- sits between them as context.
   vim.api.nvim_set_hl(0, "StatuslineAccent", { fg = hl("Special", "fg"), bg = bg })
   vim.api.nvim_set_hl(0, "StatuslineAdd", { fg = hl("String", "fg"), bg = bg })
   vim.api.nvim_set_hl(0, "StatuslineChange", { fg = hl("DiagnosticWarn", "fg"), bg = bg })
@@ -69,7 +57,7 @@ end
 set_highlights()
 vim.api.nvim_create_autocmd("ColorScheme", { callback = set_highlights })
 
--- ── Components ─────────────────────────────────────────────────────────────
+-- ── Components ──────────────────────────────────────────────────────────────
 
 local MODES = {
   n = { "NORMAL", "StatuslineNormal" },
@@ -89,9 +77,8 @@ function M.mode()
   return ("%%#%s# %s %%*"):format(m[2], m[1])
 end
 
--- expand() and fnamemodify() are the costliest calls available here, and the
--- answer only changes when the file does, so it is computed on write and on
--- entering a buffer instead of on every redraw.
+-- The answer only changes when the file does, so it is computed on write and
+-- BufEnter rather than every redraw.
 local function refresh_path(buf)
   local name = vim.api.nvim_buf_get_name(buf)
   vim.b[buf].statusline_path = name ~= "" and vim.fn.fnamemodify(name, ":.") or ""
@@ -104,29 +91,21 @@ vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "BufFilePost" }, {
 function M.path()
   local p = vim.b.statusline_path
   if not p or p == "" then return "" end
-  -- Shorten to l/s/git.lua rather than let the path crowd out everything on
-  -- the right; 60 columns is roughly what the right-hand side needs.
+  -- Shorten rather than crowd out the right-hand side, which needs ~60.
   if #p > math.max(20, vim.api.nvim_win_get_width(0) - 60) then
     p = vim.fn.pathshorten(p)
   end
   return p
 end
 
--- ── Repository state ───────────────────────────────────────────────────────
--- The same symbols the zsh prompt (Pure) and the Claude Code statusline use,
--- so all three read alike:
+-- ── Repository state ────────────────────────────────────────────────────────
+-- The symbols the zsh prompt (Pure) and the Claude Code statusline use:
 --
 --   *  uncommitted changes     ⇡  ahead of upstream
 --   ⇣  behind upstream         and the name of any operation in progress
 --
--- Pure can also show ≡ for stashes, but only when opted into, and it is not
--- opted into here — a permanent stash pile would make it a constant.
---
--- These describe the repository, while the +~- counts alongside describe the
--- current file; the two answer different questions.
---
--- Git costs about 10ms per call, which is far too slow for a redraw, so this
--- runs asynchronously on events and the result is cached.
+-- These describe the repository; the +~- counts alongside describe the file.
+-- Git is far too slow for a redraw, so this is async and cached.
 
 local repo_state = {}
 
@@ -191,9 +170,8 @@ function M.repo()
   local st = d and d.root and repo_state[d.root]
   if not st then return "" end
 
-  -- Grouped as Pure groups them: the dirty marker qualifies the branch, so it
-  -- sits tight against it, while the upstream arrows are a separate fact and
-  -- take a space. Pure joins its prompt parts the same way.
+  -- As Pure groups them: the dirty marker qualifies the branch and sits tight
+  -- against it; the arrows are a separate fact and take a space.
   local out = ""
   if st.dirty then out = out .. "%#StatuslineDelete#*%*" end
 
@@ -220,9 +198,8 @@ function M.git()
   return out .. " "
 end
 
--- Bracketed, because the servers attached to a buffer are a different kind of
--- fact from the file's own properties beside them. The brackets do that work,
--- so the colour stays the same as the filetype and no new one is invented.
+-- Bracketed: servers are a different kind of fact from the file's own
+-- properties beside them, so no new colour is invented.
 function M.lsp()
   if not wide_enough("lsp") then return "" end
   local names = {}
@@ -265,15 +242,15 @@ function M.recording()
   return ("%%#StatuslineReplace# @%s %%*"):format(reg)
 end
 
--- Neovim's own diagnostic counts, lifted verbatim from the default statusline
--- so they keep whatever formatting a future version gives them.
+-- Verbatim from the default, so they keep whatever formatting a future version
+-- gives them.
 local DIAGNOSTICS = "%{% luaeval('(package.loaded[\"vim.diagnostic\"] "
   .. "and next(vim.diagnostic.count()) "
   .. "and vim.diagnostic.status() .. \" \") or \"\"') %}"
 
--- ── Assembly ───────────────────────────────────────────────────────────────
--- The default's own pieces are reused verbatim: %m %r modified and readonly,
--- the LSP progress and busy indicators, the diagnostic counts, and the ruler.
+-- ── Assembly ────────────────────────────────────────────────────────────────
+-- The default's own pieces verbatim: %m %r, LSP progress and busy, the
+-- diagnostic counts, the ruler.
 
 function M.render()
   return table.concat({

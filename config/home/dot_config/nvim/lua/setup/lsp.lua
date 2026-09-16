@@ -1,14 +1,9 @@
--- Language servers.
+-- 0.12 has it all built in: vim.lsp.config() adjusts, vim.lsp.enable() starts.
+-- nvim-lspconfig is on the runtimepath only so Neovim can read its lsp/
+-- definitions — never require()d, no on_attach plumbing, no mason.
 --
--- Neovim 0.12 has everything needed built in: vim.lsp.config() adjusts a
--- server, vim.lsp.enable() starts it when a matching file opens. nvim-lspconfig
--- is on the runtimepath purely so Neovim can read its lsp/ directory for the
--- stock definitions (cmd, filetypes, root markers) — it is never require()d,
--- and there is no framework, no on_attach plumbing, no mason.
---
--- Servers are installed with the system's own tools, so the same binary serves
--- the shell, CI and the editor, and nothing is pinned to a Neovim-only
--- install directory:
+-- Servers come from the system's own tools, so one binary serves shell, CI and
+-- editor:
 --     uv tool install ruff
 --     uv tool install basedpyright
 --     brew install lua-language-server
@@ -19,10 +14,9 @@ local M = {}
 local function have(exe) return vim.fn.executable(exe) == 1 end
 
 -- ── Python ──────────────────────────────────────────────────────────────────
--- pyright does not look for .venv on its own, which is the usual source of
--- phantom import errors. Resolve the interpreter per project instead. This runs
--- in before_init, where root_dir is already known, so two projects with
--- different virtualenvs both work in one session.
+-- pyright does not look for .venv itself, the usual source of phantom import
+-- errors. Resolved in before_init, where root_dir is known, so two projects
+-- with different virtualenvs work in one session.
 local function project_python(root)
   for _, dir in ipairs({ vim.env.VIRTUAL_ENV, vim.env.CONDA_PREFIX }) do
     if dir and vim.uv.fs_stat(dir .. "/bin/python") then
@@ -37,9 +31,8 @@ local function project_python(root)
   return nil
 end
 
--- basedpyright is a fork of pyright that ships its own Node inside the tool
--- venv, so it does not care which Node is on PATH. That matters when projects
--- pin different Node versions through nvm.
+-- Ships its own Node inside the tool venv, so it does not care which Node nvm
+-- has active.
 local pyright_settings = {
   before_init = function(_, config)
     local python = project_python(config.root_dir)
@@ -49,34 +42,29 @@ local pyright_settings = {
       })
     end
   end,
-  -- Nothing else to set: nvim-lspconfig already supplies cmd, filetypes, root
-  -- markers and diagnosticMode = "openFilesOnly".
+  -- nvim-lspconfig supplies cmd, filetypes, root markers and diagnosticMode.
 }
 
 vim.lsp.config("basedpyright", pyright_settings)
 vim.lsp.config("pyright", pyright_settings)
 
--- ruff runs alongside pyright by design: ruff lints and formats, pyright does
--- types. Both would offer hover, so ruff's is switched off below.
+-- ruff lints and formats, pyright does types. Both offer hover, so ruff's is
+-- switched off below.
 vim.lsp.config("ruff", {})
 
 -- ── Ruby ────────────────────────────────────────────────────────────────────
--- ruby-lsp needs Ruby >= 3.0, but it does not have to be the project's Ruby: it
--- re-execs with whichever interpreter launched it. So a legacy 2.x project is
--- analysed by a modern server.
+-- ruby-lsp needs Ruby >= 3.0, but not the PROJECT's Ruby: it re-execs with
+-- whichever interpreter launched it, so a modern server analyses a legacy 2.x
+-- project.
 --
--- The catch is Bundler. Normally ruby-lsp composes a bundle from the project's
--- Gemfile, which fails when that Gemfile pins `ruby "2.7.x"`. Pointing
--- BUNDLE_GEMFILE at a standalone Gemfile skips composition: the project's own
--- source is still indexed (definitions, references, completion across your
--- code), but its gems are not, so gem APIs do not autocomplete.
+-- The catch is Bundler, which refuses to compose a bundle from a Gemfile
+-- pinning `ruby "2.7.x"`. BUNDLE_GEMFILE at a standalone Gemfile skips
+-- composition: the project's own source is still indexed, its gems are not.
 --
--- Ruby 3 projects take the first branch and need nothing special. After the
--- migration the legacy branch is simply dead code.
+-- Ruby 3 takes the first branch; after the migration the legacy one is dead.
 
--- The newest Ruby >= 3 under rbenv that has ruby-lsp installed. Nothing is
--- pinned: install a newer Ruby, `gem install ruby-lsp` into it, and it is used.
--- Strict parsing so "jruby-9.x" is skipped rather than misread.
+-- Newest rbenv Ruby >= 3 with ruby-lsp installed. Nothing is pinned. Strict
+-- parsing, so "jruby-9.x" is skipped rather than misread.
 function M.modern_ruby_lsp()
   local best, best_v
   for _, path in ipairs(vim.fn.glob("~/.rbenv/versions/*/bin/ruby-lsp", true, true)) do
@@ -99,8 +87,8 @@ local function project_ruby_major(root)
   return tonumber((line or ""):match("^(%d+)"))
 end
 
--- An rbenv shim always exists as a file, so vim.fn.executable() says yes even
--- when rbenv cannot resolve it for this directory. Ask rbenv instead.
+-- A shim always exists as a file, so executable() says yes even when rbenv
+-- cannot resolve it here. Ask rbenv instead.
 local function shim_resolves(root)
   if vim.fn.executable("rbenv") == 0 then
     return vim.fn.executable("ruby-lsp") == 1
@@ -125,9 +113,9 @@ vim.lsp.config("ruby_lsp", {
           env = { BUNDLE_GEMFILE = RUBY_LSP_BUNDLE }
         end
       elseif major == nil and not shim_resolves(root) then
-        -- No .ruby-version to steer the shim, and the shim resolves to nothing
-        -- for this directory (rbenv global is commonly the system Ruby, which
-        -- is too old). Use the known-good interpreter rather than not starting.
+        -- No .ruby-version, and the shim resolves to nothing here (rbenv
+        -- global is commonly the too-old system Ruby). Use the known-good one
+        -- rather than not starting.
         exe = RUBY_LSP_MODERN
       end
     end
@@ -135,17 +123,17 @@ vim.lsp.config("ruby_lsp", {
     return vim.lsp.rpc.start({ exe }, dispatchers, { cwd = root, env = env })
   end,
   init_options = {
-    -- Uses the project's own rubocop and .rubocop.yml, so the editor and CI
-    -- agree. Only reachable when the server shares the project's bundle, i.e.
-    -- on Ruby 3.x; setup/git.lua's :make path covers the 2.x case.
+    -- The project's own rubocop and .rubocop.yml, so editor and CI agree.
+    -- Only reachable when the server shares the bundle (Ruby 3.x);
+    -- setup/git.lua's :make path covers 2.x.
     formatter = "auto",
   },
 })
 
 -- ── Lua ─────────────────────────────────────────────────────────────────────
--- lazydev supplies the Neovim API types, so no workspace library is needed.
--- The `vim` global still has to be declared here: lazydev types the module,
--- it does not stop lua_ls treating a bare `vim` as undefined.
+-- lazydev supplies the API types, so no workspace library. `vim` still has to
+-- be declared: lazydev types the module, it does not stop lua_ls calling a bare
+-- `vim` undefined.
 vim.lsp.config("lua_ls", {
   settings = {
     Lua = {
@@ -155,10 +143,9 @@ vim.lsp.config("lua_ls", {
   },
 })
 
--- ── Enable whatever this machine can actually run ───────────────────────────
+-- ── Enable what this machine can run ────────────────────────────────────────
 local servers = {}
--- basedpyright first: it bundles its own Node, so it is immune to whichever
--- version nvm has active. Only one type checker should run at a time.
+-- basedpyright first, and only one type checker at a time.
 if have("basedpyright") then
   table.insert(servers, "basedpyright")
 elseif have("pyright") then
@@ -173,12 +160,9 @@ if #servers > 0 then
   vim.lsp.enable(servers)
 end
 
--- Floating windows get a border. Without one the text runs straight into the
--- buffer behind it and reads as corruption; the border also gives the content
--- a column of breathing room on each side.
---
--- Square borders, matching the file browser and the cheatsheet. keymaps.lua
--- binds Esc to close these.
+-- Without a border the text runs into the buffer behind it and reads as
+-- corruption. Square, matching the file browser and cheatsheet; keymaps.lua
+-- binds Esc to close.
 local float = { border = "single", max_width = 80 }
 
 vim.lsp.buf.hover = (function(orig)
@@ -194,8 +178,8 @@ vim.api.nvim_create_autocmd("LspAttach", {
     local client = vim.lsp.get_client_by_id(args.data.client_id)
     if not client then return end
 
-    -- Completion from the language server, feeding Neovim's own popup menu.
-    -- <C-y> accepts and applies side effects: snippet expansion, auto-imports.
+    -- Feeds Neovim's own popup menu. <C-y> accepts and applies side effects:
+    -- snippet expansion, auto-imports.
     if client:supports_method("textDocument/completion") then
       vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
     end
@@ -205,17 +189,16 @@ vim.api.nvim_create_autocmd("LspAttach", {
       client.server_capabilities.hoverProvider = false
     end
 
-    -- Folds from the language server where it offers them: it knows an import
-    -- block or a region comment is one thing, which treesitter cannot see.
-    -- Treesitter stays the default everywhere else (set in options.lua).
+    -- Where the server offers them: it knows an import block or a region
+    -- comment is one thing, which treesitter cannot see. Treesitter stays the
+    -- default elsewhere (options.lua).
     if client:supports_method("textDocument/foldingRange") then
       for _, win in ipairs(vim.fn.win_findbuf(args.buf)) do
         vim.wo[win][0].foldexpr = "v:lua.vim.lsp.foldexpr()"
       end
     end
 
-    -- Highlight other uses of the symbol under the cursor. The autocommands
-    -- are buffer-local, so they die with the buffer and need no cleanup.
+    -- Buffer-local, so they die with the buffer and need no cleanup.
     if client:supports_method("textDocument/documentHighlight") then
       vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
         buffer = args.buf,
