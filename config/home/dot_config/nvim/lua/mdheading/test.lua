@@ -18,6 +18,12 @@
 -- with no main loop, insert mode cannot be entered. The first is checked as
 -- the extmarks themselves, the second through the gate that decides whether to
 -- place them, with mode() stubbed.
+--
+-- Which is why torture.md, next to this file, is the other half of the suite:
+-- open it in a real editor and look. Whether six shades actually read as six is
+-- not a thing any assertion here can answer — the contrast numbers below are a
+-- floor, not a verdict, and collapsing the ramp to four levels came from
+-- A/B-ing that file rather than from anything red.
 
 vim.opt.rtp:prepend(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h:h"))
 vim.cmd("set termguicolors")

@@ -15,6 +15,11 @@
 -- was right rather than whether anything was drawn, and passed 109 green while
 -- the plugin painted nothing at all. `nvim -l` attaches no UI, so screenstring()
 -- cannot tell the difference; the marks can.
+--
+-- Which is why torture.md, next to this file, is the other half of the suite:
+-- open it in a real editor and look. Wide characters, tabs and a cell wider
+-- than the window are all things these checks measure but nobody here can see,
+-- and the last two bugs in those came from reading it, not from a red suite.
 
 vim.opt.rtp:prepend(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h:h"))
 

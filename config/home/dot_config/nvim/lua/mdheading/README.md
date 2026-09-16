@@ -234,6 +234,12 @@ attached, so nothing is painted, and insert mode cannot be entered without a
 main loop. Both are checked at the layer below — the marks themselves, and the
 gate that decides whether to place them.
 
+Which leaves `torture.md`, the manual half: sixteen sections and about a
+hundred heading-shaped lines, 64 of which should be tinted and the rest
+deliberately not. It exists because the question this plugin actually has to
+answer — whether the levels read apart at a glance — is one no assertion can
+settle. The ramp was cut from six shades to four by looking at that file.
+
 ## Design notes
 
 `DESIGN.md`, next to this file, is why it is built this way: how the colour ramp

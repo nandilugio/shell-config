@@ -238,6 +238,12 @@ attached, and insert mode cannot be entered without a main loop. Both are
 checked at the layer below — the marks themselves, and the gate that decides
 whether to place them.
 
+Which leaves `torture.md`, the manual half: twenty numbered cases to open in a
+real editor and read down, covering what the automated checks measure but
+cannot see — wide characters, tabs, a cell wider than the window, and the
+things at the end that must *not* be padded. Both bugs found since the suite
+went green came from reading it.
+
 ## Design notes
 
 `DESIGN.md`, next to this file, is why it is built this way: the plugins it was
