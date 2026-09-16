@@ -233,6 +233,10 @@ M.maps = {
   -- anything, so there was no letter to borrow. On by default for markdown, so
   -- this is the way out when the padding is in the way.
   { "<leader>um", function() require("mdtable").toggle() end, desc = "Markdown table alignment" },
+  -- Capital H because <leader>uh is inlay hints. Both markdown toggles sit
+  -- under <leader>u for the same reason: they are display layers over a file
+  -- neither one changes.
+  { "<leader>uH", function() require("mdheading").toggle() end, desc = "Markdown heading colours" },
 
   -- ── Buffers and windows ─────────────────────────────────────────────────
   -- <C-hjkl> for windows deliberately mirrors tmux's M-hjkl for panes: two

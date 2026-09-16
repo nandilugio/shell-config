@@ -89,13 +89,21 @@ thing:
 | `which-key` | shows what a prefix contains |
 | `vimwiki` | notes |
 
-One is local rather than installed: `lua/mdtable` aligns markdown tables that
-nobody padded — on screen by default (the file is untouched), and in the buffer
-on `,t`. No dependencies, and no opinion about filetypes: `init.lua` passes the
-list in. It has its own `README.md`; `docs/decisions.md` says why it is not
-`render-markdown`.
+Two are local rather than installed, both display layers over markdown that
+leave the file alone:
 
-    nvim -l lua/mdtable/test.lua    # its tests, no framework needed
+- `lua/mdtable` aligns tables nobody padded — on screen by default, and in the
+  buffer on `,t`.
+- `lua/mdheading` tints heading lines by depth, strongest at `#`, so the visual
+  weight stops running backwards from the semantic weight. The colour is
+  derived from the current scheme, not configured.
+
+Neither has dependencies, and neither has an opinion about filetypes:
+`init.lua` passes the list in. Each has its own `README.md`;
+`docs/decisions.md` says why they are not `render-markdown`.
+
+    nvim -l lua/mdtable/test.lua      # their tests, no framework needed
+    nvim -l lua/mdheading/test.lua
 
 ### Not installed, and why
 

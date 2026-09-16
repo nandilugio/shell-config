@@ -125,6 +125,15 @@ All letters below are LazyVim/AstroNvim-identical (the only 7 they agree on).
 | `<leader>ub` | **B**ackground |
 | `<leader>ul` | **L**ine numbers |
 
+Two more are ours, not shared conventions — nothing else here renders anything,
+so there was no letter to borrow. Both are display layers over markdown, both
+on by default, so these are the way out when one is in the way:
+
+| Key | Action |
+|---|---|
+| `<leader>um` | **M**arkdown table alignment (`lua/mdtable`) |
+| `<leader>uH` | Markdown **h**eading colours (`lua/mdheading`) — capital, since `uh` is inlay hints |
+
 Optional companion: tpope's `yo<x>` — 2 keystrokes, free namespace.
 Mnemonic (verbatim): "The mnemonic for y is that if you tilt it a bit it looks like a switch."
 Tradeoff: faster to type, invisible to which-key. `<leader>u` optimizes discovery, `yo` optimizes speed.
