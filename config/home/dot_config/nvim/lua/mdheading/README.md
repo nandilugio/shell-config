@@ -233,3 +233,9 @@ Two things `nvim -l` cannot reach, so the tests stop one step short: no UI is
 attached, so nothing is painted, and insert mode cannot be entered without a
 main loop. Both are checked at the layer below — the marks themselves, and the
 gate that decides whether to place them.
+
+## Design notes
+
+`DESIGN.md`, next to this file, is why it is built this way: how the colour ramp
+was derived and measured, why it ends at four distinct levels, and the levers
+that were measured and rejected on the way there.

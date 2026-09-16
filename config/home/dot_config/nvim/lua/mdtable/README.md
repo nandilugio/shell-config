@@ -237,3 +237,9 @@ Two things `nvim -l` cannot reach, so the tests stop one step short of them:
 attached, and insert mode cannot be entered without a main loop. Both are
 checked at the layer below — the marks themselves, and the gate that decides
 whether to place them.
+
+## Design notes
+
+`DESIGN.md`, next to this file, is why it is built this way: the plugins it was
+measured against, the detection and width decisions, the performance numbers,
+and the bugs that shaped the current wiring.
