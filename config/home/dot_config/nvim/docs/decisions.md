@@ -438,7 +438,9 @@ COLOUR IS DERIVED, NOT CONFIGURED — and the derivation was MEASURED, not assum
     read as nothing. A genuinely coloured source is required: the list is
     @markup.heading.1, @markup.heading, Directory, Function, Special, Title, and the
     first NON-GREY one wins (grey = max channel - min channel < 24).
-  * Blend range 0.62-0.92 toward Normal's bg, linear, six steps.
+  * FINAL: blend range 0.50-0.92 toward Normal's bg, linear, over 4 distinct levels.
+    The road there is below, kept because each step rejected something that looked
+    obvious, and the last entry is the one that settled it.
     REVISED 2026-09-16 after the user tried it: first shipped 0.70-0.92, which worked but
     the user asked for "more difference between shades" — levels 2-5 were hard to separate
     at a 9-unit step. The fix was NOT simply a wider range, and the measurement is the
@@ -472,6 +474,45 @@ COLOUR IS DERIVED, NOT CONFIGURED — and the derivation was MEASURED, not assum
     REGRESSION TEST: saturation must fall monotonically with the level.
     NOTE the distance-from-background invariant still holds, so the pre-existing
     "six distinct shades, fading in order" check passes unmodified.
+  * FINAL ROUND 2026-09-16, same session, settled by A/B-ing on real files.
+    Two axes still read as too similar in use, so we measured every remaining lever
+    rather than guessing which would help:
+      white mixed into the top levels   +0.4 units of separation for -0.3 contrast.
+                                        REJECTED: white raises luminance, so it hits the
+                                        SAME readability cap as brightness. Same axis
+                                        wearing a different hat — which is exactly the
+                                        trap the earlier "just widen the range" was.
+      front-loaded curve (t^0.55)       steps 25,14,10,7,6 against a flat 12. REJECTED:
+                                        moves separation to where it was already adequate
+                                        and starves the deep levels.
+      fewer distinct levels             THE ONLY LEVER THAT WORKED. A bounded range over
+                                        fewer steps makes each step bigger. No contrast
+                                        cost, no extra code — a smaller divisor.
+    Smallest gap between adjacent shades, default scheme, all at 0.50:
+      6 levels 16    5 levels 21    4 levels 27    (was 12 at 0.62/6)
+    LANDED ON BLEND_FIRST=0.50 with DISTINCT_LEVELS=4.
+    0.50 puts h1 at 3.1:1 — over WCAG's 3:1 for BOLD text, which heading text is, but
+    under the 4.5:1 that 0.62 was chosen for. The user A/B'd 0.62 -> 0.55 -> 0.50 on real
+    files and on three schemes before choosing; this is a judgment call made by looking,
+    not a threshold met. Recorded as such.
+    THE COST, stated plainly: #### ##### and ###### are ONE shade. #### is common enough
+    to miss. Accepted because a distinction too fine to see is not a distinction.
+    DISTINCT_LEVELS trades it back with no other change.
+    TWO SCHEMES GO UNDER 3:1 at this setting: catppuccin 2.6, retrobox 2.7 — their accent
+    is lighter against their background, so the same blend lands brighter. The user looked
+    at both ("works less nicely but works") and accepted it.
+    HOW THE TEST HANDLES THAT, because this is the part worth getting right: the two are
+    named in a KNOWN_TOO_BRIGHT list with the measured value, not deleted from the check.
+    Any scheme NOT on the list still fails under 3:1, and a listed one fails if it gets
+    WORSE than what was accepted (0.15 tolerance). Verified it still has teeth: passes at
+    0.50, fails at 0.42 (default 2.5) and 0.35 (default 2.1). An allowance for a known
+    amount, not a blank cheque.
+    THE PRINCIPLED FIX, not taken: derive the cap per scheme by searching for the
+    brightest blend that clears the threshold against THAT scheme's own fg and bg. ~10
+    lines, deletes BLEND_FIRST as a magic number and replaces it with a contrast TARGET,
+    and every theme would land at its own maximum instead of the global minimum. Deferred
+    because the hardcoded value is good on the scheme in use and the complexity is not yet
+    earned. This is the first thing to reach for if a scheme ever looks wrong.
   * Verified across every bundled scheme: default teal, catppuccin blue, retrobox olive,
     sorbet green, unokai/habamax muted, quiet greys (correctly — it is monochrome).
     Recomputed on ColorScheme; the marks name groups, not colours, so that is enough.

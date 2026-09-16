@@ -5,16 +5,17 @@
 -- weight, and in a long file headings are hard to pick out at all.
 --
 -- So: a background colour on the heading line, strongest at level 1 and
--- fading to level 6. Depth reads at a glance, and headings become landmarks
--- while scrolling. The file is untouched — this is display only, one extmark
--- per heading line carrying line_hl_group.
+-- fading as it goes deeper. Depth reads at a glance, and headings become
+-- landmarks while scrolling. The file is untouched — this is display only,
+-- one extmark per heading line carrying line_hl_group.
 --
 -- The colour is derived, not configured. The six @markup.heading.N groups are
 -- identical in most schemes (they are in Neovim's default: same fg, same
 -- bold), so there is no existing ordered scale to read — a ramp has to be
--- computed. One source colour is blended toward the Normal background in six
--- steps, and the whole ramp is recomputed on ColorScheme, so changing scheme
--- changes the headings with it.
+-- computed. One source colour is blended toward the Normal background, and the
+-- whole ramp is recomputed on ColorScheme, so changing scheme changes the
+-- headings with it. See "Colour" for what bounds the ramp and why the deepest
+-- levels share a shade.
 --
 -- Headings are found by scanning lines, not parsing, for the same reason
 -- mdtable does it: the syntax is regular, and a line scan works on a machine
@@ -88,30 +89,51 @@ end
 
 -- ── Colour ──────────────────────────────────────────────────────────────────
 
--- The ramp moves along TWO axes at once, because one is not enough to tell six
--- levels apart.
+-- Three numbers, each settled by looking at real files rather than by taste.
+-- What they trade against each other is the whole design, so: separation
+-- between levels is bounded, and every way of buying more costs something.
 --
--- Brightness: the fraction of background mixed in, level 1 least. Its top is
--- not a taste call — a heading line still has text on it, drawn in Normal's
--- foreground, so the tint may not get bright enough to swallow it. 0.62 is the
--- brightest blend that keeps that text at WCAG AA (4.5:1) in the default
--- scheme, and past it things degrade fast: 0.45 drops level 1 to 2.7:1, which
--- is unreadable. So the brightness range is capped at both ends, which limits
--- how far apart six levels can be pushed on it alone.
+-- BRIGHTNESS — how much background is mixed in, level 1 least. Both ends are
+-- pinned. The bottom is the background itself; the top is that a heading line
+-- still has TEXT on it, drawn in Normal's foreground, so the tint may not get
+-- bright enough to swallow it. In the default scheme 0.62 is where that text
+-- sits at WCAG AA (4.5:1) and 0.50 is where it reaches 3.1:1 — AA's threshold
+-- for bold text, which heading text is. Below that it stops being readable
+-- rather than merely tight.
 --
--- Saturation: level 1 keeps the source colour, and each level after it is
--- mixed further toward its own grey, until level 6 is nearly neutral. This is
--- free — desaturating preserves luminance, so contrast is untouched — and it
--- is a signal the eye reads separately from brightness. Saturation falls 45
--- to 6 instead of 45 to 15, so "vividly teal" and "almost grey" become another
--- way to tell a level apart, and depth reads as colour draining away rather
--- than as six samples of one colour.
+-- SATURATION — level 1 keeps the source colour, and each level is mixed
+-- further toward its own grey. This one is free: desaturating preserves
+-- luminance, so it costs no contrast at all, and the eye reads hue separately
+-- from brightness. Colour draining away is a second signal on top of darkness.
 --
--- For scale, in that scheme CursorLine sits 24 units from the background and
--- Visual 60: level 1 lands past Visual, level 4 near it, level 6 below
--- CursorLine but still present.
-local BLEND_FIRST, BLEND_LAST = 0.62, 0.92
+-- COUNT — levels past DISTINCT_LEVELS share its shade. A bounded range over
+-- fewer steps makes each step bigger, which is the only lever that actually
+-- moved the needle. Measured in the default scheme, smallest gap between
+-- adjacent shades:
+--
+--     6 levels at 0.62    12      the first version; too close to read
+--     6 levels at 0.50    16
+--     5 levels at 0.50    21
+--     4 levels at 0.50    27      <- here
+--
+-- Two things that look like they should help and do not, both measured before
+-- being rejected: mixing white into the top levels raises luminance, so it hits
+-- the same readability cap for +0.4 units of separation at a cost of 0.3 in
+-- contrast; and front-loading the curve only starves the deep levels that had
+-- least room already (25,14,10,7,6 against a flat 12).
+--
+-- The cost here is that ####, ##### and ###### are one shade. That is a real
+-- loss — #### is common enough — accepted because a distinction too fine to
+-- see is not a distinction, and three unmistakable levels beat six blurred
+-- ones. Raise DISTINCT_LEVELS to 5 or 6 to trade it back; nothing else needs
+-- to change.
+--
+-- For scale, in the default scheme CursorLine sits 24 units from the
+-- background and Visual 60: level 1 lands well past Visual, level 2 near it,
+-- level 4 below CursorLine but still present.
+local BLEND_FIRST, BLEND_LAST = 0.50, 0.92
 local DESATURATE_LAST = 1.0
+local DISTINCT_LEVELS = 4
 
 -- Groups tried in order for the source colour. The heading groups come first
 -- so a scheme that does colour its headings is honoured, but in schemes where
@@ -164,7 +186,10 @@ local function define_highlights()
   local sr, sg, sb = rgb(src)
   local br, bgr, bb = rgb(bg)
   for level = 1, 6 do
-    local t = (level - 1) / 5
+    -- Levels past DISTINCT_LEVELS share its shade, which is what buys the
+    -- others their separation: the same range over fewer steps makes each
+    -- step bigger.
+    local t = (math.min(level, DISTINCT_LEVELS) - 1) / (DISTINCT_LEVELS - 1)
 
     -- Toward this colour's own grey, which is its luminance: mixing toward
     -- that rather than toward a fixed grey is what leaves brightness alone.

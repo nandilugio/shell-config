@@ -7,7 +7,7 @@ while meaning less. The visual weight runs backwards from the semantic weight,
 and in a long or messy file headings are hard to pick out at all.
 
 mdheading puts a background colour on each heading line — strongest at level 1,
-fading to level 6:
+fading as it goes deeper:
 
 ```markdown
 # Chapter          ← strongest tint
@@ -27,15 +27,15 @@ terminal supports it).
 ## The colour is derived, not configured
 
 There is nothing to pick. mdheading takes one colour from your colourscheme and
-blends it toward your `Normal` background in six steps, so the headings belong
-to whatever theme you are using:
+blends it toward your `Normal` background, so the headings belong to whatever
+theme you are using:
 
-| scheme | level 1 → level 6 |
+| scheme | level 1 → level 4 |
 |---|---|
-| `default` | teal, `#426c6f` → `#24252a` |
-| `catppuccin` | blue, `#47577c` → `#2a2a38` |
-| `retrobox` | olive, `#575820` → `#272727` |
-| `sorbet` | green, `#416139` → `#22242d` |
+| `default` | teal, `#508789` → `#24252a` |
+| `catppuccin` | blue, `#546994` → `#2a2a38` |
+| `retrobox` | olive, `#6a6c21` → `#272727` |
+| `sorbet` | green, `#4f7840` → `#22242d` |
 
 The ramp is recomputed on `ColorScheme`, so switching theme switches the
 headings with it.
@@ -52,27 +52,48 @@ trying `@markup.heading.1`, `@markup.heading`, `Directory`, `Function`,
 `Special` and `Title` in turn. A monochrome scheme such as `quiet` correctly
 gets greys, because that is what it has.
 
-**The ramp moves along two axes**, because one is not enough to tell six levels
-apart. Each level is both darker *and* less saturated than the one above, so
-level 1 is vividly coloured and level 6 is nearly neutral grey — depth reads as
-colour draining away, not as six samples of one colour.
+**The ramp moves along two axes.** Each level is both darker *and* less
+saturated than the one above, so level 1 is vividly coloured and the faintest
+is nearly neutral grey — depth reads as colour draining away, not as samples of
+one colour.
 
-The second axis is there because the first is capped. **How bright level 1 gets
-is not a taste call:** a heading line still has text on it, so the tint may not
-get bright enough to swallow it. Level 1 sits at the brightest blend that keeps
-heading text at WCAG AA (4.5:1) in the default scheme, and past that it
-degrades fast — one step further drops it to 3.6:1, and a little beyond that to
-2.7:1, which is genuinely hard to read. With brightness pinned at both ends,
-saturation is what buys the remaining separation, and it is free: desaturating
-preserves luminance, so it costs no contrast at all.
+The second axis is there because the first is capped at both ends. The bottom
+is the background itself; the top is that **a heading line still has text on
+it**, so the tint may not get bright enough to swallow it. In the default
+scheme level 1 sits at 3.1:1 against the heading text — over the 3:1 threshold
+WCAG sets for bold text, which heading text is, but without much room. With
+brightness pinned, saturation buys the rest for free: desaturating preserves
+luminance, so it costs no contrast at all.
 
-Verified on every bundled scheme: the worst level anywhere is 3.4:1
-(`catppuccin`), still above the 3:1 threshold for bold text, which headings
-are. There is a regression test for it, so widening the range later fails the
-suite rather than quietly making headings unreadable.
+**`####` and deeper share one shade**, which is what makes the rest legible.
+Six shades over this range land about 12 units apart, and in use that is too
+close to tell at a glance. Nothing widens the range — mixing white into the top
+raises luminance and so hits the same readability cap, and front-loading the
+curve only starves the deep levels that had least room already. Dividing it
+into fewer parts does work:
+
+| distinct levels | smallest gap between shades |
+|---|---|
+| 6 | 16 |
+| 5 | 21 |
+| **4** | **27** |
+
+Four is the setting here, chosen by looking at real files rather than at the
+table. The cost is real — `####` is common enough to miss — but a distinction
+too fine to see is not a distinction, and three unmistakable levels beat six
+blurred ones. `DISTINCT_LEVELS` in `init.lua` trades it back; nothing else
+needs to change.
+
+**Two bundled schemes go under the threshold** at this brightness:
+`catppuccin` at 2.6:1 and `retrobox` at 2.7:1, because their accent is lighter
+against their background, so the same blend lands brighter. They are named in
+the test rather than quietly excused, so the check still fails for any scheme
+not on that list. If you use one of them and it bothers you, raise
+`BLEND_FIRST` to 0.55 — every bundled scheme clears 3:1 there (the worst
+becomes 3.6:1), at a cost of about 6 units of separation.
 
 For scale, in the default scheme `CursorLine` sits 24 units from the background
-and `Visual` 60: level 1 lands past `Visual`, level 4 near it, and level 6
+and `Visual` 60: level 1 lands well past `Visual`, level 2 near it, and level 4
 below `CursorLine` but still present.
 
 To override a level, set the group after your colourscheme loads. They are
