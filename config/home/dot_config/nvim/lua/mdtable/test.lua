@@ -7,13 +7,14 @@
 --
 -- Detection is tested through scan() and cells(), where "how many tables" and
 -- "how many cells" are the natural questions. Everything else goes through the
--- public surface: align() on a scratch buffer, and the padding as it lands on
--- screen, because the screen is the only place buffer text and virtual text are
--- combined — a wrong width shows up there as a crooked pipe, not an error.
+-- public surface: align() on a scratch buffer, and the padding by reading back
+-- the extmarks actually placed and applying them to the buffer's own text — a
+-- wrong width shows up as a crooked pipe, not an error.
 --
--- The padding is drawn per frame and never stored, so there are no extmarks to
--- count between redraws: "is it rendered" is answered by looking at the screen,
--- which is also the only honest question to ask of a decoration provider.
+-- Read back, never recomputed. An earlier suite asked whether the arithmetic
+-- was right rather than whether anything was drawn, and passed 109 green while
+-- the plugin painted nothing at all. `nvim -l` attaches no UI, so screenstring()
+-- cannot tell the difference; the marks can.
 
 vim.opt.rtp:prepend(vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h:h"))
 

@@ -26,12 +26,12 @@
 -- what follows: a column is never narrower than any cell already is, and
 -- whitespace the author wrote counts towards the padding.
 --
--- The padding is drawn, not stored. Neovim asks this module what to put on each
--- window's visible lines as it redraws them, and the answer is thrown away
--- afterwards — see "Drawing" at the bottom. That is what keeps it honest: there
--- is no saved state to go stale when 'tabstop' changes, when another window
--- edits the buffer, or when insert mode is left in a way that fires no
--- autocommand. Every frame is computed from the buffer as it is right then.
+-- The padding is stored extmarks, placed for the whole buffer and replaced when
+-- something that could change them happens. Drawing it per frame instead would
+-- be tidier — nothing kept, so nothing to go stale — but is not available here:
+-- an ephemeral mark cannot carry inline virtual text. So the state is stored,
+-- and everything that can stale it has to be caught. "Drawing" at the bottom
+-- lists those events and why each one is there.
 --
 -- Tables are found by scanning lines, not parsing. The syntax is regular enough
 -- that a parser would add only code-block awareness, which scan() covers by
