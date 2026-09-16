@@ -89,6 +89,12 @@ ih              the hunk as a text object: dih, yih
 
 uw wrap · us spell · ul line numbers · ur relative numbers · ub light/dark
 uh inlay hints       ud diagnostics: all → warnings+errors → errors → off
+um markdown table alignment (on by default for markdown)
+
+
+## Filetype — <LocalLeader> = ,
+
+,t  pad the markdown table under the cursor, for real (edits the buffer)
 
 
 ## Own — <leader>o

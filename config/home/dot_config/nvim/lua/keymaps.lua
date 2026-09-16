@@ -34,6 +34,7 @@ M.groups = {
   { "<leader>b", "buffer" },
   { "<leader>o", "own" }, -- reserved: no plugin or convention may claim it
   { "<leader>x", "lists" },
+  { "<LocalLeader>", "filetype" },
 
   -- Built-in prefixes. Not ours, but the popup is where you look when you
   -- have forgotten what lives under them.
@@ -228,6 +229,10 @@ M.maps = {
     function() vim.o.background = vim.o.background == "dark" and "light" or "dark" end,
     desc = "Background",
   },
+  -- The eighth letter, and not a shared convention: nothing else here renders
+  -- anything, so there was no letter to borrow. On by default for markdown, so
+  -- this is the way out when the padding is in the way.
+  { "<leader>um", function() require("mdtable").toggle() end, desc = "Markdown table alignment" },
 
   -- ── Buffers and windows ─────────────────────────────────────────────────
   -- <C-hjkl> for windows deliberately mirrors tmux's M-hjkl for panes: two
@@ -287,6 +292,13 @@ M.maps = {
   { "<leader>oD", "<Cmd>VimwikiDiaryIndex<CR>", desc = "Wiki diary index", needs = "cmd:VimwikiDiaryIndex" },
   { "<leader>oh", function() require("setup.cheatsheet").open() end, desc = "Cheatsheet" },
   { "<leader>oa", function() require("setup.autosave").toggle() end, desc = "Autosave on/off" },
+
+  -- ── Filetype actions: <LocalLeader> ─────────────────────────────────────
+  -- Mapped globally rather than per-filetype: applying these is setup/keymaps'
+  -- job, and it has no ft field. The cost of that is that they must no-op
+  -- where they do not apply, which mdtable.align() does — outside a markdown
+  -- table there is nothing under the cursor to pad, and it returns silently.
+  { "<LocalLeader>t", function() require("mdtable").align() end, desc = "Align markdown table" },
 
   -- ── Odds and ends ───────────────────────────────────────────────────────
   -- One key for "dismiss whatever is in the way": a hover or diagnostic float

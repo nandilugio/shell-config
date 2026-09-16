@@ -89,6 +89,14 @@ thing:
 | `which-key` | shows what a prefix contains |
 | `vimwiki` | notes |
 
+One is local rather than installed: `lua/mdtable` aligns markdown tables that
+nobody padded — on screen by default (the file is untouched), and in the buffer
+on `,t`. No dependencies, and no opinion about filetypes: `init.lua` passes the
+list in. It has its own `README.md`; `docs/decisions.md` says why it is not
+`render-markdown`.
+
+    nvim -l lua/mdtable/test.lua    # its tests, no framework needed
+
 ### Not installed, and why
 
 **No plugin manager.** `vim.pack` is built in and writes a committed lockfile.

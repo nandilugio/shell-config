@@ -165,7 +165,7 @@ Caveat: JetBrains is the systematic outlier (`F2`=next error, `F7`/`F8`=step).
 | Key | Purpose | Why |
 |---|---|---|
 | `<leader>o` | **Yours alone** | 🟨 Spacemacs' best convention: guaranteed never to collide |
-| `<LocalLeader>`=`,` | Filetype-specific | 🟨 Spacemacs `SPC m`. Home for Ruby/markdown/vimwiki keys |
+| `<LocalLeader>`=`,` | Filetype-specific | 🟨 Spacemacs `SPC m`. Home for Ruby/markdown/vimwiki keys. First occupant: `,t` align markdown table |
 | `-` | **leave free** | 🟨 nvim 0.13's builtin explorer claims it (guards politely) |
 | `g`+new letters | **don't extend** | ⚠️ crowded with real vim commands |
 
