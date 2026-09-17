@@ -64,6 +64,12 @@ overrides both). They include pane contents — whatever was on screen — so:
 mkdir -p ~/.local/share/tmux/resurrect && chmod 700 ~/.local/share/tmux/resurrect
 ```
 
+Don't start a session name with `%`: that is tmux's pane-id sigil, so a target
+like `-t '% Planning:1'` is read as a pane id and never resolves. Resurrect
+creates the session but then fails to split its panes, restoring only the
+first one of each window. Prefix with `#` instead, or pass `=` to force an
+exact name match.
+
 ## Linux
 
 ### Gnome shell
