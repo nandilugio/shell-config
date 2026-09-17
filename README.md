@@ -37,6 +37,33 @@ g profile-pers
 popd
 ```
 
+### tmux
+
+Config is XDG: `config/home/dot_config/tmux` links to `~/.config/tmux`. Don't
+also keep a `~/.tmux.conf` — tmux 3.1+ loads both if both exist.
+
+Plugins are third-party checkouts, referenced from `tmux.conf` and guarded by
+`if-shell`, so a missing one is simply skipped:
+
+```sh
+git clone https://github.com/tmux-plugins/tmux-resurrect ~/Projects/thirds/tmux-resurrect
+
+# Optional, currently not installed:
+git clone https://github.com/Morantron/tmux-fingers ~/Projects/thirds/tmux-fingers
+```
+
+Resurrect saves with `prefix + Ctrl-s` and restores with `prefix + Ctrl-r`. It
+also restores the `claude --resume <id>` command into each pane that was
+running Claude Code (typed, not executed; see `bin/n.tmux-claude-sessions-*`).
+
+Its saves go to resurrect's default dir, `~/.local/share/tmux/resurrect`
+(it switches to `~/.tmux/resurrect` if that directory exists; `@resurrect-dir`
+overrides both). They include pane contents — whatever was on screen — so:
+
+```sh
+mkdir -p ~/.local/share/tmux/resurrect && chmod 700 ~/.local/share/tmux/resurrect
+```
+
 ## Linux
 
 ### Gnome shell

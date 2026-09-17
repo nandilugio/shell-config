@@ -1,0 +1,60 @@
+#!/bin/bash
+# Map tmux panes to the Claude Code sessions running in them.
+#
+# Run as tmux-resurrect's post-save-layout hook. Claude records no tty or pid
+# in its transcripts, so the pane->session link only exists while the process
+# is alive: we read CLAUDE_CODE_SESSION_ID from each live process's
+# environment and join to panes on tty.
+#
+# Writes "<session>:<window>.<pane>\t<session-id>\t<cwd>" beside the state file.
+#
+# Kept to bash 3.2 (no associative arrays): macOS ships only that.
+
+set -uo pipefail
+
+resurrect_file="${1:-}"
+if [ -z "$resurrect_file" ]; then
+	echo "usage: $(basename "$0") <resurrect-state-file>" >&2
+	exit 1
+fi
+
+# Process environment, one VAR=value per line. Empty if unreadable.
+process_env() {
+	local pid="$1"
+	case "$(uname -s)" in
+		Darwin) ps -p "$pid" -Eww -o command= 2>/dev/null | tr ' ' '\n' ;;
+		Linux)  tr '\0' '\n' < "/proc/$pid/environ" 2>/dev/null ;;
+	esac
+}
+
+# "<tty> <session-id>" for every live Claude process.
+claude_sessions_by_tty() {
+	local pid sid tty
+	while read -r pid; do
+		[ -n "$pid" ] || continue
+		sid="$(process_env "$pid" | grep -m1 '^CLAUDE_CODE_SESSION_ID=' | cut -d= -f2-)"
+		[ -n "$sid" ] || continue
+		tty="$(ps -p "$pid" -o tty= 2>/dev/null | tr -d ' ')"
+		[ -n "$tty" ] && [ "$tty" != "??" ] || continue
+		printf '%s %s\n' "$tty" "$sid"
+	done < <(pgrep -u "$USER" -f 'claude|node' 2>/dev/null)
+}
+
+map_file="$(dirname "$resurrect_file")/claude_sessions.txt"
+
+tmpfile="$(mktemp "${TMPDIR:-/tmp}/claude_sessions.XXXXXX")" || exit 1
+trap 'rm -f "$tmpfile"' EXIT
+chmod 600 "$tmpfile"
+
+sessions="$(claude_sessions_by_tty)"
+if [ -n "$sessions" ]; then
+	while IFS=$'\t' read -r pane_id pane_tty pane_path; do
+		[ -n "$pane_id" ] || continue
+		sid="$(printf '%s\n' "$sessions" | awk -v t="${pane_tty#/dev/}" '$1 == t { print $2; exit }')"
+		[ -n "$sid" ] || continue
+		printf '%s\t%s\t%s\n' "$pane_id" "$sid" "$pane_path" >> "$tmpfile"
+	done < <(tmux list-panes -a -F '#{session_name}:#{window_index}.#{pane_index}	#{pane_tty}	#{pane_current_path}')
+fi
+
+mv "$tmpfile" "$map_file"
+trap - EXIT

@@ -1,0 +1,77 @@
+#!/bin/bash
+# Put each pane's `claude --resume <id>` command back into the pane it
+# belongs to, using the map written by n.tmux-claude-sessions-save.
+#
+# Run as tmux-resurrect's post-restore-all hook. Resurrect's inline-strategy
+# mechanism can't do this: strategies get only (command, dir) with no way to
+# know which pane they're restoring, and their output is always sent with
+# Enter pressed.
+#
+# The command is typed but NOT run, so no agent session starts by itself.
+# Set @resurrect-claude-autoresume 'on' to press Enter too.
+
+set -uo pipefail
+
+resurrect_dir="$(tmux show-option -gqv @resurrect-dir)"
+if [ -z "$resurrect_dir" ]; then
+	if [ -d "$HOME/.tmux/resurrect" ]; then
+		resurrect_dir="$HOME/.tmux/resurrect"
+	else
+		resurrect_dir="${XDG_DATA_HOME:-$HOME/.local/share}/tmux/resurrect"
+	fi
+fi
+resurrect_dir="${resurrect_dir/#\~/$HOME}"
+map_file="$resurrect_dir/claude_sessions.txt"
+
+[ -f "$map_file" ] || exit 0
+
+autoresume="$(tmux show-option -gqv @resurrect-claude-autoresume)"
+
+restored=0
+skipped=0
+stale=0
+while IFS=$'\t' read -r pane_id sid pane_path; do
+	[ -n "${pane_id:-}" ] && [ -n "${sid:-}" ] || continue
+
+	# Only type into a pane that exists and is sitting at a shell prompt.
+	current="$(tmux display-message -p -t "$pane_id" '#{pane_current_command}' 2>/dev/null)" || continue
+	case "$current" in
+		zsh|bash|sh|fish) ;;
+		*) continue ;;
+	esac
+
+	# Pane indexes shift when a restore creates fewer panes than were saved,
+	# so the pane sitting at this id may not be the one we mapped. The cwd
+	# tells them apart: resuming a session from the wrong directory fails.
+	current_path="$(tmux display-message -p -t "$pane_id" '#{pane_current_path}' 2>/dev/null)"
+	if [ "$current_path" != "$pane_path" ]; then
+		skipped=$((skipped + 1))
+		continue
+	fi
+
+	# The session id comes from the process environment, which holds the id
+	# Claude was LAUNCHED with - not the conversation currently loaded. A
+	# resumed or forked session therefore maps to an id with no transcript.
+	# Fall back to Claude's own picker, scoped to the pane's directory.
+	if [ -n "$(find "$HOME/.claude/projects" -name "$sid.jsonl" -print -quit 2>/dev/null)" ]; then
+		resume_cmd="claude --resume $sid"
+	else
+		resume_cmd="claude --resume"
+		stale=$((stale + 1))
+	fi
+
+	if [ "$autoresume" = "on" ]; then
+		tmux send-keys -t "$pane_id" "$resume_cmd" C-m
+	else
+		tmux send-keys -t "$pane_id" "$resume_cmd"
+	fi
+	restored=$((restored + 1))
+done < "$map_file"
+
+if [ "$restored" -gt 0 ]; then
+	msg="Claude resume: $restored pane(s)"
+	[ "$stale" -gt 0 ] && msg="$msg, $stale via picker (id had no transcript)"
+	[ "$skipped" -gt 0 ] && msg="$msg, $skipped skipped (pane moved)"
+	tmux display-message "$msg"
+fi
+exit 0
