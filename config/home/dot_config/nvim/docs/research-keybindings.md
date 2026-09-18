@@ -224,3 +224,82 @@ LazyVim `<leader>u<x>`: optimizes DISCOVERY before learning; slower to type
 mini.clue explicitly refuses to prescribe; ships gen_clues only for BUILT-IN namespaces (g, z, <C-w>, marks, registers)
 => which-key made deep namespaces VIABLE, which removed the pressure to standardize them. Explains
    top-level convergence + sub-level divergence.
+
+## GIT HISTORY bindings [agent-verified from source 2026-09-18; the local claims re-verified by me]
+Four operations the config wanted to name: (1) line blame, (2) line/selection history,
+(3) function history, (4) file history. Prompted by `git log -L` having no binding anywhere.
+
+### THE HEADLINE: nobody ships a default key for (2) or (3). Empty space, not a violated convention.
+Fugitive, diffview and Neogit expose them as EX-COMMANDS ONLY and leave the key to the user.
+A GitHub search for neovim + `git log -L` returned ONE plugin, at 2 stars (noizwaves/gloggles.nvim)
+=> the niche is genuinely unfilled. Design freely; there is nothing to transfer FROM.
+
+### LazyVim's `<leader>gb` is MISLABELED - the one precedent, and it is wrong
+config/keymaps.lua:176 desc = "Git Blame Line", but runs Snacks.picker.git_log_line()
+snacks.nvim/lua/snacks/picker/source/git.lua:139-146:
+    if opts.current_line then ... args[#args+1] = "-L"; args[#args+1] = line .. ",+1:" .. file
+=> it is LINE HISTORY, not blame. LazyVim's actual blame is <leader>ghb (gitsigns).
+=> the most-copied distro is an unreliable guide here. Cursor-line only, no visual range.
+
+### The letters, by evidence
+`b` = BLAME is the strongest convention in the whole report: GitLens (alt+b, cmd+alt+g b),
+  Zed (cmd-alt-g b), Magit (C-c M-g b), LazyVim (in name), AstroNvim's gL, this config already.
+`t` = TRACE for function history. Magit `magit-log-trace-definition`, C-c M-g t - the ONLY tool
+  with a distinct default key for the op. Source-verified to emit real funcname -L
+  (lisp/magit-log.el ~824-851: `(format "-L:%s%s:%s" ...)`).
+  => dissolves the f = file-or-function collision. `f` becomes unambiguously FILE.
+`f` = FILE history: weak but uncontested. Only LazyVim binds it (<leader>gf, git log --follow).
+`l` = CONTESTED, and NOT reliably "log": LazyVim=repo log, AstroNvim=blame (gitsigns.lua:30),
+  LunarVim=blame (which-key.lua:191). 2 blame vs 1 log. Nothing anywhere uses it for line history
+  => free to take, no convention broken either way.
+`h` = HUNK in neovim, NOT history. LazyVim `{ "<leader>gh", group = "hunks" }` (plugins/editor.lua:74);
+  kickstart uses the whole <leader>h namespace for hunks. `ih` is already the hunk textobject HERE.
+  CONTRADICTION FLAGGED: h = history in VS Code/GitLens (alt+h). Does not transfer. Avoided.
+=> CHOSEN: gb blame · gl line history · gt function history · gf file history. No letter means two things.
+
+### What each tool actually implements
+gitsigns: NEITHER (2) nor (3) nor (4). Full public API read from doc/gitsigns.txt - zero matches for
+  `log -L`, `--follow`, file history. Hunk- and blame-scoped BY DESIGN. Has blame() with in-window
+  `r` reblame / `R` reblame-at-parent (actions/blame.lua:546+), the ITERATIVE route to the same answer.
+fugitive: `:{range}Gclog` = real `git log -L` into quickfix; `:0Gclog` = whole file (doc:128-147).
+  No funcname support documented. tpope's own caveat: quickfix "exhibits extremely poor performance".
+diffview: the ONLY plugin with the full -L incl. funcname - `-L:{funcname}:{file}` (doc:293-296).
+  Ships NO <leader> bindings.
+neogit: `:NeogitLogCurrent` with a range -> real -L (plugin/neogit.lua:19-32). No blame at all.
+  CONTRADICTION: its doc says `:NeogitLog`, which does not exist. Manual is stale.
+fzf-lua [I verified locally, it is INSTALLED here]: providers/git.lua:264 - git_bcommits in VISUAL
+  mode runs `git log -L %d,%d:%s --no-patch`; NORMAL mode = whole-file history. git_blame:299 same.
+  => (2) and (4) were already available before any of this was written. Visual-only, no cursor-line case.
+git-messenger: popup `o`/`O` walk older/newer commits AT THE LINE - functionally (2) via iterative
+  blame, not -L. Ships no default keymap, only <Plug> maps.
+gitgutter, gitlinker, agitator: no history. agitator's "time machine" is whole-file, not -L.
+
+### Other editors
+GitLens is the ONE tool naming all four distinctly: Toggle Line Blame, Toggle File Blame,
+  Show Line History View, Show File History - and has a dedicated Line History VIEW.
+  Letters: h = history, b = blame, under a cmd+alt+g git prefix. No function history.
+JetBrains: "Show History for Selection" = (2), and "If nothing is selected, the history will be
+  displayed for the current line." NO DEFAULT SHORTCUT for annotate, selection history or file history
+  (verified by exhaustive grep of the macOS keymap reference). Gutter has "Annotate Previous Revision"
+  = the parent-reblame analogue. UNVERIFIED whether it uses -L internally; docs silent.
+Magit: the most complete of any tool. b blame / l+region line history / t trace-definition / l file.
+  NOTE neither line nor function history is on the `l` log transient - they live in the
+  file-visiting-buffer commands. Blame mode `b` = recursive reblame at parent.
+Helix: ZERO git blame/history bindings (keymap.md, 511 lines). Zed: blame only (cmd-alt-g b),
+  no line/file history action exists. Zed independently chose GitLens's cmd-alt-g prefix and b=blame.
+
+### -L is CURSOR-SCOPED where gitsigns is HUNK-SCOPED [verified locally, same commit both ways]
+Same commit renders different diffs, which looks like a bug and is not:
+  git log -L 80,80:claude-statusline.sh  -> @@ -63,3 +72,1 @@   (1 added line)
+  git log -L 78,84:claude-statusline.sh  -> @@ -62,5 +70,7 @@   (7 added lines)
+-L reports only the part of the commit's diff touching the lines ASKED FOR; gitsigns shows the whole
+hunk (git's own unit of contiguous change), hence "Hunk 2 of 2".
+=> On a `def` line, -L <line>,<line> shows the SIGNATURE changing but HIDES the body that changed with
+   it - gitsigns is more useful there. `-L :funcname:` is the right tool on a definition, which is a
+   real argument for (3) rather than a nice-to-have. Deep inside a long function the narrowing is the
+   ADVANTAGE: your line's evolution, not a 40-line hunk each time.
+
+### Rejected: <leader>gh for "history"
+Proposed because all four ops are "about history". Rejected: `h` = hunk here (`ih` textobject) and in
+the wider neovim ecosystem, and <leader>g is otherwise entirely a hunk namespace (gs/gr/gp).
+Cost of taking it: `h` would mean hunk in `ih` and history one keystroke away, in the same namespace.

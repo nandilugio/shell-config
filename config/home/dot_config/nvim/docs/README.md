@@ -13,7 +13,8 @@ openly moving — the plugin list is an inventory, not a verdict.
     language-servers.md      Python, Ruby and Lua, including the Ruby 2.7 problem
 
     research-keybindings.md  what the ecosystem does — Neovim core, the distros,
-                             Helix, Zed, IdeaVim, tpope, Spacemacs
+                             Helix, Zed, IdeaVim, tpope, Spacemacs; and the git
+                             history bindings, where nothing is standard
     research-plugins.md      churn and size measurements, built-ins that
                              displaced plugins, the netrw security finding
 

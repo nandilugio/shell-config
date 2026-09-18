@@ -141,6 +141,7 @@ lua/config/health.lua :checkhealth config
 lua/mdtable/          local plugin: markdown tables, with its own README + DESIGN
 lua/mdheading/        local plugin: markdown heading depth, likewise
 cheatsheet.md         key reference, shown by <leader>oh
+TODO.md               known gaps and decisions not yet taken
 docs/                 why it is built this way
 ```
 
