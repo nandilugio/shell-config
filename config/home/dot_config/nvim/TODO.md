@@ -1,7 +1,7 @@
 # nvim config — changes to make later
 
 Items 1-7 were found 2026-09-16 while investigating the `<leader>gb` blame
-popup; 8-11 on 2026-09-18 while adding line history. Paths are relative to this
+popup; 8-12 on 2026-09-18 while adding line history. Paths are relative to this
 directory.
 
 ---
@@ -360,3 +360,37 @@ method each time, and is the better tool there.
 **Do:** Settle the output shape, then add `gt` and `gf`, and update
 `cheatsheet.md` `## Git` and `docs/keymaps.md` §5. (The convention research is
 already in `docs/research-keybindings.md`.)
+
+---
+
+## 12. Bind bare `:FzfLua` — the picker of pickers
+
+**Where:** `lua/keymaps.lua`, `<leader>f` section.
+
+**Why:** fzf-lua ships **124** pickers; this config binds 12. The rest are
+invisible unless you already know they exist — which is how `<leader>gl` came
+to be written without noticing that `git_bcommits` in visual mode already runs
+`git log -L <range>:<file>` (`providers/git.lua:264`). Bare `:FzfLua` opens a
+searchable list of all of them, which is the cheapest fix for that whole class
+of mistake.
+
+Candidates worth knowing about, none bound today: `git_hunks`, `git_stash`,
+`git_reflog`, `git_status`, `blines`/`lines` (fuzzy search in buffer / all
+buffers), `resume` (reopen the last picker with its query), `changes`, `jumps`,
+`marks`, `registers`, `spell_suggest`, `treesitter`, `undotree`,
+`lsp_finder`, `lsp_incoming_calls` / `lsp_outgoing_calls`.
+
+**Do:** Add something like
+
+```lua
+{ "<leader>fF", function() require("setup.fzf").builtin() end,
+  desc = "All pickers", needs = "fzf" },
+```
+
+`builtin` is the picker-of-pickers (`:FzfLua builtin`); bare `:FzfLua` is the
+same thing. Letter is open — `fF` pairs with `ff`, but `f?` reads better as
+"what else is there". Add to `cheatsheet.md` under `## Pickers` too.
+
+**Note:** `resume` is arguably the more valuable daily binding of the two —
+reopening the last picker with its query intact, after you jumped somewhere and
+want the rest of the results.

@@ -1,7 +1,13 @@
 # Cheatsheet
 
 <leader> is Space, <localleader> is comma. Press <leader> and wait to see what
-follows; <leader>fk searches every mapping; :checkhealth config lists gaps.
+follows; :checkhealth config lists gaps.
+
+Finding what you already have, before writing it yourself:
+
+:SomePlugin <Tab>   the functions a plugin exposes — :FzfLua, :Gitsigns, ...
+<leader>fh          search every plugin's help     <leader>fk  every mapping
+:FzfLua commands    every Ex command, plugins included
 
 g jumps · gr acts on symbols · <leader> opens tools · [ ] iterate
 <C-w> windows · F-keys bridge other editors
