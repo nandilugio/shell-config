@@ -1,7 +1,7 @@
 # nvim config — changes to make later
 
 Items 1-7 were found 2026-09-16 while investigating the `<leader>gb` blame
-popup; 8-15 on 2026-09-18/19 while working on the git setup. Paths are
+popup; 8-16 on 2026-09-18/19 while working on the git setup. Paths are
 relative to this directory.
 
 ---
@@ -544,3 +544,67 @@ First misdiagnosed as a gitsigns interaction, because the blame panel's span
 highlight (`CursorLine`, painted to the window edge with `hl_eol`) happens to be
 *exactly* `StatusLineNC` in this scheme, which made the boundary vanish there
 too. That part is real but incidental; the patches were ours.
+
+---
+
+## 16. UPSTREAM BUG — blame panel throws once its file buffer is wiped
+
+**Where:** gitsigns, not this config. `lua/gitsigns/actions/blame.lua:389`.
+
+**Symptom:** every cursor move in the `:Gitsigns blame` panel throws, until the
+panel is closed:
+
+```
+Error in CursorMoved Autocommands for "<buffer=127>":
+...gitsigns/actions/blame.lua:36: Invalid buffer id: 126
+stack traceback:
+  [C]: in function 'nvim_buf_set_extmark'
+  ...blame.lua:36:  in function 'hl_line'
+  ...blame.lua:389: in function 'on_cursor_moved'
+  ...blame.lua:644
+```
+
+**Cause:** `r`/`R` put a revision buffer in the file window, and revision
+buffers are created with `bufhidden = 'wipe'` (`actions/diffthis.lua:69`). Show
+anything else in that window — `<leader><leader>`, `]b`, `:bnext`, closing it —
+and Neovim wipes the buffer, because nothing displays it any more.
+
+The panel's `CursorMoved` autocmd still holds the `bufnr` captured when blame
+opened (`blame.lua:643-645`). `on_cursor_moved` then calls
+`hl_line(bufnr, ...)` at `:391` with no validity check, and
+`nvim_buf_set_extmark` rejects the dead id.
+
+Verified directly: a buffer with `bufhidden = 'wipe'` goes invalid the moment
+its window shows another buffer, and `nvim_buf_set_extmark` on it returns
+`Invalid buffer id`.
+
+**This is an oversight rather than a design problem.** The `CursorMoved` /
+`BufLeave` autocmd registered immediately above, at `blame.lua:628-637`, already
+guards the same variable:
+
+```lua
+if api.nvim_buf_is_valid(bufnr) then
+  api.nvim_buf_clear_namespace(bufnr, ns_hl, 0, -1)
+end
+```
+
+as does the `WinClosed` handler at `:662`. Only the `CursorMoved` at `:643`
+omits it. A one-line guard in `on_cursor_moved`, or a `BufWipeout` autocmd
+closing the panel with its buffer, would fix it.
+
+**Repro:**
+
+```sh
+nvim <file>          # any file in a git repo with history
+:Gitsigns blame      # then r on any older commit
+<C-l>                # focus the file window
+:bnext               # or <leader><leader>, or any buffer switch
+<C-h>                # back to the panel, move the cursor -> throws
+```
+
+**Independent of item 14.** That one is a missing object at a revision across a
+rename; this is a wiped buffer and an unguarded autocmd. Same file, separate
+fixes. File both together.
+
+**Related:** item 9 — the panel outliving the buffer it describes is exactly the
+disorientation that "no way back to the working tree" is about.
