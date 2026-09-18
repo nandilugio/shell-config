@@ -1,8 +1,8 @@
 # nvim config — changes to make later
 
 Items 1-7 were found 2026-09-16 while investigating the `<leader>gb` blame
-popup; 8-12 on 2026-09-18 while adding line history. Paths are relative to this
-directory.
+popup; 8-15 on 2026-09-18/19 while working on the git setup. Paths are
+relative to this directory.
 
 ---
 
@@ -272,7 +272,7 @@ can still bite.
 
 ---
 
-## 10. Statusline cannot distinguish a historical revision from the real file
+## 10. ~~Statusline cannot distinguish a historical revision from the real file~~ DONE 2026-09-19
 
 **Where:** `lua/setup/statusline.lua`, `M.path()` / `refresh_path()`.
 
@@ -283,10 +283,16 @@ Nothing indicates the buffer is read-only, historical, or which commit it is —
 so "am I looking at my working tree or at 2023?" is unanswerable at a glance.
 The same applies to any `fugitive://`-style scheme if one is ever added.
 
-**Do:** Detect the scheme in `refresh_path()` and render the revision, e.g.
-`balance.rb @6fc33a0e`, reusing `StatuslineMuted` or `StatuslineAccent`. Small
-and self-contained; the path is already cached per buffer, so it costs nothing
-per redraw.
+**Done:** `refresh_path()` detects the scheme and renders
+`cheatsheet.md @d4d6c3af`, the revision in `StatuslineDelete` so it reads as a
+warning rather than as part of the filename. `pathshorten` is skipped for these
+(it was mangling the URI into `g:///U/n/.s/.g//4/h/d/n/cheatsheet.md`).
+
+Correction to what this item first claimed: `b:gitsigns_head` does **not**
+become the sha. `Status.update` merges with the existing dict
+(`status.lua:29`), so the real buffer's `head` survives and the statusline goes
+on saying `master` while showing a 2025 revision. The buffer name is the only
+reliable source, hence parsing it.
 
 ---
 
@@ -411,3 +417,131 @@ third hit, realise you wanted the fifth. Without it you retype the search.
 Letter open. LazyVim has no equivalent; Telescope's convention was
 `<leader>f<Space>`, AstroNvim uses `<Leader>f'`. `fu` is free here but reads as
 nothing in particular; `f.` ("again") or `fR` are alternatives worth weighing.
+
+---
+
+## 14. UPSTREAM BUG — reblame crashes across a rename
+
+**Where:** gitsigns, not this config. `lua/gitsigns/git/blame.lua:230`.
+
+**Symptom:** `r` or `R` in the `:Gitsigns blame` window, on a commit older than
+a rename of the file, throws:
+
+```
+...gitsigns/git/blame.lua:230: contents must be provided for files without a
+base object
+```
+
+Hitting Enter leaves you in the old revision with the blame panel gone.
+
+**Cause:** gitsigns asks for the file at its **current** path in the target
+revision. Across a rename that path does not exist, so `object_missing` is
+true and the `assert(contents, ...)` guard fires. There is **no rename
+handling anywhere** in `git/blame.lua`, `actions/blame.lua` or
+`actions/diffthis.lua` — no `--follow`, no `-M` (grepped, zero hits, plugin at
+f2421c5 2026-08-31).
+
+Hit here because `cheatsheet.md` moved from `dot_config/nvim/` to
+`config/home/dot_config/nvim/` in `682d197`, so every reblame crossing that
+commit breaks. Confirmed with plain git:
+
+```
+$ git cat-file -e d4d6c3af:config/home/dot_config/nvim/cheatsheet.md
+fatal: path '...' exists on disk, but not in 'd4d6c3af'
+```
+
+Note it is not commit-specific: a reblame "works" only when the line's blame
+entry happens not to cross the rename. Two commits that both look broken at the
+git level can behave differently depending on which line the cursor was on.
+
+**Minimal repro (verified 2026-09-19):**
+
+```sh
+git init repro && cd repro
+printf 'one\ntwo\n' > a.txt && git add a.txt && git commit -m 'add a.txt'
+git mv a.txt b.txt && git commit -m 'rename a.txt to b.txt'
+nvim b.txt      # :Gitsigns blame, cursor on a line from the first commit, press r
+```
+
+`git log --follow -- b.txt` traverses the rename without trouble, so the
+information is available; gitsigns simply does not ask for it.
+
+**Workarounds:** `<C-o>` back to the working tree. `<leader>gl` (`git log -L`)
+follows renames, so it answers the same question without crashing.
+
+**Do:** File upstream at lewis6991/gitsigns.nvim. Then leave it — patching
+around plugin internals from this config would be fragile and is against the
+few-moving-parts rule.
+
+### Report, ready to paste
+
+> **Title:** `blame`: reblame (`r`/`R`) asserts when the file was renamed in an
+> older commit
+>
+> Pressing `r` (reblame at commit) or `R` (reblame at parent) in the
+> `:Gitsigns blame` window throws when the target revision predates a rename of
+> the file:
+>
+> ```
+> ...gitsigns/git/blame.lua:230: contents must be provided for files without a base object
+> stack traceback:
+>   ...gitsigns/git/blame.lua:230: in function 'run_blame'
+>   ...gitsigns/cache.lua:167: in function 'run_blame'
+>   ...gitsigns/cache.lua:248: in function 'get_blame'
+>   ...gitsigns/actions/blame.lua:489: in function 'blame'
+>   ...gitsigns/actions/blame.lua:304
+> ```
+>
+> After dismissing the error the window is left showing the old revision with
+> the blame panel closed.
+>
+> **Repro** (gitsigns f2421c5, Neovim 0.12.5):
+>
+> ```sh
+> git init repro && cd repro
+> printf 'one\ntwo\n' > a.txt && git add a.txt && git commit -m 'add a.txt'
+> git mv a.txt b.txt && git commit -m 'rename a.txt to b.txt'
+> nvim b.txt
+> ```
+>
+> `:Gitsigns blame`, put the cursor on a line attributed to the first commit,
+> press `r`.
+>
+> **Cause:** `reblame()` resolves the revision and then requests the file at its
+> *current* path. Across a rename that path does not exist in the target
+> revision, so `object_missing` is set and the `assert(contents, ...)` at
+> `git/blame.lua:230` fires. `git log --follow` traverses the rename fine, so
+> the information is available.
+>
+> **Expected:** follow the rename (as `git log --follow` / `git blame -C` do),
+> or fail gracefully with a message rather than an assertion.
+
+---
+
+## 15. Cosmetic — blame span highlight merges with the statusline
+
+**Where:** nothing of ours; an interaction between gitsigns and the `default`
+colourscheme. Diagnosed 2026-09-19, **decided not to fix**.
+
+**Symptom:** with the blame panel focused, the file window's statusline appears
+to blend into the buffer above it — the boundary vanishes.
+
+**Cause:** `on_cursor_moved` (`actions/blame.lua:381-391`) highlights every line
+of the commit under the cursor in *both* windows, the file window included:
+
+```lua
+hl_line(bufnr, ns_hl, i, 'CursorLine')
+```
+
+and `hl_line` sets `hl_eol = true` with `end_row = lnum, end_col = 0`, so the
+background paints the full window width. `CursorLine` is `#2c2e33` in the
+`default` scheme, which is **exactly** `StatusLineNC` — the inactive statusline,
+which is what the file window's line becomes once blame has focus. Same colour,
+touching, so they read as one band.
+
+**Why not fixed:** the only clean lever is redefining `StatusLineNC` to differ
+from `CursorLine`, i.e. overriding a colourscheme group globally to work around
+one plugin's rendering. This config takes the bundled scheme as it comes and
+derives from it (`setup/statusline.lua`), so that is a poor trade for a purely
+cosmetic overlap that appears only while the panel is focused. gitsigns offers
+no option to skip painting the file window.
