@@ -28,7 +28,6 @@ local function hl(group, field)
 end
 
 local function set_highlights()
-  local bg = hl("StatusLine", "bg")
   local dark = hl("Normal", "bg")
 
   -- Distinct hues in practice, not by name. StatusLine's own fg stands in for
@@ -47,11 +46,15 @@ local function set_highlights()
 
   -- By importance, as Pure does: path and arrows take the accent, the branch
   -- sits between them as context.
-  vim.api.nvim_set_hl(0, "StatuslineAccent", { fg = hl("Special", "fg"), bg = bg })
-  vim.api.nvim_set_hl(0, "StatuslineAdd", { fg = hl("String", "fg"), bg = bg })
-  vim.api.nvim_set_hl(0, "StatuslineChange", { fg = hl("DiagnosticWarn", "fg"), bg = bg })
-  vim.api.nvim_set_hl(0, "StatuslineDelete", { fg = hl("DiagnosticError", "fg"), bg = bg })
-  vim.api.nvim_set_hl(0, "StatuslineMuted", { fg = hl("Comment", "fg"), bg = bg })
+  --
+  -- Foreground only, deliberately: an inactive window draws its line with
+  -- StatusLineNC, and a bg pinned to StatusLine would keep painting the active
+  -- colour there, leaving each coloured segment as a patch on a darker line.
+  vim.api.nvim_set_hl(0, "StatuslineAccent", { fg = hl("Special", "fg") })
+  vim.api.nvim_set_hl(0, "StatuslineAdd", { fg = hl("String", "fg") })
+  vim.api.nvim_set_hl(0, "StatuslineChange", { fg = hl("DiagnosticWarn", "fg") })
+  vim.api.nvim_set_hl(0, "StatuslineDelete", { fg = hl("DiagnosticError", "fg") })
+  vim.api.nvim_set_hl(0, "StatuslineMuted", { fg = hl("Comment", "fg") })
 end
 
 set_highlights()

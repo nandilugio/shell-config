@@ -518,30 +518,29 @@ few-moving-parts rule.
 
 ---
 
-## 15. Cosmetic — blame span highlight merges with the statusline
+## 15. ~~Statusline segments kept the active background in inactive windows~~ DONE 2026-09-19
 
-**Where:** nothing of ours; an interaction between gitsigns and the `default`
-colourscheme. Diagnosed 2026-09-19, **decided not to fix**.
+**Where:** `lua/setup/statusline.lua`, `set_highlights()`.
 
-**Symptom:** with the blame panel focused, the file window's statusline appears
-to blend into the buffer above it — the boundary vanishes.
-
-**Cause:** `on_cursor_moved` (`actions/blame.lua:381-391`) highlights every line
-of the commit under the cursor in *both* windows, the file window included:
+**Was:** every segment group pinned `bg` to `StatusLine`'s background:
 
 ```lua
-hl_line(bufnr, ns_hl, i, 'CursorLine')
+local bg = hl("StatusLine", "bg")
+vim.api.nvim_set_hl(0, "StatuslineAccent", { fg = ..., bg = bg })
 ```
 
-and `hl_line` sets `hl_eol = true` with `end_row = lnum, end_col = 0`, so the
-background paints the full window width. `CursorLine` is `#2c2e33` in the
-`default` scheme, which is **exactly** `StatusLineNC` — the inactive statusline,
-which is what the file window's line becomes once blame has focus. Same colour,
-touching, so they read as one band.
+An inactive window draws its line with `StatusLineNC` instead, which in the
+`default` scheme is `#2c2e33` against `StatusLine`'s `#4f5258`. So in every
+split that did not have focus, each coloured segment stayed lit at the active
+colour and read as a patch on a darker line — visible wherever two windows are
+open, not just beside the blame panel.
 
-**Why not fixed:** the only clean lever is redefining `StatusLineNC` to differ
-from `CursorLine`, i.e. overriding a colourscheme group globally to work around
-one plugin's rendering. This config takes the bundled scheme as it comes and
-derives from it (`setup/statusline.lua`), so that is a poor trade for a purely
-cosmetic overlap that appears only while the panel is focused. gitsigns offers
-no option to skip painting the file window.
+**Done:** the five segment groups are foreground-only, so they inherit whichever
+statusline group the window is actually using. The mode blocks keep an explicit
+`bg`, which is right — a mode block is meant to be a solid colour in both
+states.
+
+First misdiagnosed as a gitsigns interaction, because the blame panel's span
+highlight (`CursorLine`, painted to the window edge with `hl_eol`) happens to be
+*exactly* `StatusLineNC` in this scheme, which made the boundary vanish there
+too. That part is real but incidental; the patches were ours.
