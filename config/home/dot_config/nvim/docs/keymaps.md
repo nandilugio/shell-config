@@ -108,8 +108,18 @@ credits tpope in the source.
 | `<leader>gr` | **R**eset hunk | 🟨 |
 | `<leader>gp` | **P**review hunk | 🟨 |
 | `<leader>gb` | **B**lame line | 🟨 |
+| `<leader>gB` | **B**lame file (side panel) | 🟨 capital = wider scope, as `gO`/`gW` |
 | `<leader>gd` | **D**iff | 🟨 |
+| `<leader>gl` | **L**ine history (`git log -L`) | 🟨 no convention exists; see research |
+| `<leader>gS`/`gR` | **S**tage / **R**eset buffer | 🟨 capitals of `gs`/`gr`, as gitsigns names them |
+| `<leader>gq` | Hunks to **q**uickfix | 🟨 `q` as in `<leader>xq` |
+| `<leader>ug*` | Git toggles: `ugd` deleted, `ugw` word diff, `ugb` line blame | 🟨 the one nested group |
 | `]c`/`[c` | Navigate hunks | 🟦 see §3 |
+
+`undo_stage_hunk` is deliberately unbound: gitsigns deprecated it in favour of
+`stage_hunk()` on a staged hunk, so `<leader>gs` already toggles both ways. That
+only became usable once staged signs were configured — before, staged and
+unstaged hunks were indistinguishable.
 
 ## 6 · Toggle — `<leader>u`
 Spacemacs used `SPC t`; LazyVim moved to `u` (**u**i) to free `t` for test.

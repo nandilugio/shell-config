@@ -143,7 +143,7 @@ if it is absent, the swap held nothing newer. Clean up with
 
 ---
 
-## 6. Add `<leader>gB` — full-file blame
+## 6. ~~Add `<leader>gB` — full-file blame~~ DONE 2026-09-19
 
 **Where:** `lua/keymaps.lua`, in the `<leader>g` git section.
 
@@ -183,7 +183,15 @@ Arguably the best fit for that file's stated purpose ("what an editor uniquely
 offers is the ambient layer"), but it is a persistent visual change — try it
 before keeping it.
 
-**Do:** Add the `gB` line. Add it to `cheatsheet.md` under `## Git` too.
+**Done:** `<leader>gB`, plus the rest of the namespace gaps in the same pass —
+`gS`/`gR` stage/reset buffer, `gq` hunks to quickfix, and the three toggles
+nested under `<leader>ug` (`ugd` deleted, `ugw` word diff, `ugb` current-line
+blame, the ambient layer this item suggested trying).
+
+`undo_stage_hunk` was deliberately left unbound: gitsigns deprecates it
+(`actions.lua:426`) in favour of `stage_hunk()` on a staged hunk, so
+`<leader>gs` already toggles. That is only usable now that staged signs are
+distinguishable — see item 8.
 
 ---
 

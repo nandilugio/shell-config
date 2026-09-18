@@ -75,12 +75,28 @@ a comment, grep instead: <leader>fw or <leader>fg.
 
 ## Git — <leader>g
 
-Hunks live here; commits and history live in lazygit.
+Hunks and history here; commits and rebases live in lazygit.
+Capital = the whole buffer, where the lowercase is one hunk.
 
-<leader>gs      stage hunk (or selection)       <leader>gr  reset hunk
-<leader>gp      preview hunk                    <leader>gb  blame line
+<leader>gs,gS   stage hunk (or selection), buffer
+<leader>gr,gR   reset hunk (or selection), buffer
+<leader>gp      preview hunk                    <leader>gq  hunks to quickfix
 <leader>gd      diff this file                  <leader>gg  lazygit
 ih              the hunk as a text object: dih, yih
+
+gs on a hunk that is already staged unstages it — the signs dim when staged,
+so you can see which is which.
+
+<leader>gb      blame this line, in a float
+<leader>gB      blame the file, in a scroll-bound side panel
+<leader>gl      line history: every commit that touched it (visual: the range)
+
+Inside the blame panel: <CR> menu · s,S show commit in a split, a tab
+r reblame at that commit · R at its parent · d,D diff it in a tab
+r and R land you in a read-only revision of the file: the statusline then
+reads name@sha in red. <C-o> comes back. They error across a rename.
+
+Its toggles are under <leader>ug — see Toggles below.
 
 
 ## Windows and buffers
@@ -96,6 +112,7 @@ ih              the hunk as a text object: dih, yih
 uw wrap · us spell · ul line numbers · ur relative numbers · ub light/dark
 uh inlay hints       ud diagnostics: all → warnings+errors → errors → off
 um markdown table alignment (on by default for markdown)
+ug* git: ugd deleted lines · ugw word diff · ugb blame every line
 
 
 ## Filetype — <LocalLeader> = ,

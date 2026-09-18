@@ -27,6 +27,7 @@ M.groups = {
   { "<leader>f", "find" },
   { "<leader>g", "git", mode = { "n", "v" } },
   { "<leader>u", "toggle (ui)" },
+  { "<leader>ug", "git" }, -- the only nested group: git has three of its own
   { "<leader>b", "buffer" },
   { "<leader>o", "own" }, -- reserved: no plugin or convention may claim it
   { "<leader>x", "lists" },
@@ -195,6 +196,16 @@ M.maps = {
   { "<leader>gb", function() require("gitsigns").blame_line({ full = true }) end, desc = "Blame line", needs = "mod:gitsigns" },
   { "<leader>gd", function() require("gitsigns").diffthis() end, desc = "Diff this", needs = "mod:gitsigns" },
   { "<leader>gg", "<Cmd>terminal lazygit<CR>", desc = "Lazygit", needs = "lazygit" },
+  -- The side panel: every line's commit, scroll-bound to the buffer. Capital
+  -- pairs with gb, the single-line float. Inside it, r and R walk back through
+  -- history -- see TODO 14, they throw across a rename.
+  { "<leader>gB", "<Cmd>Gitsigns blame<CR>", desc = "Blame file", needs = "mod:gitsigns" },
+  -- Capitals of the hunk actions, meaning "all of them", as gitsigns names
+  -- them: stage_hunk/stage_buffer, reset_hunk/reset_buffer.
+  { "<leader>gS", function() require("gitsigns").stage_buffer() end, desc = "Stage buffer", needs = "mod:gitsigns" },
+  { "<leader>gR", function() require("gitsigns").reset_buffer() end, desc = "Reset buffer", needs = "mod:gitsigns" },
+  -- q as in <leader>xq: the quickfix list, which ]q and [q then walk.
+  { "<leader>gq", function() require("gitsigns").setqflist() end, desc = "Hunks to quickfix", needs = "mod:gitsigns" },
   -- How a line got here, as opposed to who touched it last: git log -L, which
   -- blame and gitsigns have no equivalent for. Normal mode takes the cursor
   -- line, visual the selection.
@@ -245,6 +256,28 @@ M.maps = {
   -- Capital H because <leader>uh is inlay hints. Both markdown toggles live
   -- under <leader>u: display layers over a file neither one changes.
   { "<leader>uH", function() require("mdheading").toggle() end, desc = "Markdown heading colours" },
+  -- Git's own toggles, nested because there are three of them and <leader>u's
+  -- single letters are spoken for (ud diagnostics, uw wrap, ub background).
+  {
+    "<leader>ugd",
+    function() require("gitsigns").toggle_deleted() end,
+    desc = "Deleted lines",
+    needs = "mod:gitsigns",
+  },
+  {
+    "<leader>ugw",
+    function() require("gitsigns").toggle_word_diff() end,
+    desc = "Word diff",
+    needs = "mod:gitsigns",
+  },
+  -- The ambient layer: blame for the cursor line, as virtual text, following
+  -- the cursor. Off by default in gitsigns, hence a toggle rather than config.
+  {
+    "<leader>ugb",
+    function() require("gitsigns").toggle_current_line_blame() end,
+    desc = "Current-line blame",
+    needs = "mod:gitsigns",
+  },
 
   -- ── Buffers and windows ───────────────────────────────────────────────────
   -- Mirrors tmux's M-hjkl for panes: two levels, two modifiers.
