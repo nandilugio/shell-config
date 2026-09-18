@@ -75,13 +75,13 @@ a comment, grep instead: <leader>fw or <leader>fg.
 
 ## Git — <leader>g
 
-Hunks and history here; commits and rebases live in lazygit.
+Hunks and history here; commits and rebases belong in a tmux pane.
 Capital = the whole buffer, where the lowercase is one hunk.
 
 <leader>gs,gS   stage hunk (or selection), buffer
 <leader>gr,gR   reset hunk (or selection), buffer
 <leader>gp      preview hunk                    <leader>gq  hunks to quickfix
-<leader>gd      diff this file                  <leader>gg  lazygit
+<leader>gd      diff this file
 ih              the hunk as a text object: dih, yih
 
 gs on a hunk that is already staged unstages it — the signs dim when staged,

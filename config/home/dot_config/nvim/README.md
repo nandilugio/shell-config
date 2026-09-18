@@ -184,7 +184,7 @@ with the project's own gem and `.rubocop.yml`. Ruby 3 projects need none of this
 Clone and start Neovim; plugins install on first run. Then, for full function:
 
 ```sh
-brew install fzf ripgrep fd lazygit tree-sitter-cli lua-language-server
+brew install fzf ripgrep fd tree-sitter-cli lua-language-server
 uv tool install ruff
 uv tool install basedpyright
 RBENV_VERSION=3.x gem install ruby-lsp   # any Ruby >= 3; the newest is used

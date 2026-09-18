@@ -174,8 +174,8 @@ M.maps = {
   },
 
   -- ── Git: <leader>g ────────────────────────────────────────────────────────
-  -- Hunk-level only; lazygit does the rest. Without gitsigns these keep Vim's
-  -- own meaning: next/previous change in diff mode.
+  -- Hunk-level only; commits and rebases are a tmux pane's job. Without
+  -- gitsigns these keep Vim's own meaning: next/previous change in diff mode.
   { "]c", function() require("gitsigns").nav_hunk("next") end, desc = "Next hunk", needs = "mod:gitsigns", fallback = "]c" },
   { "[c", function() require("gitsigns").nav_hunk("prev") end, desc = "Previous hunk", needs = "mod:gitsigns", fallback = "[c" },
   {
@@ -195,7 +195,6 @@ M.maps = {
   { "<leader>gp", function() require("gitsigns").preview_hunk() end, desc = "Preview hunk", needs = "mod:gitsigns" },
   { "<leader>gb", function() require("gitsigns").blame_line({ full = true }) end, desc = "Blame line", needs = "mod:gitsigns" },
   { "<leader>gd", function() require("gitsigns").diffthis() end, desc = "Diff this", needs = "mod:gitsigns" },
-  { "<leader>gg", "<Cmd>terminal lazygit<CR>", desc = "Lazygit", needs = "lazygit" },
   -- The side panel: every line's commit, scroll-bound to the buffer. Capital
   -- pairs with gb, the single-line float. Inside it, r and R walk back through
   -- history -- see TODO 14, they throw across a rename.

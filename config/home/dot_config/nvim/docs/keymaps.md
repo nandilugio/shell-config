@@ -103,7 +103,6 @@ credits tpope in the source.
 ## 5 · Git — `<leader>g`
 | Key | Action | Why |
 |---|---|---|
-| `<leader>gg` | Status / lazygit | 🟦 LazyVim + AstroNvim identical |
 | `<leader>gs` | **S**tage hunk | 🟨 |
 | `<leader>gr` | **R**eset hunk | 🟨 |
 | `<leader>gp` | **P**review hunk | 🟨 |

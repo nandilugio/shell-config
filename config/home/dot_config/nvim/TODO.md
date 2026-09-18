@@ -6,7 +6,7 @@ relative to this directory.
 
 ---
 
-## 1. Remove the lazygit binding
+## 1. ~~Remove the lazygit binding~~ DONE 2026-09-19
 
 **Where:** `lua/keymaps.lua:203`
 
@@ -25,11 +25,13 @@ misses the point — what is actually wanted from the editor is "show me this
 commit", not "launch a git UI rooted somewhere". That is a real integration
 question, deferred deliberately. See item 5.
 
-**Do:** Delete the line. Nothing else references it —
-`plugins.lua` has no entry, and `config/health.lua` lists `lazygit` as an
-optional tool that would simply stop being reported. Also drop it from the
-tools table in `lua/config/health.lua` and from the `<leader>g` section of
-`cheatsheet.md`.
+**Done:** the binding, the `config/health.lua` row, the `brew install` line in
+`README.md`, the `docs/keymaps.md` entry, and the cheatsheet mentions.
+`<leader>gg` is now free.
+
+The deferred question in this item — "what is actually wanted is *show me this
+commit*" — was answered in the meantime by `<leader>gB` (item 6): the blame
+panel's `D` opens the commit under the cursor, all hunks, in a tab.
 
 ---
 

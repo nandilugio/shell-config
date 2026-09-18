@@ -1,6 +1,6 @@
 -- Only the part that belongs in the editor: which lines changed, hunk
--- navigation, staging without leaving the buffer. Commits, rebases and history
--- are lazygit's job, in a tmux pane.
+-- navigation, staging without leaving the buffer. Commits and rebases are a
+-- git UI's job, in a tmux pane; the editor need not know about it.
 
 local ok, gitsigns = pcall(require, "gitsigns")
 if ok then
@@ -54,8 +54,7 @@ vim.api.nvim_create_autocmd("FileType", {
 -- but "how did this line get here". It follows the line through renames and
 -- reindentation, printing each commit with the diff of just that line.
 --
--- gitsigns is hunk-scoped by design and has no equivalent, and lazygit's file
--- history is `--follow` on a whole file, which is a different question.
+-- gitsigns is hunk-scoped by design and has no equivalent.
 --
 -- TODO: the function form, `git log -L :name:file`, tracks a function as it
 -- moves and is the more useful half. It needs the enclosing symbol's name,

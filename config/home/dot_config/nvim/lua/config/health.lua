@@ -16,7 +16,6 @@ local tools = {
   { "rg", "fast :grep", "falls back to the built-in grep" },
   { "fd", "fast file listing", "fzf-lua uses its own walker" },
   { "git", "hunk signs and navigation", "gitsigns does nothing outside a repo" },
-  { "lazygit", "<leader>gg", "mapping is not created" },
   { "tree-sitter", "parser compilation", "regex syntax highlighting only" },
 }
 
