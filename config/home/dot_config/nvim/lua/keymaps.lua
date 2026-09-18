@@ -195,6 +195,22 @@ M.maps = {
   { "<leader>gb", function() require("gitsigns").blame_line({ full = true }) end, desc = "Blame line", needs = "mod:gitsigns" },
   { "<leader>gd", function() require("gitsigns").diffthis() end, desc = "Diff this", needs = "mod:gitsigns" },
   { "<leader>gg", "<Cmd>terminal lazygit<CR>", desc = "Lazygit", needs = "lazygit" },
+  -- How a line got here, as opposed to who touched it last: git log -L, which
+  -- blame and gitsigns have no equivalent for. Normal mode takes the cursor
+  -- line, visual the selection.
+  {
+    "<leader>gl",
+    function() require("setup.git").line_history(false) end,
+    desc = "Line history",
+    needs = "git",
+  },
+  {
+    "<leader>gl",
+    function() require("setup.git").line_history(true) end,
+    desc = "Line history (selection)",
+    mode = "v",
+    needs = "git",
+  },
   -- A hunk as a text object, so dih and yih read like diw and yiw.
   {
     "ih",
