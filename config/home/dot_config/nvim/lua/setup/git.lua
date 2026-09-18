@@ -18,6 +18,15 @@ if ok then
       changedelete = { text = "≃" },
       untracked = { text = "┆" },
     },
+    -- Same characters again: staged-ness is already in the colour, which
+    -- gitsigns dims to half brightness. Unset, this defaults back to the bars.
+    signs_staged = {
+      add = { text = "+" },
+      change = { text = "~" },
+      delete = { text = "-" },
+      topdelete = { text = "‾" },
+      changedelete = { text = "≃" },
+    },
     preview_config = { border = "single" },
   })
 end

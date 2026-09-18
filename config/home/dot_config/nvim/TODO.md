@@ -206,7 +206,7 @@ diffview.nvim (a real dependency, against the config's few-plugins rule).
 
 ---
 
-## 8. `signs_staged` is unconfigured, so staged hunks show the default bars
+## 8. ~~`signs_staged` is unconfigured, so staged hunks show the default bars~~ DONE 2026-09-19
 
 **Where:** `lua/setup/git.lua`, the `gitsigns.setup({})` call.
 
@@ -225,16 +225,15 @@ topdelete = { text = '▔' }, changedelete = { text = '~' },
 That is why the bars reappear after staging — the file's own comment about
 rejecting bars is silently half-applied. Found 2026-09-18.
 
-**Do:** Decide and set `signs_staged`. Two defensible answers:
+**Done:** option 1 — same characters as unstaged, colour carries staged-ness.
+`GitSignsStaged*` falls back to the unstaged group at half brightness, verified
+on the `default` scheme: add `#b3f6c0` → `#597b60`, delete `#ffc0b9` →
+`#7f605c`. Same hue, half luminance, so one glyph vocabulary reads for both.
 
-1. **Same characters as unstaged.** `+ ~ -` is what `git add -p` shows either
-   way, and gitsigns already uses distinct highlight groups
-   (`GitSignsStagedAdd` etc.), so colour carries staged-ness. Most consistent
-   with the existing comment.
-2. **Keep bars for staged**, as a deliberate "already banked" signal — but then
-   say so in the comment, since it contradicts the sentence above it.
-
-Either way the current state is an oversight, not a choice.
+Note `signs_staged` takes no `untracked` key (nothing untracked can be staged);
+the other five mirror `signs`. Sign text is capped at **2 display cells**
+(`E239` on three), so a prepended marker like `┃+` is possible but would widen
+the gutter, which `signcolumn = "yes"` keeps at one column.
 
 ---
 
@@ -391,6 +390,24 @@ buffers), `resume` (reopen the last picker with its query), `changes`, `jumps`,
 same thing. Letter is open — `fF` pairs with `ff`, but `f?` reads better as
 "what else is there". Add to `cheatsheet.md` under `## Pickers` too.
 
-**Note:** `resume` is arguably the more valuable daily binding of the two —
-reopening the last picker with its query intact, after you jumped somewhere and
-want the rest of the results.
+---
+
+## 13. Bind `FzfLua.resume` — reopen the last picker
+
+**Where:** `lua/keymaps.lua`, `<leader>f` section.
+
+**Why:** Probably the highest-value unbound picker, and unlike item 12 it is a
+daily action rather than a discovery aid. Reopens the previous picker *with its
+query and cursor position intact* — the case is: grep for something, jump to the
+third hit, realise you wanted the fifth. Without it you retype the search.
+
+**Do:**
+
+```lua
+{ "<leader>fu", function() require("setup.fzf").resume() end,
+  desc = "Resume last picker", needs = "fzf" },
+```
+
+Letter open. LazyVim has no equivalent; Telescope's convention was
+`<leader>f<Space>`, AstroNvim uses `<Leader>f'`. `fu` is free here but reads as
+nothing in particular; `f.` ("again") or `fR` are alternatives worth weighing.
