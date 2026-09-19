@@ -100,7 +100,16 @@ local function gitsigns_revision(name)
   if not rest then return nil end
   local rev, relpath = rest:match("^(.-):([^:]*)$")
   if not rev or relpath == "" then return nil end
-  return ("%s[%s]"):format(vim.fn.fnamemodify(relpath, ":t"), rev:sub(1, 8))
+  -- The whole relpath, as fzf-lua gives it: both are relative to the git root,
+  -- and M.path shortens either one when the window is too narrow for it.
+  --
+  -- A full sha is cut to 7, git's own default abbreviation and what fzf-lua's
+  -- %h gives here. Reading core.abbrev would match git exactly in a repository
+  -- big enough to need more, but that is a subprocess per BufEnter to save a
+  -- character. Anything else -- HEAD~1, a branch, :0 for the index -- is
+  -- already short and is left alone.
+  if #rev > 7 and rev:match("^%x+$") then rev = rev:sub(1, 7) end
+  return ("%s[%s]"):format(relpath, rev)
 end
 
 -- The answer only changes when the file does, so it is computed on write and
@@ -111,7 +120,6 @@ local function refresh_path(buf)
     vim.b[buf].statusline_path = ""
     return
   end
-  -- Already basename[rev] when it is a revision, so nothing further to carry.
   vim.b[buf].statusline_path = gitsigns_revision(name) or vim.fn.fnamemodify(name, ":.")
 end
 
