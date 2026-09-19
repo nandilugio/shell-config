@@ -221,6 +221,25 @@ M.maps = {
     mode = "v",
     needs = "git",
   },
+  -- The whole function, tracked as it moves and is renamed. Better than gl on
+  -- a definition line, where the cursor-scoped -L hides the body.
+  {
+    "<leader>gt",
+    function() require("setup.git").function_history() end,
+    desc = "Function history (trace)",
+    needs = "git",
+  },
+  -- Every commit touching this file, as a picker: fzf-lua already runs it,
+  -- with the diff in a preview pane and <CR> to open the file at that commit.
+  {
+    "<leader>gf",
+    function() require("setup.fzf").git_bcommits({ follow = true }) end,
+    desc = "File history",
+    needs = "fzf",
+    -- Without fzf, the same question as a patch dump: file_history is ours and
+    -- needs only git, so the key keeps working on a bare server.
+    fallback = function() require("setup.git").file_history() end,
+  },
   -- A hunk as a text object, so dih and yih read like diw and yiw.
   {
     "ih",

@@ -306,7 +306,7 @@ reliable source, hence parsing it.
 
 ---
 
-## 11. Git history bindings — the four operations
+## 11. ~~Git history bindings — the four operations~~ DONE 2026-09-19
 
 **Where:** `lua/keymaps.lua`, `<leader>g` section. Partly done: `<leader>gl`
 (line/selection history) shipped 2026-09-18 in `b51de90`.
@@ -320,8 +320,8 @@ Four related-but-distinct operations, which the letters kept colliding over
 |---|---|---|
 | line blame | `<leader>gb` | done (gitsigns) |
 | line/selection history | `<leader>gl` | done (`b51de90`) |
-| function history | `<leader>gt` | **not done** |
-| file history | `<leader>gf` | **not done** |
+| function history | `<leader>gt` | done |
+| file history | `<leader>gf` | done |
 
 Letters chosen against researched convention (2026-09-18, primary sources —
 full notes in `docs/research-keybindings.md`, "GIT HISTORY bindings"):
@@ -361,10 +361,14 @@ So:
 - the picker suits *navigating to a commit* and is already written, but needs
   `fzf` and is visual-only.
 
-Undecided whether `gl`/`gf` should be fzf-lua, the custom code, or fzf-lua with
-the custom code as the `needs`/`fallback` (which is what the keymap spec's
-fallback mechanism is for). `gt` needs custom code either way — no installed
-plugin does the funcname form.
+**Settled:** `gf` is fzf-lua's picker with our patch dump as the `needs`/
+`fallback`, so it degrades to git-only on a bare server. `gl` and `gt` stay
+ours — fzf-lua has no cursor-line case and no funcname form.
+
+One thing found the hard way: git ships funcname patterns but they are inert
+until a `.gitattributes` enables them per repository (`*.rb diff=ruby`). An
+earlier note here claiming Ruby and Python were "covered" was wrong — shipping
+is not enabling. `gt` now says so when `-L` reports "no match".
 
 **Also relevant to item 7:** `-L` is *cursor-scoped* where gitsigns is
 *hunk-scoped*, which is why their diffs differ for the same commit. On a `def`

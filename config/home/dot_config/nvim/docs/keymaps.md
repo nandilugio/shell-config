@@ -110,6 +110,8 @@ credits tpope in the source.
 | `<leader>gB` | **B**lame file (side panel) | 🟨 capital = wider scope, as `gO`/`gW` |
 | `<leader>gd` | **D**iff | 🟨 |
 | `<leader>gl` | **L**ine history (`git log -L`) | 🟨 no convention exists; see research |
+| `<leader>gt` | Function history (**t**race) | 🟨 Magit's `magit-log-trace-definition`, the only tool with a default key for it |
+| `<leader>gf` | **F**ile history | 🟦 LazyVim's only use of `gf`; fzf-lua's picker, ours as fallback |
 | `<leader>gS`/`gR` | **S**tage / **R**eset buffer | 🟨 capitals of `gs`/`gr`, as gitsigns names them |
 | `<leader>gq` | Hunks to **q**uickfix | 🟨 `q` as in `<leader>xq` |
 | `<leader>ug*` | Git toggles: `ugd` deleted, `ugw` word diff, `ugb` line blame | 🟨 the one nested group |
