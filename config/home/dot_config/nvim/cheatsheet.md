@@ -34,19 +34,26 @@ m / '           set a mark / jump to it         @   reveal the working dir
 
 ## Pickers — <leader>f
 
-The input line is a text field, so move with Ctrl, not h j k l.
+The input line is a text field, so move with Ctrl, not h j k l. These are
+fzf's own keys, so they are the same ones the shell's fzf uses.
 
 <C-j>,<C-k>     next, previous                  Enter  open
-<C-x>,<C-v>     open in a split, a vsplit       <C-t>  in a tab
-<S-Up>,<S-Down> scroll the preview
-<C-u>           clear the query                 <C-a>,<C-e>  start, end
-Tab             tick several                    <C-q>  send all to quickfix
+<C-s>,<C-v>     open in a split, a vsplit       <C-t>  in a tab
+<C-f>,<C-b>     half page down, up              <C-u>  clear the query
+<S-Up>,<S-Down> scroll the preview              <C-a>,<C-e>  start, end of query
+Tab             tick one, M-a ticks all         M-q    ticked to quickfix
+F1 help · F4 hide the preview · M-i include ignored · M-f follow symlinks
+
+Tab does nothing where a pick must be single: buffers and file history.
+M-h (include hidden) is tmux's pane-left and never arrives; M-i is the one
+you want anyway, since .gitignore hides more here than dotfiles do.
 
 <leader><leader>  buffers                       <leader>ff  files
 <leader>fg or /   grep the project              <leader>fw  word under cursor
 <leader>fr        recent files                  <leader>fh  help
 <leader>fk        keymaps                       <leader>fd  diagnostics
 <leader>fs,fS     symbols: file, workspace      <leader>fR  references (usages)
+<leader>f?        every picker fzf-lua has      <leader>f.  resume the last one
 
 
 ## Code

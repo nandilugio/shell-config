@@ -99,6 +99,8 @@ credits tpope in the source.
 | `<leader>fd` | **D**iagnostics | 🟨 |
 | `<leader>fs` | **S**ymbols | 🟨 |
 | `<leader>/` | Grep project | 🟦 LazyVim; matches `/`=search intuition |
+| `<leader>f?` | Every picker fzf-lua has | 🟨 discovery: 124 ship, a dozen are bound |
+| `<leader>f.` | Resume the last picker | 🟨 `.` as "again"; no cross-distro convention |
 
 ## 5 · Git — `<leader>g`
 | Key | Action | Why |

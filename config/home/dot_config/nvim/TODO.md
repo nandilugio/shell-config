@@ -382,7 +382,7 @@ already in `docs/research-keybindings.md`.)
 
 ---
 
-## 12. Bind bare `:FzfLua` — the picker of pickers
+## 12. ~~Bind bare `:FzfLua` — the picker of pickers~~ DONE 2026-09-19
 
 **Where:** `lua/keymaps.lua`, `<leader>f` section.
 
@@ -406,13 +406,12 @@ buffers), `resume` (reopen the last picker with its query), `changes`, `jumps`,
   desc = "All pickers", needs = "fzf" },
 ```
 
-`builtin` is the picker-of-pickers (`:FzfLua builtin`); bare `:FzfLua` is the
-same thing. Letter is open — `fF` pairs with `ff`, but `f?` reads better as
-"what else is there". Add to `cheatsheet.md` under `## Pickers` too.
+**Done:** `<leader>f?` — `f?` reads as "what else is there". Cheatsheet and
+`docs/keymaps.md` updated.
 
 ---
 
-## 13. Bind `FzfLua.resume` — reopen the last picker
+## 13. ~~Bind `FzfLua.resume` — reopen the last picker~~ DONE 2026-09-19
 
 **Where:** `lua/keymaps.lua`, `<leader>f` section.
 
@@ -423,14 +422,9 @@ third hit, realise you wanted the fifth. Without it you retype the search.
 
 **Do:**
 
-```lua
-{ "<leader>fu", function() require("setup.fzf").resume() end,
-  desc = "Resume last picker", needs = "fzf" },
-```
-
-Letter open. LazyVim has no equivalent; Telescope's convention was
-`<leader>f<Space>`, AstroNvim uses `<Leader>f'`. `fu` is free here but reads as
-nothing in particular; `f.` ("again") or `fR` are alternatives worth weighing.
+**Done:** `<leader>f.` — `.` as "again", which nothing else here claims.
+There is no cross-distro convention to follow: LazyVim has no equivalent,
+Telescope used `<leader>f<Space>`, AstroNvim `<Leader>f'`.
 
 ---
 

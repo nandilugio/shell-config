@@ -172,6 +172,22 @@ M.maps = {
     needs = "fzf",
     fallback = "grr",
   },
+  -- fzf-lua ships 124 pickers and this binds a dozen; the rest are invisible
+  -- unless you already know they exist. This is the way in.
+  {
+    "<leader>f?",
+    function() require("setup.fzf").builtin() end,
+    desc = "All pickers",
+    needs = "fzf",
+  },
+  -- The last picker, with its query and position intact: grep, jump to the
+  -- third hit, realise you wanted the fifth.
+  {
+    "<leader>f.",
+    function() require("setup.fzf").resume() end,
+    desc = "Resume last picker",
+    needs = "fzf",
+  },
 
   -- ── Git: <leader>g ────────────────────────────────────────────────────────
   -- Hunk-level only; commits and rebases are a tmux pane's job. Without
