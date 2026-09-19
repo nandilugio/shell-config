@@ -86,6 +86,13 @@ end
 -- below mangles it further, so the one thing that matters -- that this is not
 -- your working tree -- is the one thing it fails to say.
 --
+-- Rewritten to path[rev], which is the name fzf-lua already gives the same
+-- thing (actions.lua:1135), so both arrive at one shape. Only this direction
+-- is worth doing: "gitsigns://" is a scheme and cannot be mistaken for a real
+-- path, whereas recognising path[rev] would mean a regex over every filename,
+-- and a file honestly called report[abc123].md would be labelled a revision it
+-- is not. A marker that lies is worse than one that is merely quiet.
+--
 -- The gitdir is absolute and full of slashes, so anchor on the "//" that
 -- follows it and take the LAST colon: a revision cannot contain either.
 local function gitsigns_revision(name)
@@ -93,7 +100,7 @@ local function gitsigns_revision(name)
   if not rest then return nil end
   local rev, relpath = rest:match("^(.-):([^:]*)$")
   if not rev or relpath == "" then return nil end
-  return vim.fn.fnamemodify(relpath, ":t"), rev:sub(1, 8)
+  return ("%s[%s]"):format(vim.fn.fnamemodify(relpath, ":t"), rev:sub(1, 8))
 end
 
 -- The answer only changes when the file does, so it is computed on write and
@@ -104,9 +111,8 @@ local function refresh_path(buf)
     vim.b[buf].statusline_path = ""
     return
   end
-  local file, rev = gitsigns_revision(name)
-  vim.b[buf].statusline_path = file or vim.fn.fnamemodify(name, ":.")
-  vim.b[buf].statusline_revision = rev
+  -- Already basename[rev] when it is a revision, so nothing further to carry.
+  vim.b[buf].statusline_path = gitsigns_revision(name) or vim.fn.fnamemodify(name, ":.")
 end
 
 vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "BufFilePost" }, {
@@ -116,19 +122,9 @@ vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "BufFilePost" }, {
 function M.path()
   local p = vim.b.statusline_path
   if not p or p == "" then return "" end
-  local rev = vim.b.statusline_revision
-  -- A revision is already just the basename, and shortening it would only hide
-  -- what little is left.
-  if not rev and #p > math.max(20, vim.api.nvim_win_get_width(0) - 60) then
-    -- Shorten rather than crowd out the right-hand side, which needs ~60.
+  -- Shorten rather than crowd out the right-hand side, which needs ~60.
+  if #p > math.max(20, vim.api.nvim_win_get_width(0) - 60) then
     p = vim.fn.pathshorten(p)
-  end
-  if rev then
-    -- The path is already accented, so the revision needs its own colour to
-    -- read as a warning rather than as part of the filename. Delete's red is
-    -- the strongest thing the scheme gives, and "not your working tree" earns
-    -- it -- this is the only cue that edits here go nowhere.
-    return ("%s%%*%%#StatuslineDelete#@%s"):format(p, rev)
   end
   return p
 end

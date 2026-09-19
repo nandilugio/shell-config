@@ -293,10 +293,22 @@ Nothing indicates the buffer is read-only, historical, or which commit it is —
 so "am I looking at my working tree or at 2023?" is unanswerable at a glance.
 The same applies to any `fugitive://`-style scheme if one is ever added.
 
-**Done:** `refresh_path()` detects the scheme and renders
-`cheatsheet.md @d4d6c3af`, the revision in `StatuslineDelete` so it reads as a
-warning rather than as part of the filename. `pathshorten` is skipped for these
-(it was mangling the URI into `g:///U/n/.s/.g//4/h/d/n/cheatsheet.md`).
+**Done:** `refresh_path()` detects the scheme and rewrites it to
+`cheatsheet.md[d4d6c3af]`, which is the name fzf-lua already gives the same
+thing (`actions.lua:1135`), so the two arrive at one shape. Before this it
+rendered as a path and `pathshorten` mangled it to
+`g:///U/n/.s/.g//4/h/d/n/cheatsheet.md`.
+
+Only this direction is worth doing. `gitsigns://` is a scheme and cannot be
+mistaken for a real path; recognising `path[rev]` would mean a regex over every
+filename, and a file honestly called `report[abc123].md` would then be labelled
+a revision it is not. A marker that lies is worse than one that is quiet.
+
+Cost taken deliberately: an earlier version coloured the revision in
+`StatuslineDelete` so it read as a warning. Matching fzf's plainer form gives
+that up — `r`/`R` is a deliberate action, so the loudness matters less now the
+mechanism is known. Gitsigns' own buffer name is untouched: it keys off it in
+`diffthis.lua:132` and `:328`, so renaming would break reuse and refresh.
 
 Correction to what this item first claimed: `b:gitsigns_head` does **not**
 become the sha. `Status.update` merges with the existing dict
