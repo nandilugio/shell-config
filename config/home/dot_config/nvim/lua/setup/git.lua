@@ -5,20 +5,21 @@
 local ok, gitsigns = pcall(require, "gitsigns")
 if ok then
   gitsigns.setup({
-    -- Diff characters rather than gitsigns' bars, which leave the colour to
-    -- carry the meaning; + ~ - read like diff output and git add -p.
+    -- Characters rather than gitsigns' bars, which leave the colour to carry
+    -- the meaning. + and ~ sit on the line they describe, so they read as
+    -- diff output does. A deletion has no line to sit on -- the text is gone
+    -- -- so _ and ‾ mark the edge it went from instead: _ on the line below
+    -- the gap, ‾ on line 1 when the gap is above it. ≃ is a change that also
+    -- shortened. Plain UTF-8 throughout, no Nerd Font.
     --
-    -- Plain UTF-8, no Nerd Font. ‾ is a deletion above the first line, ≃ a
-    -- line both changed and partly deleted.
-    -- show_count only where the lines are not on screen to be counted: a
-    -- deletion marks where text used to be, and 2 lines gone looks exactly
-    -- like 200. Added and changed lines are visible, so a count there is
-    -- noise. It is free -- 'signcolumn' reserves two cells whether or not
-    -- anything fills the second.
+    -- show_count only on the deletions, the three where the lines are not on
+    -- screen to be counted: 2 gone looks exactly like 200. It is free --
+    -- 'signcolumn' reserves two cells whether or not anything fills the
+    -- second -- and reads 1-9 then > for more.
     signs = {
       add = { text = "+" },
       change = { text = "~" },
-      delete = { text = "-", show_count = true },
+      delete = { text = "_", show_count = true },
       topdelete = { text = "‾", show_count = true },
       changedelete = { text = "≃", show_count = true },
       untracked = { text = "┆" },
@@ -28,7 +29,7 @@ if ok then
     signs_staged = {
       add = { text = "+" },
       change = { text = "~" },
-      delete = { text = "-", show_count = true },
+      delete = { text = "_", show_count = true },
       topdelete = { text = "‾", show_count = true },
       changedelete = { text = "≃", show_count = true },
     },

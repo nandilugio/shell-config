@@ -94,9 +94,10 @@ ih              the hunk as a text object: dih, yih
 gs on a hunk that is already staged unstages it — the signs dim when staged,
 so you can see which is which.
 
-In the gutter: + added · ~ changed · - deleted · ‾ deleted at the top of the
-file · ≃ changed and shortened · ┆ untracked. The deletions carry how many
-lines went, 1-9 then > for more, since those lines are not there to count.
+In the gutter: + added · ~ changed · ┆ untracked · ≃ changed and shortened.
+Deleted lines are gone, so _ and ‾ mark the edge they went from: _ below the
+gap, ‾ on line 1 when the gap is above it. Those three carry how many lines
+went — 1-9, then > for more — since the lines are not there to count.
 
 <leader>gb      blame this line, in a float
 <leader>gB      blame the file, in a scroll-bound side panel
