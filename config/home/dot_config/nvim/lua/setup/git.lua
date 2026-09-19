@@ -10,12 +10,17 @@ if ok then
     --
     -- Plain UTF-8, no Nerd Font. ‾ is a deletion above the first line, ≃ a
     -- line both changed and partly deleted.
+    -- show_count only where the lines are not on screen to be counted: a
+    -- deletion marks where text used to be, and 2 lines gone looks exactly
+    -- like 200. Added and changed lines are visible, so a count there is
+    -- noise. It is free -- 'signcolumn' reserves two cells whether or not
+    -- anything fills the second.
     signs = {
       add = { text = "+" },
       change = { text = "~" },
-      delete = { text = "-" },
-      topdelete = { text = "‾" },
-      changedelete = { text = "≃" },
+      delete = { text = "-", show_count = true },
+      topdelete = { text = "‾", show_count = true },
+      changedelete = { text = "≃", show_count = true },
       untracked = { text = "┆" },
     },
     -- Same characters again: staged-ness is already in the colour, which
@@ -23,9 +28,9 @@ if ok then
     signs_staged = {
       add = { text = "+" },
       change = { text = "~" },
-      delete = { text = "-" },
-      topdelete = { text = "‾" },
-      changedelete = { text = "≃" },
+      delete = { text = "-", show_count = true },
+      topdelete = { text = "‾", show_count = true },
+      changedelete = { text = "≃", show_count = true },
     },
     preview_config = { border = "single" },
   })
