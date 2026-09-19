@@ -366,7 +366,7 @@ So:
 ours — fzf-lua has no cursor-line case and no funcname form.
 
 One thing found the hard way: git ships funcname patterns but they are inert
-until a `.gitattributes` enables them per repository (`*.rb diff=ruby`). An
+until a `.gitattributes` enables them per repository (`*.py diff=python`). An
 earlier note here claiming Ruby and Python were "covered" was wrong — shipping
 is not enabling. `gt` now says so when `-L` reports "no match".
 

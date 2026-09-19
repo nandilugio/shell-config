@@ -94,7 +94,7 @@ so you can see which is which.
 <leader>gf      file history: every commit touching the file, as a picker
 
 gt needs the repository to have enabled git's funcname pattern for the
-language (`*.rb diff=ruby` in .gitattributes); it says so when it has not.
+language (`*.py diff=python` in .gitattributes); it says so when it has not.
 On a definition line prefer gt: gl there shows the signature and hides the
 body that changed with it.
 

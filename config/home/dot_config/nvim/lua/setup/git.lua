@@ -200,7 +200,7 @@ function M.function_history()
     -- "no match" usually means the pattern was never enabled here, not that
     -- the name is wrong, and git's own message does not say so.
     when = "no match",
-    say = "funcname patterns are per-repository: add e.g. `*.rb diff=ruby`"
+    say = "funcname patterns are per-repository: add e.g. `*.py diff=python`"
       .. "\nto .gitattributes. Until then <leader>gl gives line history.",
   })
 end
