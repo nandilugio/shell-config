@@ -64,31 +64,37 @@ which of the two is wrong — the fix might equally be to drop the
 
 ---
 
-## 3. `<C-s>` vs `<C-S>` in the cheatsheet
+## 3. ~~`<C-s>` vs `<C-S>` in the cheatsheet~~ DONE 2026-09-21
 
-**Where:** `cheatsheet.md:51` says `<C-s>`; `lua/setup/keymaps.lua:80-81`
-relabels `<C-S>`.
+**Where:** `lua/setup/keymaps.lua:79-80`.
 
-**Why:** Cosmetic only — identical to Vim, since Ctrl strips case. Worth
-aligning so the cheatsheet matches the code it documents.
+**Was:** the cheatsheet wrote `<C-s>`, the core-label table wrote `<C-S>`.
+Cosmetic only — Ctrl strips case, so both spellings are the same key.
 
-**Do:** Pick one spelling. `<C-s>` in the cheatsheet reads better; `<C-S>`
-matches how core defines it. Low priority.
+**Done:** standardised on lowercase `<C-s>`, which is the spelling the
+cheatsheet and `docs/keymaps.md` already used, so the code now matches its own
+documentation rather than the other way round.
+
+The label is applied by a `maparg` lookup, so the spelling had to keep
+resolving to the same core mapping. Verified it does: `maparg("<C-s>", "i")`
+and `maparg("<C-S>", "i")` both return `lhs = "<C-S>"` with the callback
+present — Neovim normalises the case internally.
 
 ---
 
-## 4. `<leader>gr` vs `grr` — naming collision
+## 4. ~~`<leader>gr` vs `grr` — naming collision~~ NOT AN ISSUE 2026-09-21
 
-**Where:** `lua/keymaps.lua:194` (`<leader>gr` reset hunk) vs core `grr`
-(references).
+**Closed without action.** There is no collision. `gr` is core's LSP prefix
+(`grr`, `gri`, `grn`); `<leader>gr` is reset-hunk. `<leader>` is a distinct
+key, so the two sequences never race — no shadowing, no timeout ambiguity.
+Each namespace is coherent on its own terms: everything under `g` acts on
+symbols, everything under `<leader>g` is git.
 
-**Why:** Not a real conflict — different prefixes, no shadowing, and
-`:KeymapAudit` will not flag it. But "gr" means *reset hunk* under `<leader>`
-and *references* under `g`, which cuts against the config's own one-sentence
-rule ("`gr` acts on symbols").
-
-**Do:** Probably nothing. Noted so it is a decision rather than an oversight.
-If it ever grates, `<leader>gx` or `<leader>gu` (undo hunk) are free.
+What this item actually described was that the *letters* `g`+`r` mean different
+things depending on whether leader was pressed first — a fact about English,
+not about the config. By that reasoning `<leader>gd` would collide with `grd`
+and the whole git namespace would be suspect. The leader key is the
+disambiguator, and it is pressed deliberately.
 
 ---
 
@@ -197,22 +203,20 @@ distinguishable — see item 8.
 
 ---
 
-## 7. Open question — seeing a commit from the editor
+## 7. ~~Open question — seeing a commit from the editor~~ SETTLED 2026-09-21
 
 The thing that started all this: `<leader>gb` shows "Hunk 1 of 4", meaning the
-commit that last touched this line changed 4 hunks in this file. There is no
-way to see the other 3 from the popup — gitsigns binds only `q` there
-(`popup.lua:244`), and the hunks belong to a historical diff that is not on
-screen.
+commit that last touched this line changed 4 hunks in this file, with no way to
+see the other 3 — gitsigns binds only `q` in that popup (`popup.lua:244`), and
+the hunks belong to a historical diff that is not on screen.
 
-`:Gitsigns show <sha>` opens that commit's version of the file, using the SHA
-from the blame popup. That is the closest built-in answer, and may be enough —
-worth living with before building anything.
+**Settled by `<leader>gB`** (item 6). The blame panel's `D` opens the commit
+under the cursor, all hunks, in a tab — without copying a SHA out of the popup.
+That is better than both candidates this item originally listed: `:Gitsigns
+show <sha>` (still needs the SHA by hand) and diffview.nvim (a real dependency,
+against the few-plugins rule).
 
-If it is not enough, the want is "show me the commit under my cursor,
-diff and all", which is a genuine integration to design rather than a keybinding
-to fix. Candidates: a `<leader>o*` binding wrapping `:Gitsigns show`, or
-diffview.nvim (a real dependency, against the config's few-plugins rule).
+Closed on the intended test — living with it rather than building on it.
 
 ---
 
