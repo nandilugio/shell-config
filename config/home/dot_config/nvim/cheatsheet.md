@@ -126,11 +126,29 @@ Its toggles are under <leader>ug — see Toggles below.
 <S-h>,<S-l>     previous, next buffer           <leader>bd  close buffer
 
 
+## Folds — z
+
+A closed fold still shows its first line, colours and all: close everything
+and the file reads as an outline.
+
+zc zo za        close, open, toggle the fold here
+zC              close it and every fold containing it (not the ones inside)
+zO              open everything in the outermost fold here
+zm zr           mask, reveal one more level        zM zR  mask, reveal all
+zn              no folding at all                  zN     bring it back
+
+zm and zr set 'foldlevel' for the whole window, undoing any zc or zo by hand.
+It starts at 99, so zm seems to do nothing at first: zM first, then zr.
+Closing a fold shows the fold column (+ closed); zR and zn hide it again,
+<leader>uz toggles it.
+
+
 ## Toggles — <leader>u
 
 uw wrap · us spell · ul line numbers · ur relative numbers · ub light/dark
 uh inlay hints       ud diagnostics: all → warnings+errors → errors → off
 um markdown table alignment (on by default for markdown)
+uz fold column (see Folds above)
 ug* git: ugd deleted lines · ugw word diff · ugb blame every line
 
 

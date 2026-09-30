@@ -92,6 +92,9 @@ end, { expr = true, desc = "Accept selected completion, else newline" })
 vim.o.foldmethod = "expr"
 vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.o.foldlevel = 99
+-- A closed fold shows its first line as is, syntax colours included, instead
+-- of a grey "+-- N lines: ..." summary: closing folds leaves an outline.
+vim.o.foldtext = ""
 
 -- Same terms as insert mode, with <Tab> as the trigger (Vim's default, and
 -- every shell's). Popup rather than a line of matches, and fuzzy, so :e cfg

@@ -701,7 +701,7 @@ the comment gets right. The cheatsheet does not repeat the mistake.
 
 ---
 
-## 20. Teach `zm` / `zr` as **m**ask / **r**eveal
+## 20. ~~Teach `zm` / `zr` as **m**ask / **r**eveal~~ DONE 2026-09-30
 
 **Where:** `cheatsheet.md` (no folds section at all today) and the which-key
 popup under `z`.
@@ -731,6 +731,12 @@ and discarding any `zo` / `zc` done by hand. One section is `za` / `zc` / `zo`.
    mappings via `maparg` — `zm` is neither, being a built-in command. Needs a
    small third shape, e.g. `M.labels` in `keymaps.lua` (`{ lhs, desc }`, no
    mapping, which-key only). Decide that before writing it.
+
+**Done:** the cheatsheet has a Folds section with the mnemonic and the
+`'foldlevel'` gotcha. The shape question went away: `zc zC za zA zm zM zR zn`
+became real mappings in `keymaps.lua` meanwhile (they show the fold column), so
+their `desc` is the label. `zr` is mapped to itself for its label. The labels
+also say what `zC` / `zA` really do, per item 22.
 
 ---
 

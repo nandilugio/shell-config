@@ -1,7 +1,7 @@
 -- Every keybinding, as data. Applied by setup/keymaps.lua after plugins load.
 --
 -- Entry shape:
---   { lhs, rhs, desc = "...", mode = "n"|{"n","x"}, needs = "...", fallback = rhs }
+--   { lhs, rhs, desc = "...", mode = "n"|{"n","x"}, needs = "...", fallback = rhs, expr = true }
 --
 --   needs     what `rhs` depends on: a bare name is an executable on PATH,
 --             "mod:x" a Lua module, "cmd:X" an Ex command.
@@ -9,6 +9,7 @@
 --             mapping is skipped entirely. This is what lets the config work on
 --             a bare server with nothing installed.
 --   fallback  a built-in that does the same job, less well.
+--   expr      rhs is a function returning the keys to run (:h map-expression).
 --
 -- Design rule:  g jumps · gr acts on symbols · <leader> opens tools
 --               [ ] iterate lists · <C-w> windows · F-keys bridge other editors
@@ -42,6 +43,15 @@ M.groups = {
   { "[", "previous" },
   { "<C-w>", "window" },
 }
+
+-- For the fold commands: an expr map that sets the window's fold column, then
+-- runs the built-in key, so counts and visual selections work unchanged.
+local function setting_foldcolumn(keys, width)
+  return function()
+    vim.wo.foldcolumn = tostring(width)
+    return keys
+  end
+end
 
 M.maps = {
 
@@ -291,6 +301,12 @@ M.maps = {
   -- Capital H because <leader>uh is inlay hints. Both markdown toggles live
   -- under <leader>u: display layers over a file neither one changes.
   { "<leader>uH", function() require("mdheading").toggle() end, desc = "Markdown heading colours" },
+  -- Off by default. z for the fold commands; a string option, so no set x!.
+  {
+    "<leader>uz",
+    function() vim.o.foldcolumn = vim.o.foldcolumn == "0" and "1" or "0" end,
+    desc = "Fold column",
+  },
   -- Git's own toggles, nested because there are three of them and <leader>u's
   -- single letters are spoken for (ud diagnostics, uw wrap, ub background).
   {
@@ -348,6 +364,24 @@ M.maps = {
   -- ── Edit ──────────────────────────────────────────────────────────────────
   -- = is Vim's own format operator, so <leader>= reads as "format everything".
   { "<leader>=", function() vim.lsp.buf.format({ timeout_ms = 2000 }) end, desc = "Format buffer", mode = { "n", "v" } },
+
+  -- ── Folds: z ──────────────────────────────────────────────────────────────
+  -- The built-ins, showing the fold column (off by default) once something is
+  -- folded and hiding it once everything is open. <leader>uz toggles it by hand.
+  -- Labels say what the key does to the view: zm "fold more" lowers
+  -- 'foldlevel', which masks one more level. zC closes the fold and the ones
+  -- containing it, not the ones inside (fold.c:1221); zO opens everything in
+  -- the outermost fold.
+  { "zc", setting_foldcolumn("zc", 1), desc = "Close fold", mode = { "n", "x" }, expr = true },
+  { "zC", setting_foldcolumn("zC", 1), desc = "Close fold and those containing it", mode = { "n", "x" }, expr = true },
+  { "za", setting_foldcolumn("za", 1), desc = "Toggle fold", mode = { "n", "x" }, expr = true },
+  { "zA", setting_foldcolumn("zA", 1), desc = "Toggle fold, as zC or zO", mode = { "n", "x" }, expr = true },
+  { "zm", setting_foldcolumn("zm", 1), desc = "Mask one more level (fold more)", expr = true },
+  { "zM", setting_foldcolumn("zM", 1), desc = "Mask all", expr = true },
+  { "zR", setting_foldcolumn("zR", 0), desc = "Reveal all", expr = true },
+  { "zn", setting_foldcolumn("zn", 0), desc = "No folding (zN restores)", expr = true },
+  -- Mapped to itself only for the label; the column stays as it is.
+  { "zr", "zr", desc = "Reveal one more level (fold less)" },
 
   -- ── F-keys: the only layer that transfers unchanged to other editors ──────
   -- Only <F1> is bound, so F2-F12 are free. These match VS Code and Zed.

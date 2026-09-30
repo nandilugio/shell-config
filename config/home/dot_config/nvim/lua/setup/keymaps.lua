@@ -38,7 +38,7 @@ local function apply(m)
       return
     end
   end
-  vim.keymap.set(m.mode or "n", m[1], rhs, { desc = m.desc, silent = true })
+  vim.keymap.set(m.mode or "n", m[1], rhs, { desc = m.desc, silent = true, expr = m.expr })
 end
 
 -- Vimscript plugins source their plugin/ files only after init.lua returns, so
