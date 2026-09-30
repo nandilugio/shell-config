@@ -3,8 +3,8 @@
 Items 1-7 were found 2026-09-16 while investigating the `<leader>gb` blame
 popup; 8-16 on 2026-09-18/19 while working on the git setup; 17-22 on
 2026-09-28 in a read-through of the nvim and tmux configs; 23-24 on 2026-09-30
-while setting up a Python project; 25 the same day, while reworking folds.
-Paths are relative to this directory.
+while setting up a Python project; 25 the same day, while reworking folds; 26
+the same day, as a feature request. Paths are relative to this directory.
 
 ---
 
@@ -969,3 +969,94 @@ tmux pane, with and without the `default-title` border title.
    `vim.snippet.expand("foo(${1:arg})")` in a scratch tmux) and the partial
    stage in a scratch repo. Also decide whether the selection maps should
    leave Visual mode afterwards, as `line_history` does (`setup/git.lua:140`).
+
+---
+
+## 26. A "review mode": one toggle that sets the editor up for code review
+
+**Where:** new; it would drive `setup/diagnostics.lua`, `setup/lsp.lua`
+(`pick_type_checking`) and gitsigns. The key is not chosen yet: `<leader>u*`
+is the toggle namespace, and `<leader>o` is kept for personal bindings.
+
+**Why:** Reviewing a branch takes several separate steps today, and each has
+to be undone afterwards. The idea is one toggle that switches all of these on
+and back off:
+
+| Setting | Today | Review mode |
+|---|---|---|
+| Diagnostics | `<leader>ud` cycle, level "all" | errors only |
+| Type checking | `,pt` picker; defaults to basedpyright `recommended` | `standard` |
+| gitsigns base | the index | the merge-base with `develop` / `master` / `main` |
+| Editing | normal | `:set nowrite`: edits allowed, writes refused |
+| Hunk display | `<leader>ugd` / `ugw` / `ugb` toggles, off | deleted lines, word diff and current-line blame on |
+
+**What exists, and what each piece needs (checked 2026-09-30):**
+
+- **Diagnostics.** `cycle()` only filters `virtual_lines` (`setup/diagnostics.lua:38-44`).
+  Signs and underlines still show every severity, so "errors only" today is
+  only partial. Review mode needs:
+  - a setter alongside `cycle()` that moves the same `level`, so the two don't
+    disagree afterwards;
+  - a decision on whether to also filter signs and underline (`severity = { min = ERROR }` works for both).
+- **Type checking.** `pick_type_checking()` is interactive
+  (`setup/lsp.lua:81`). Its body after `vim.ui.select` needs to become a
+  `set_type_checking(mode)` that review mode can call. Three things to keep:
+  - The project-config warning still applies: `pyrightconfig.json` or
+    `[tool.(based)pyright]` in the project overrides the editor's setting.
+  - Leaving review mode should restore the previous mode, not the default.
+  - Both checkers have a `standard` mode (`setup/lsp.lua:58`, `:61`).
+- **gitsigns base.** `require("gitsigns").change_base(rev, true)` applies to
+  every buffer and to the config (`gitsigns/actions.lua:794-806`), so buffers
+  opened later use it too. `reset_base(true)` goes back to the index. Two
+  problems:
+  - **Branch tip vs merge-base.** Diffing against the branch tip shows every
+    change made on that branch since you forked from it, reversed, as if the
+    current branch had made them. The PR's diff is against the merge-base:
+    `git merge-base HEAD origin/develop`, falling back to `master` or `main`.
+    This is a known git behaviour, not tested in gitsigns.
+  - **Staging.** Not checked: what `<leader>gs` and `<leader>gr` do while the
+    base isn't the index. That doesn't matter if review mode is also
+    read-only.
+- **Read-only** (`'write'` chosen, see Do 1). There are two separate options:
+  - `'write'` (global): `:set nowrite` blocks every write with E142 but still
+    allows edits (`:h 'write'`). Easy to toggle, but you can still change the
+    buffer by accident.
+  - `'modifiable'` (per buffer): blocks edits, but you would have to set it on
+    each open buffer, plus a `BufReadPost` autocmd for buffers opened later,
+    and restore it on the way out. It shouldn't touch buffers this config
+    already sets unmodifiable: the cheatsheet, the git windows
+    (`setup/git.lua:94`), and anything with a non-empty `buftype`.
+
+  Autosave already skips non-modifiable buffers (`setup/autosave.lua:17`).
+
+**Do:**
+
+1. **Decided 2026-09-30:** the gitsigns base is the merge-base, detected;
+   read-only is `:set nowrite`, so small test edits stay possible. Still open:
+   what to do when no base branch is found (ask with `vim.ui.select`, or
+   refuse), and the key.
+2. Give each piece a setter that can also report its current value, so review
+   mode can save the state on entry and restore it on exit.
+3. **Hunk display.** Switch on deleted lines, word diff and current-line
+   blame on entry, and put each back on exit. gitsigns' `toggle_deleted`,
+   `toggle_word_diff` and `toggle_current_line_blame` take a value to set and
+   return the new state (`gitsigns/actions.lua:208`, `:224`, `:239`). Not
+   checked: how to read the state without changing it, which item 2 needs.
+4. **Every hunk in the PR, in quickfix.** `setqflist("all")` diffs every
+   changed file against the global base, open or not
+   (`gitsigns/actions/qflist.lua:61-106`). With the merge-base set, that is
+   the whole PR, and `]q` / `[q` walk it. Today `<leader>gq` calls
+   `setqflist()`, which takes the current buffer only (`keymaps.lua:234`).
+   Decide whether `<leader>gq` itself changes, or review mode gets its own
+   key.
+5. **A picker over the changed files.** fzf-lua's `git_diff` runs
+   `git diff --name-only {ref1} {ref}`, with a diff preview
+   (`fzf-lua/defaults.lua:680-684`). Pass the merge-base as `ref`.
+6. **Statusline indicator** while review mode is on, since it changes what
+   the signs and diagnostics mean. Show the base too (the branch name, not
+   the merge-base sha).
+7. **Cheatsheet: a short "Review mode" section.** Besides the new keys, it
+   should say that `<leader>gd` (diffthis) already diffs against the current
+   base (`gitsigns/actions.lua:839`), so in review mode it shows the full file
+   against the merge-base. Nothing needs building for that. Also update
+   `docs/keymaps.md`.
