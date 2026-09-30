@@ -3,7 +3,8 @@
 Items 1-7 were found 2026-09-16 while investigating the `<leader>gb` blame
 popup; 8-16 on 2026-09-18/19 while working on the git setup; 17-22 on
 2026-09-28 in a read-through of the nvim and tmux configs; 23-24 on 2026-09-30
-while setting up a Python project. Paths are relative to this directory.
+while setting up a Python project; 25 the same day, while reworking folds.
+Paths are relative to this directory.
 
 ---
 
@@ -923,3 +924,48 @@ point of deferring the setup.
 
 **Do:** Apply it, then check the `+ 4` by capturing the window in a scratch
 tmux pane, with and without the `default-title` border title.
+
+---
+
+## 25. Visual-mode maps: Select mode, and selections they ignore
+
+**Where:** `lua/keymaps.lua` — the `"v"` entries at `:29` (`<leader>g` group),
+`:212` (`<leader>gs`), `:219` (`<leader>gr`), `:248` (`<leader>gl` selection),
+`:366` (`<leader>=`).
+
+**Why:** Three problems, found 2026-09-30:
+
+1. **`"v"` is Visual *and* Select mode.** Snippet placeholders (`vim.snippet`)
+   are selected in Select mode, where typing replaces them, so the leader maps
+   catch a space typed first into one. Verified with this config: `<Space>`
+   opens which-key's leader popup instead of inserting, and `<Space>=` runs
+   Format buffer — the placeholder stays, the space is lost. A key with no map
+   after it (`<Space>x`) types normally. Only the first key is at risk, since
+   it turns Select into Insert.
+2. **Visual `<leader>gs` / `<leader>gr` act on the whole hunk.** The
+   cheatsheet says "stage hunk (or selection)", but `stage_hunk()` /
+   `reset_hunk()` with no argument take the hunk under the cursor
+   (gitsigns `actions.lua:290`, `:378`); only a range stages part of one.
+   Verified in a scratch repo: one line of a two-line hunk selected, both
+   staged. With `{ vim.fn.line("v"), vim.fn.line(".") }` only the selected
+   line was. gitsigns sorts the range itself (`cache.lua:356`).
+3. **Visual `<leader>=` says "Format buffer".** It does format just the
+   selection: `vim.lsp.buf.format()` takes it in `v` / `V` mode
+   (`$VIMRUNTIME/lua/vim/lsp/buf.lua:618`). Label only.
+
+**Do:**
+
+1. `"v"` → `"x"` in all five. which-key takes `"x"` as is
+   (`which-key/mappings.lua:280`), and `:KeymapAudit` already splits `"v"`
+   into `x` and `s` (`setup/keymaps.lua:123`, `config/health.lua:134`), so it
+   needs no change.
+2. Split `gs`, `gr` and `=` like `<leader>gl` already is: the normal-mode entry
+   as today, plus an `"x"` one — "Stage selection" / "Reset selection" passing
+   the range, "Format selection". Keep the header's `mode = "n"|{"n","x"}`
+   example true.
+3. Update `cheatsheet.md` (`:69`, `:88-89`) and `docs/keymaps.md` (`:108-109`,
+   `:171`) to match.
+4. Re-run both checks: the snippet placeholder (via an `inoremap` calling
+   `vim.snippet.expand("foo(${1:arg})")` in a scratch tmux) and the partial
+   stage in a scratch repo. Also decide whether the selection maps should
+   leave Visual mode afterwards, as `line_history` does (`setup/git.lua:140`).
