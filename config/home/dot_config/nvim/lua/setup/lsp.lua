@@ -48,6 +48,70 @@ local pyright_settings = {
 vim.lsp.config("basedpyright", pyright_settings)
 vim.lsp.config("pyright", pyright_settings)
 
+-- basedpyright first, and only one type checker at a time.
+local checker = (have("basedpyright") and "basedpyright") or (have("pyright") and "pyright") or nil
+
+-- Each checker's modes, loosest first, and where it starts: its own default,
+-- since nothing here sets one. The settings section differs too.
+local CHECKERS = {
+  basedpyright = {
+    section = "basedpyright",
+    modes = { "off", "basic", "standard", "strict", "recommended", "all" },
+    default = "recommended",
+  },
+  pyright = { section = "python", modes = { "off", "basic", "standard", "strict" }, default = "standard" },
+}
+
+local type_checking = checker and CHECKERS[checker].default
+
+-- In a language server, (based)pyright looks for these in the root only, and
+-- when it finds one it ignores the editor's settings altogether.
+local function project_config(root)
+  if not root then return nil end
+  if vim.uv.fs_stat(root .. "/pyrightconfig.json") then return "pyrightconfig.json" end
+  local f = io.open(root .. "/pyproject.toml")
+  if not f then return nil end
+  local text = "\n" .. f:read("a")
+  f:close()
+  if text:find("\n%s*%[tool%.pyright[%].]") or text:find("\n%s*%[tool%.basedpyright[%].]") then
+    return "pyproject.toml"
+  end
+end
+
+-- Global, like <leader>ud: running clients switch now, later ones start in it.
+function M.pick_type_checking()
+  if not checker then
+    vim.notify("No basedpyright or pyright on PATH", vim.log.levels.WARN)
+    return
+  end
+  vim.ui.select(CHECKERS[checker].modes, {
+    prompt = "Type checking (" .. checker .. ")",
+    format_item = function(mode) return mode == type_checking and mode .. " (current)" or mode end,
+  }, function(mode)
+    if not mode then return end
+    type_checking = mode
+    local patch = { [CHECKERS[checker].section] = { analysis = { typeCheckingMode = mode } } }
+    vim.lsp.config(checker, { settings = patch })
+    local ignored = {}
+    for _, client in ipairs(vim.lsp.get_clients({ name = checker })) do
+      client.settings = vim.tbl_deep_extend("force", client.settings, patch)
+      -- :lsp restart starts from the client's config, not vim.lsp.config.
+      client.config.settings = vim.tbl_deep_extend("force", client.config.settings or {}, patch)
+      client:notify("workspace/didChangeConfiguration", { settings = client.settings })
+      local cfg = project_config(client.root_dir)
+      if cfg then table.insert(ignored, vim.fn.fnamemodify(client.root_dir, ":~") .. "/" .. cfg) end
+    end
+    if #ignored > 0 then
+      vim.notify(
+        ("Type checking: %s, except where the project's own config wins: %s"):format(mode, table.concat(ignored, ", ")),
+        vim.log.levels.WARN
+      )
+    else
+      vim.notify("Type checking: " .. mode)
+    end
+  end)
+end
+
 -- ruff lints and formats, pyright does types. Both offer hover, so ruff's is
 -- switched off below.
 vim.lsp.config("ruff", {})
@@ -145,12 +209,7 @@ vim.lsp.config("lua_ls", {
 
 -- ── Enable what this machine can run ────────────────────────────────────────
 local servers = {}
--- basedpyright first, and only one type checker at a time.
-if have("basedpyright") then
-  table.insert(servers, "basedpyright")
-elseif have("pyright") then
-  table.insert(servers, "pyright")
-end
+if checker then table.insert(servers, checker) end
 if have("ruff") then table.insert(servers, "ruff") end
 if have("lua-language-server") then table.insert(servers, "lua_ls") end
 -- The rbenv shim always exists, so test a real interpreter instead.

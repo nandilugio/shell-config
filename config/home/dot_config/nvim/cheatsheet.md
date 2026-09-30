@@ -137,6 +137,7 @@ ug* git: ugd deleted lines · ugw word diff · ugb blame every line
 ## Filetype — <LocalLeader> = ,
 
 ,t  pad the markdown table under the cursor, for real (edits the buffer)
+,pt Python type-checking mode (picker): basedpyright starts on recommended
 
 
 ## Own — <leader>o

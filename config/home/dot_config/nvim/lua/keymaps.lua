@@ -32,6 +32,7 @@ M.groups = {
   { "<leader>o", "own" }, -- reserved: no plugin or convention may claim it
   { "<leader>x", "lists" },
   { "<LocalLeader>", "filetype" },
+  { "<LocalLeader>p", "python" },
 
   -- Not ours, but the popup is where you look having forgotten them.
   { "g", "goto / extended" },
@@ -374,6 +375,8 @@ M.maps = {
   -- cost is that they must no-op where they do not apply, which
   -- mdtable.align() does.
   { "<LocalLeader>t", function() require("mdtable").align() end, desc = "Align markdown table" },
+  -- Global state, like <leader>ud, so it also works before a Python file is open.
+  { "<LocalLeader>pt", function() require("setup.lsp").pick_type_checking() end, desc = "Type checking mode" },
 
   -- ── Odds and ends ─────────────────────────────────────────────────────────
   -- One key for "dismiss whatever is in the way": a float if one is open, the
