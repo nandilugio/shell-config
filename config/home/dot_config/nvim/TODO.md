@@ -1,8 +1,9 @@
 # nvim config — changes to make later
 
 Items 1-7 were found 2026-09-16 while investigating the `<leader>gb` blame
-popup; 8-16 on 2026-09-18/19 while working on the git setup. Paths are
-relative to this directory.
+popup; 8-16 on 2026-09-18/19 while working on the git setup; 17-22 on
+2026-09-28 in a read-through of the nvim and tmux configs; 23-24 on 2026-09-30
+while setting up a Python project. Paths are relative to this directory.
 
 ---
 
@@ -37,13 +38,13 @@ panel's `D` opens the commit under the cursor, all hunks, in a tab.
 
 ## 2. Completion autotrigger contradicts `'autocomplete'`
 
-**Where:** `lua/options.lua:76` vs `lua/setup/lsp.lua:200`
+**Where:** `lua/options.lua:67` vs `lua/setup/lsp.lua:184`
 
 ```lua
--- options.lua:76
+-- options.lua:67
 vim.o.autocomplete = false
 
--- setup/lsp.lua:200
+-- setup/lsp.lua:184
 vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
 ```
 
@@ -61,6 +62,14 @@ or Lua buffer that the menu only appears on `<C-n>` / `<C-x><C-o>` /
 whether `'autocomplete' = false` suppresses it anyway. Check before deciding
 which of the two is wrong — the fix might equally be to drop the
 `options.lua` comment if autotrigger is what is wanted.
+
+**Source says (2026-09-28, v0.12.5):** `'autocomplete'` does not suppress it.
+`autotrigger = true` registers its own buffer-local `InsertCharPre` autocmd
+(`$VIMRUNTIME/lua/vim/lsp/completion.lua:1175`), independent of the option.
+It fires on the server's `triggerCharacters` only (`completion.lua:1141`,
+`:1232`), not on every keystroke — so expect the menu to open by itself after
+`.` (or whatever the server declares), and nowhere else. Still worth
+confirming by typing, but the contradiction is real.
 
 ---
 
@@ -632,3 +641,279 @@ fixes. File both together.
 
 **Related:** item 9 — the panel outliving the buffer it describes is exactly the
 disorientation that "no way back to the working tree" is about.
+
+---
+
+## 17. `M-a` in the pickers is the tmux prefix
+
+**Where:** `cheatsheet.md:44`, and fzf-lua's default `keymap.fzf`
+(`fzf-lua/lua/fzf-lua/defaults.lua:242`, `["alt-a"] = "toggle-all"`).
+
+**Why:** The cheatsheet lists "M-a ticks all", but `tmux.conf` sets
+`prefix M-a`, so tmux eats the key and fzf never sees it. Same class as the
+`M-h` note two lines below it in the cheatsheet, which is already documented.
+`M-a M-a` works, because `tmux.conf` binds it to `send-prefix`.
+
+The other Alt keys the cheatsheet lists (`M-q`, `M-i`, `M-f`) are not bound in
+tmux, so they get through.
+
+**Do:** Either note in the cheatsheet that it is `M-a M-a` under tmux, or give
+toggle-all another key in `setup/fzf.lua`. Careful with the second: as that
+file notes, a `keymap.fzf` table *replaces* fzf-lua's defaults rather than
+extending them, so the whole set would have to be restated.
+
+---
+
+## 18. Cheatsheet still describes the old revision marker
+
+**Where:** `cheatsheet.md:115-116`
+
+```
+r and R land you in a read-only revision of the file: the statusline then
+reads name@sha in red.
+```
+
+**Why:** Out of date since item 10. The statusline now shows `path[sha]`,
+the same shape fzf-lua uses, and not in red: the colour was dropped on purpose
+(item 10, "Cost taken deliberately").
+
+**Do:** Change it to something like "the statusline then reads path[sha]".
+
+---
+
+## 19. `keymaps.lua` header lists `]n` / `[n` as normal-mode defaults
+
+**Where:** `lua/keymaps.lua:15-17`
+
+```lua
+-- Nvim 0.12 defaults we deliberately do NOT redefine (they are already right):
+--   grn gra grr grx gO   K   ]d [d ]D [D   ]q [q ]Q [Q   ]b [b   ]<Space> [<Space>
+--   gc gcc   <C-]> <C-t>   an in ]n [n
+```
+
+**Why:** Core maps `]n` / `[n` (and `]N` / `[N`) in **visual mode only**:
+incremental selection, extending the selection to the next or previous node
+(`$VIMRUNTIME/lua/vim/_core/defaults.lua:454-458`). In normal mode they are
+unmapped. `an` / `in` are visual and operator-pending (`:470`, `:478`), which
+the comment gets right. The cheatsheet does not repeat the mistake.
+
+**Do:** Comment only, e.g. `an in (x/o)  ]n [n (x)`. No behaviour change.
+
+---
+
+## 20. Teach `zm` / `zr` as **m**ask / **r**eveal
+
+**Where:** `cheatsheet.md` (no folds section at all today) and the which-key
+popup under `z`.
+
+**Why:** Vim's own names are "Fold more" and "Reduce folding" (`:h zm`,
+`:h zr`), which which-key shows as "Fold more" / "Fold less"
+(`which-key.nvim/lua/which-key/plugins/presets.lua:148,150`). Both make you
+translate: `zm` *lowers* `'foldlevel'` to fold *more*. **Mask / reveal**
+states the effect directly, and carries over to the capitals: `zM` masks
+everything, `zR` reveals everything. Worth saying it is a level at a time,
+across the whole window: these set `'foldlevel'`, re-applying it to every fold
+and discarding any `zo` / `zc` done by hand. One section is `za` / `zc` / `zo`.
+
+**Do:**
+
+1. **Cheatsheet:** add a Folds section with the mnemonic. While there, the
+   one gotcha that makes `zm` look broken: `'foldlevel'` starts at 99, so the
+   first `zm`s close nothing — `zM` first, then `zr` to reveal levels.
+2. **which-key:** relabel the four, e.g. "Mask one more level (fold more)",
+   "Reveal one more level (fold less)", "Mask all", "Reveal all". Presets load
+   first so a user spec overrides them (`which-key/config.lua:280`), and they
+   create no mappings (`config.lua:44`), so a desc-only
+   `wk.add({ { "zm", desc = "..." } })` should be enough — not yet verified.
+
+   The catch is where it lives. `setup/keymaps.lua` feeds which-key only
+   `M.groups`, which are prefix *groups*, and `core_labels` relabels real
+   mappings via `maparg` — `zm` is neither, being a built-in command. Needs a
+   small third shape, e.g. `M.labels` in `keymaps.lua` (`{ lhs, desc }`, no
+   mapping, which-key only). Decide that before writing it.
+
+---
+
+## 21. Learn more about `gO`
+
+**Where:** nothing in this config yet. Core's markdown ftplugin maps `gO` to
+`vim.treesitter._headings.show_toc()` (`$VIMRUNTIME/ftplugin/markdown.lua:3`),
+which puts the headings in the **location list** and opens it.
+
+**Why:** Came up 2026-09-28 while trying it. It is a quickfix window
+underneath, and that shows as soon as it is resized:
+
+- Each line is really `/full/path/file.md|<lnum>| <heading>`. `syntax/qf.lua`
+  conceals everything up to the second `| ` (`conceallevel=3`), but wrapping and
+  horizontal scrolling still count the hidden text. Hence wrapping far short of
+  the border, blank rows with a long path, and `h` / `l` / `zl` appearing dead
+  under `nowrap` — they are moving through the invisible path.
+- The indent is non-breaking spaces placed *after* the hidden prefix, because
+  quickfix trims ordinary leading whitespace (`treesitter/_headings.lua:98`). So
+  `breakindent` sees no indent, and `'listchars'` (`nbsp:␣`) draws it as `␣`.
+
+**Works today:** `:setlocal nowrap`, then `$` / `0` to see the end of a heading
+and come back. `<C-w>L` moves it to the right, `<C-w>|` widens it.
+
+**To learn:**
+
+- `]]` / `[[` — the same ftplugin maps them to next / previous section.
+- `gO` elsewhere: help, man (`lua/man.lua:878` uses the same `qf_toc` trick),
+  `checkhealth`. Do they share these quirks?
+- Location-list behaviour that applies here: one list per window, `<CR>` jumps,
+  `:lclose`. The list is a snapshot, filled once, so re-run `gO` after
+  adding headings (not yet checked).
+
+**Fix, prototyped and tested 2026-09-28** (not applied): a
+`'quickfixtextfunc'` that, for outline lists only, displays just the heading
+with real spaces. Hidden prefix gone, so wrapping, `breakindent` and `h` / `l`
+all behave, and `<CR>` still jumps to the right line.
+
+```lua
+function _G.toc_qftf(info)
+  local what = { id = info.id, items = 1, title = 1 }
+  local list = info.quickfix == 1 and vim.fn.getqflist(what) or vim.fn.getloclist(info.winid, what)
+  if not (list.title or ""):match("Table of contents") then return {} end -- {} = default format
+  local out = {}
+  for i = info.start_idx, info.end_idx do
+    out[#out + 1] = (list.items[i].text:gsub("\194\160", " "))
+  end
+  return out
+end
+vim.o.quickfixtextfunc = "v:lua.toc_qftf"
+```
+
+Plus `linebreak` and `breakindentopt=shift:2` in that window. Open decisions:
+where it lives (a `setup/outline.lua` with a `FileType qf` autocmd, or
+`options.lua`); whether to match the same titles as `syntax/qf.lua`
+(`TOC`, `Table of contents`) so man pages benefit; and `conceallevel=0` there,
+since the conceal regex would still hide the start of a heading containing two
+`|`, e.g. `## a | b | c`.
+
+---
+
+## 22. A mapping to close a fold *and everything inside it*
+
+**Where:** new, in `lua/keymaps.lua`. `<leader>o` is the obvious home: no
+convention exists to follow, and no built-in does it.
+
+**Why:** Came up 2026-09-28. `zC` reads as "close everything below" but closes
+the folds that *contain* the cursor line — the fold and its ancestors — and
+leaves the folds nested inside it untouched (`src/nvim/fold.c:1221-1224`). So
+on a `##` heading it collapses the whole file above you, and the subsections
+come back exactly as open as they were. `zA` on an open fold does the same.
+`zO` is *not* its mirror: it opens every fold nested in the outermost one
+containing the cursor (`foldOpenNested`, `fold.c:1232`) — contrary to
+`:h zO`, which says folds not containing the cursor line are unchanged.
+
+Wanted: close this section and everything nested in it, leave its parents and
+siblings as they are, so that reopening it goes one level at a time.
+
+**By hand** (works for a fold whose parent is the outermost one):
+
+```
+zc V zC zo
+```
+
+`zc` closes the fold, `V` on a closed fold selects all its lines, visual `zC`
+closes every fold in the selection — nested ones included, and the ancestors
+too, as partly selected — and `zo` reopens the outermost ancestor.
+
+**Two traps, both verified,** which is why this wants to be a mapping rather
+than a habit:
+
+- **Deeper than two levels, `zo` is not enough.** It opens only the topmost
+  closed fold. On a `###` under `##` under `#`, the `##` stays closed and hides
+  the section you were on.
+- **`zc` on an already-closed fold closes its parent** (`fold.c:1246`: it
+  closes the innermost *open* fold), so starting on a closed section selects
+  the wrong one.
+
+**Tested version** (headless, on a `#` > `##` > `###` file): only the `###`
+closed, its sibling list and the next `##` untouched.
+
+```lua
+local l = vim.fn.line(".")
+if vim.fn.foldclosed(l) == -1 then vim.cmd("normal! zc") end
+local s = vim.fn.foldclosed(l) -- start of the fold we mean
+vim.cmd("normal! VzC")
+-- reopen the ancestors that VzC closed, one at a time, down to ours
+while vim.fn.foldclosed(l) ~= s do
+  vim.fn.cursor(vim.fn.foldclosed(l), 1)
+  vim.cmd("normal! zo")
+end
+vim.fn.cursor(l, 1)
+```
+
+**Do:** Pick the key, then check the cases the test did not cover: a fold
+with no parent (the loop should not run), a line in no fold at all (`zc`
+errors with E490), and nested folds closing at depth three — the `###` in the
+test file had none.
+
+---
+
+## 23. The venv hook never reaches the server
+
+**Where:** `lua/setup/lsp.lua:36-46` (`before_init`), and the comment at
+`:17-19`
+
+**Why:** `before_init` assigns a *new* table to `config.settings`, but the
+client took its `settings` from `config.settings` when it was created
+(`client.lua:409` in 0.12.5), before `before_init` runs (`:571`). What the
+server gets — the `workspace/configuration` answer (`handlers.lua:235`) and
+the `didChangeConfiguration` after `initialize` (`client.lua:602`) — is
+`client.settings`, which never sees the `pythonPath`. Nvim's own docstring
+example (`client.lua:36-40`) uses the same pattern, so possibly an upstream
+bug.
+
+**Verified** (2026-09-30, headless, in a project with a `.venv`):
+`client.settings.python` is `nil`, while `client.config.settings.python` has
+the `.venv` path.
+
+It looks like it works because basedpyright finds `<root>/.venv/bin/python`
+itself when no path is set (its `pyright-langserver.js`, "`defaultVenvPath =
+'.venv'`"). So the comment at `:17` is wrong for basedpyright, and the hook is
+dead in every case it exists for: `$VIRTUAL_ENV`, `$CONDA_PREFIX`, a `venv/`
+without the dot, and plain pyright.
+
+**Not understood:** after creating a `.venv`, `:lsp restart` did not pick it
+up and a full nvim restart did, although basedpyright's own detection should
+run on either.
+
+**Do:** Mutate `config.settings` in place rather than replace it, then
+re-check the headless test above with `VIRTUAL_ENV` set to a venv that is not
+the project's `.venv`. Fix the comment. Consider reporting the docstring
+upstream.
+
+---
+
+## 24. Pickers are full-size however few items they list
+
+**Where:** `lua/setup/fzf.lua:41` (`fzf.register_ui_select()`)
+
+**Why:** Every `vim.ui.select` opens at the picker's 85% × 85%, so `,pt`'s six
+modes sit in a window meant for a file search. `register_ui_select` also takes
+a function of `(ui_opts, items)` returning opts
+(`providers/ui_select.lua:103-113`), and in fzf-lua a size above 1 is lines
+rather than a fraction (`win.lua:568`).
+
+**Decided (2026-09-30):** size every `vim.ui.select` to its items, rather than
+only `,pt` through a `kind` of its own, and leave code actions alone: they
+show a diff preview.
+
+```lua
+fzf.register_ui_select(function(ui_opts, items)
+  if ui_opts.kind == "codeaction" then return {} end
+  return { winopts = { height = math.min(#items + 4, 0.85 * vim.o.lines), width = 0.4 } }
+end)
+```
+
+The `+ 4` (border, prompt, info line) is a guess.
+
+**Related, left as is:** fzf-lua only takes over `vim.ui.select` once a
+picker has loaded it, so `,pt` before any picker shows nvim's own numbered
+list at the bottom. Fixing that means registering at startup, against the
+point of deferring the setup.
+
+**Do:** Apply it, then check the `+ 4` by capturing the window in a scratch
+tmux pane, with and without the `default-title` border title.
