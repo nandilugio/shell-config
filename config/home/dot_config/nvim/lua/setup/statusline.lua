@@ -171,7 +171,7 @@ local function refresh_repo()
   vim.system(
     {
       "git", "--no-optional-locks", "-C", root,
-      "status", "--porcelain=v2", "--branch", "--untracked-files=no",
+      "status", "--porcelain=v2", "--branch",
     },
     { text = true },
     function(res)
