@@ -1,1 +1,5 @@
-/Applications/Sublime Merge.app/Contents/SharedSupport/bin/smerge
+#!/bin/sh
+# Sublime Merge's CLI, from the app bundle.
+t="/Applications/Sublime Merge.app/Contents/SharedSupport/bin/smerge"
+[ -x "$t" ] || { echo "${0##*/}: $t not found" >&2; exit 127; }
+exec "$t" "$@"

@@ -1,1 +1,5 @@
-/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl
+#!/bin/sh
+# Sublime Text's CLI, from the app bundle.
+t="/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl"
+[ -x "$t" ] || { echo "${0##*/}: $t not found" >&2; exit 127; }
+exec "$t" "$@"

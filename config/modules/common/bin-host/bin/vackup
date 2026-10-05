@@ -1,1 +1,5 @@
-/Users/nandosq/Projects/thirds/docker-vackup/vackup
+#!/bin/sh
+# A third-party tool (docker-vackup), checked out at ~/Projects/thirds/docker-vackup.
+t="$HOME/Projects/thirds/docker-vackup/vackup"
+[ -x "$t" ] || { echo "${0##*/}: $t not found" >&2; exit 127; }
+exec "$t" "$@"
