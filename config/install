@@ -1,0 +1,44 @@
+#!/bin/sh
+# install [-D] <target>: link a target's modules into $HOME with GNU Stow (-D: unlink them).
+#
+# A target (targets/<name>) lists <group>/<module> lines; each group under modules/ is a Stow
+# directory and each module a Stow package mirroring $HOME.
+set -eu
+
+usage() { echo "usage: ${0##*/} [-D] <target>" >&2; exit 64; }
+
+here=$(cd "$(dirname "$0")" && pwd)
+action=--stow
+if [ "${1:-}" = -D ]; then action=--delete; shift; fi
+[ $# -eq 1 ] || usage
+list="$here/targets/$1"
+[ -f "$list" ] || { echo "${0##*/}: no target '$1' in $here/targets" >&2; exit 64; }
+
+entries=$(sed -e 's/#.*//' -e 's/[[:space:]]//g' "$list" | grep -v '^$')
+groups=$(printf '%s\n' "$entries" | cut -d/ -f1 | sort -u)
+
+# Real directories, never Stow's directory links: where modules of different groups meet (Stow
+# only reshapes links into its own directory) and where tools write next to our files (their
+# state must stay out of the repo, and out of a guest's read-only mount).
+for d in bin .config .claude .config/opencode .config/lazygit; do
+  if [ -L "$HOME/$d" ]; then
+    echo "${0##*/}: ~/$d is a symlink; replace it with a real directory first" >&2
+    exit 1
+  fi
+  mkdir -p "$HOME/$d"
+done
+
+modules_of() { printf '%s\n' "$entries" | sed -n "s#^$1/##p"; }
+
+# Dry run every group first, so a conflict changes nothing; its output only matters on failure.
+for g in $groups; do
+  # shellcheck disable=SC2046 # one word per module is intended
+  out=$(stow --no --dir="$here/modules/$g" --target="$HOME" $action $(modules_of "$g") 2>&1) || {
+    printf '%s\n' "$out" >&2
+    exit 1
+  }
+done
+for g in $groups; do
+  # shellcheck disable=SC2046
+  stow --dir="$here/modules/$g" --target="$HOME" $action $(modules_of "$g")
+done

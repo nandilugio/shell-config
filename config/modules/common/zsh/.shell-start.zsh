@@ -1,12 +1,11 @@
-# Update!
-#pushd ~/shell-config; git pull; popd
+# Shared by every target (macOS, Linux, aiws guests): tools that may be missing are behind checks.
 
 # Homebrew
-eval "$(/opt/homebrew/bin/brew shellenv)"  # NOTE: You may have already added this to .zprofile or .zshrc already
+[ -x /opt/homebrew/bin/brew ] && eval "$(/opt/homebrew/bin/brew shellenv)"  # NOTE: You may have already added this to .zprofile or .zshrc already
 #export PATH="/usr/local/sbin:$PATH"
 
 # libpq (psql, etc.) from Homebrew
-export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+[ -d /opt/homebrew/opt/libpq/bin ] && export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 
 # FZF
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh  # NOTE: Vim plug may have already installed FZF, adding this command to .zprofile or .zshrc already
@@ -16,18 +15,18 @@ export FZF_DEFAULT_COMMAND="find . -type f -not -path '*/\.git/*'"
 #PATH=$PATH:"/usr/local/Cellar/perl/5.32.0/bin"
 
 # Rbenv
-eval "$(rbenv init - zsh)"
+command -v rbenv >/dev/null && eval "$(rbenv init - zsh)"
 
 # Pyenv
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
+command -v pyenv >/dev/null && eval "$(pyenv init -)"
 
 # Pipx
 #PATH=$PATH:~/.local/bin
 
 # AWS ElasticBeanstalk CLI (https://github.com/aws/aws-elastic-beanstalk-cli-setup)
-export PATH=~/.ebcli-virtual-env/executables:$PATH
+[ -d ~/.ebcli-virtual-env/executables ] && export PATH=~/.ebcli-virtual-env/executables:$PATH
 
 # Direnv
 #eval "$(direnv hook zsh)"
@@ -51,6 +50,7 @@ export VISUAL='nvim'
 setopt HIST_IGNORE_SPACE
 alias g=git
 alias lg='git fetch && lazygit'
+export LG_CONFIG_FILE=~/.config/lazygit/config.yml  # macOS would default to ~/Library/Application Support
 alias ttofu='tofu workspace show; read -n 1; tofu'
 alias notes='pushd ~/notes && git pull; nvim -c VimwikiIndex; git add .; git commit -am wip && git push; popd'
 

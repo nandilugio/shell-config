@@ -1,0 +1,17 @@
+# Modules linked into $HOME on Linux desktops. One <group>/<module> per line.
+common/agents
+common/claude
+common/opencode
+common/git
+common/zsh
+common/nvim
+common/vim
+common/tmux
+common/ghostty
+common/ruff
+common/psql
+common/ruby
+common/lazygit
+common/bin
+common/bin-host
+linux/i3

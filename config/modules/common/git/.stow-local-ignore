@@ -1,0 +1,3 @@
+# A template to copy to ~/.gitconfig_host, not a config to link.
+\.gitconfig_host\.example
+^/README.*

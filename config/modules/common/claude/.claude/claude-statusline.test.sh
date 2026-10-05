@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Tests for claude-statusline.sh — run directly:
-#   ~/.shell-config/claude-statusline.test.sh
+#   ~/.shell-config/config/modules/common/claude/.claude/claude-statusline.test.sh
 # The statusline is invoked with STATUSLINE_BASH (default /bin/bash, i.e.
 # macOS system bash 3.2 — the oldest supported target).
 #

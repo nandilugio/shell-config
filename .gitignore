@@ -1,0 +1,3 @@
+# The global gitignore ignores **/AGENTS.md and **/.claude/ everywhere; this repo tracks them.
+!config/modules/common/agents/AGENTS.md
+!config/modules/common/*/.claude/

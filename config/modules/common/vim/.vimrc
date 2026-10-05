@@ -40,6 +40,11 @@ map <ESC>[1;5D <C-Left>
 map <ESC>[1;5C <C-Right>
 map! <ESC>[1;5D <C-Left>
 map! <ESC>[1;5C <C-Right>
+" Ctrl+Up/Down, from the former macOS-only vimrc (config/macos/vimrc); kept, unused:
+" map <ESC>[1;5A <C-Up>
+" map <ESC>[1;5B <C-Down>
+" map! <ESC>[1;5A <C-Up>
+" map! <ESC>[1;5B <C-Down>
 map <ESC>[5;5~ <C-PageUp>
 map <ESC>[6;5~ <C-PageDown>
 map! <ESC>[5;5~ <C-PageUp>

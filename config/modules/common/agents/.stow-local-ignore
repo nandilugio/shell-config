@@ -1,0 +1,3 @@
+# Not linked into $HOME: the canonical file, reached through the two links below.
+^/AGENTS\.md$
+^/README.*

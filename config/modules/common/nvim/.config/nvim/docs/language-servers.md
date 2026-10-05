@@ -284,5 +284,5 @@ For >=3 projects: cmd = { 'ruby-lsp' } (rbenv shim), no BUNDLE_GEMFILE => compos
 Same config handles both; branch on .ruby-version major. Zero changes at migration time.
 Standalone Gemfile should live in the dotfiles repo (e.g. dot_config/nvim/ruby-lsp/Gemfile)
 so it's reproducible; its Gemfile.lock too.
-Also: add `.ruby-lsp/` to ~/.gitignore_global (tracked at config/home/gitignore_global).
+Also: add `.ruby-lsp/` to ~/.gitignore_global (tracked at config/modules/common/git/.gitignore_global).
 NOTE `**/vendor/bundle/` is ALREADY ignored there — covers the composed bundle's gem dir.

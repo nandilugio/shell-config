@@ -4,7 +4,7 @@
 # Minimalist design matching the Pure zsh theme
 #
 # Install (new machine):
-#   ln -s ~/.shell-config/claude-statusline.sh ~/.claude/claude-statusline.sh
+#   Linked by the dotfiles' install script (module common/claude).
 #   Add to ~/.claude/settings.json:
 #     "statusLine": {
 #       "type": "command",
