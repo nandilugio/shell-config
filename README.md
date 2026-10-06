@@ -20,7 +20,7 @@ extras/macos/             app settings copied by hand (see below)
 
 Targets:
 - `macos`, `linux`: a full workstation.
-- `aiws`: a [priviledge](https://github.com/nandilugio/priviledge) guest. No host tools, terminal or desktop config. The guest mounts `config/` read-only at the same path and runs `install aiws` once.
+- `aiws`: a [priviledge](https://github.com/nandilugio/priviledge) guest. No host tools, terminal or desktop config. The guest's colima VM mounts `config/` read-only (the host enforces it), and the guest mounts it at the same path, `~/.shell-config/config`, and runs `install aiws` once. A guest also needs, once, what the host has outside the repo: `stow` in its image; a `~/.gitconfig_host` with only `[user]` name and email (no ssh profiles: guests fetch over HTTPS and never push); prezto, cloned with `--recursive` (the `pure` prompt is a submodule), with `~/.zshenv` and `~/.zshrc` linked to its runcoms; and `source ~/.shell-start.zsh` in `~/.zprofile`. `.zpreztorc` comes from the zsh module.
 
 ## Setup
 
