@@ -1,3 +1,6 @@
 # ~/.cayo/egress/default.txt: the hosts every new guest's allow-list starts with. Only what
-# guest-init needs; a guest's own list (local, never in this repository) grows with `cayo allow`.
+# guest-init and the dotfiles' tools need on first start: github.com for prezto's clone,
+# codeload.github.com for the parser sources nvim-treesitter compiles (GitHub's archive-download
+# host; read-only). A guest's own list (local, never in this repository) grows with `cayo allow`.
 github.com
+codeload.github.com
