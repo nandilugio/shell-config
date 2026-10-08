@@ -1,0 +1,3 @@
+# ~/.cayo/egress/default.txt: the hosts every new guest's allow-list starts with. Only what
+# guest-init needs; a guest's own list (local, never in this repository) grows with `cayo allow`.
+github.com

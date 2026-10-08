@@ -14,5 +14,6 @@ common/ruby
 common/lazygit
 common/bin
 common/bin-host
+common/cayo
 macos/aerospace
 macos/bin

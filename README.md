@@ -7,11 +7,11 @@ My dotfiles, deployable to different machines and users with [GNU Stow](https://
 ```
 config/                   everything deployable
 ├── modules/<group>/<m>   one Stow package per tool, mirroring $HOME
-│   ├── common/           agents claude opencode git zsh nvim vim tmux ghostty ruff psql ruby lazygit
+│   ├── common/           agents claude opencode git zsh nvim vim tmux ghostty ruff psql ruby lazygit cayo
 │   │                     bin (portable scripts)  bin-host (docker, tmux: needs the host)
 │   ├── macos/            aerospace  bin (keychain, macOS apps)
 │   └── linux/            i3
-├── targets/              macos  linux  aiws: one <group>/<module> per line
+├── targets/              macos  linux  cayo: one <group>/<module> per line
 └── install               install [-D] <target>
 extras/macos/             app settings copied by hand (see below)
 ```
@@ -20,7 +20,7 @@ extras/macos/             app settings copied by hand (see below)
 
 Targets:
 - `macos`, `linux`: a full workstation.
-- `aiws`: a [priviledge](https://github.com/nandilugio/priviledge) guest. No host tools, terminal or desktop config. The guest's colima VM mounts `config/` read-only (the host enforces it), and the guest mounts it at the same path, `~/.shell-config/config`, and runs `install aiws` once. A guest also needs, once, what the host has outside the repo: `stow` in its image; a `~/.gitconfig_host` with only `[user]` name and email (no ssh profiles: guests fetch over HTTPS and never push); prezto, cloned with `--recursive` (the `pure` prompt is a submodule), with `~/.zshenv` and `~/.zshrc` linked to its runcoms; and `source ~/.shell-start.zsh` in `~/.zprofile`. `.zpreztorc` comes from the zsh module.
+- `cayo`: a [cayo](https://github.com/nandilugio/cayo) guest, an isolated workspace for an AI agent. No host tools, terminal or desktop config. The host's side is the `cayo` module, `~/.cayo`: `config` mounts this repository's `config/` read-only into trusted and public guests at the same path, `~/.shell-config/config`; `guest-init` runs `install cayo` there, writes `~/.gitconfig_host` (the name from the host's, the email from `CAYO_INIT_GIT_EMAIL=… cayo new trusted <project>`) and sets up prezto, for which `egress/default.txt` lets every new guest reach `github.com`; `image/Dockerfile` adds what the dotfiles expect (zsh, ripgrep, fd, stow, nvim). Guests never push: the host reviews and pushes from a clean clone. `n.cayo-window` opens a tmux window into a guest.
 
 ## Setup
 

@@ -1,0 +1,16 @@
+# Modules linked into a cayo guest's home (github.com/nandilugio/cayo), by ~/.cayo/guest-init from
+# the read-only mount of config/. One <group>/<module> per line. No host tools: no tmux, terminal
+# or desktop config, no bin-host (docker, tmux) or macos/bin (keychain, apps), and not common/cayo,
+# which is the host's ~/.cayo.
+common/agents
+common/claude
+common/opencode
+common/git
+common/zsh
+common/nvim
+common/vim
+common/ruff
+common/psql
+common/ruby
+common/lazygit
+common/bin

@@ -1,0 +1,12 @@
+#!/bin/sh
+# n.cayo-window <profile> <name>: a tmux window for a cayo guest: nvim, claude and a shell in it,
+# each through a login shell, so the home's PATH (mise shims, ~/bin) applies; and penyero's
+# approval pane, once penyero exists.
+set -eu
+p=$1; n=$2
+in_guest() { echo "cayo exec $p $n zsh -lc 'exec $1'"; }
+tmux new-window -n "$p/$n" "$(in_guest nvim)"
+tmux split-window -h "$(in_guest claude)"
+tmux split-window -v "cayo exec $p $n"
+#mkdir -p ~/.penyero/run
+#tmux split-window -v "dtach -A ~/.penyero/run/$p-$n.serve -r winch penyero serve $p $n"

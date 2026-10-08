@@ -20,7 +20,7 @@ groups=$(printf '%s\n' "$entries" | cut -d/ -f1 | sort -u)
 # Real directories, never Stow's directory links: where modules of different groups meet (Stow
 # only reshapes links into its own directory) and where tools write next to our files (their
 # state must stay out of the repo, and out of a guest's read-only mount).
-for d in bin .config .claude .config/opencode .config/lazygit; do
+for d in bin .config .claude .config/opencode .config/lazygit .cayo .cayo/egress; do
   if [ -L "$HOME/$d" ]; then
     echo "${0##*/}: ~/$d is a symlink; replace it with a real directory first" >&2
     exit 1

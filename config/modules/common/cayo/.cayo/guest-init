@@ -1,0 +1,28 @@
+# ~/.cayo/guest-init: what a new trusted or public guest needs to work like the host (README, the
+# cayo target). `cayo new` runs it inside the guest, as its user, never in hostile guests. It is
+# idempotent, and the mounted copy can be re-run by hand, with the variables set:
+#   cayo exec trusted <project> env CAYO_INIT_GIT_NAME=... CAYO_INIT_GIT_EMAIL=... \
+#     sh ~/.shell-config/config/modules/common/cayo/.cayo/guest-init
+set -eu
+cfg=$HOME/.shell-config/config
+[ -x "$cfg/install" ] || { echo "guest-init: $cfg isn't mounted (CAYO_DOTFILES)" >&2; exit 1; }
+[ -n "${CAYO_INIT_GIT_NAME:-}" ] || { echo "guest-init: CAYO_INIT_GIT_NAME is empty" >&2; exit 1; }
+
+# The dotfiles, linked with stow (installed by the image layer).
+"$cfg/install" cayo
+
+# Git identity: the name from the host, the email per guest. git refuses to commit without both
+# (useConfigOnly), so a missing email only delays that.
+{
+  echo '[user]'
+  echo "  name = $CAYO_INIT_GIT_NAME"
+  [ -z "${CAYO_INIT_GIT_EMAIL:-}" ] || echo "  email = $CAYO_INIT_GIT_EMAIL"
+} > "$HOME/.gitconfig_host"
+[ -n "${CAYO_INIT_GIT_EMAIL:-}" ] \
+  || echo "guest-init: no CAYO_INIT_GIT_EMAIL: add user.email to ~/.gitconfig_host before committing"
+
+# prezto, with .zshenv and .zshrc linked to its runcoms; .zpreztorc comes from the zsh module.
+# The clone needs github.com, which egress/default.txt gives every new guest.
+[ -d "$HOME/.zprezto" ] || git clone -q --recursive https://github.com/sorin-ionescu/prezto "$HOME/.zprezto"
+for rc in zshenv zshrc; do [ -e "$HOME/.$rc" ] || ln -s ".zprezto/runcoms/$rc" "$HOME/.$rc"; done
+grep -qs shell-start "$HOME/.zprofile" || echo 'source ~/.shell-start.zsh' >> "$HOME/.zprofile"

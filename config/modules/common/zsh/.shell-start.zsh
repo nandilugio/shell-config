@@ -1,4 +1,4 @@
-# Shared by every target (macOS, Linux, aiws guests): tools that may be missing are behind checks.
+# Shared by every target (macOS, Linux, cayo guests): tools that may be missing are behind checks.
 
 # Homebrew
 [ -x /opt/homebrew/bin/brew ] && eval "$(/opt/homebrew/bin/brew shellenv)"  # NOTE: You may have already added this to .zprofile or .zshrc already

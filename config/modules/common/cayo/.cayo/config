@@ -1,0 +1,12 @@
+# ~/.cayo/config: settings for cayo (github.com/nandilugio/cayo), a shell file cayo reads on the
+# host. The guest's side is targets/cayo and ~/.cayo/guest-init.
+
+# The dotfiles: this repository's config/, mounted read-only into trusted and public guests at the
+# same path as on the host, where guest-init runs its install.
+CAYO_DOTFILES=~/.shell-config/config
+CAYO_DOTFILES_MOUNT=/home/cayo/.shell-config/config
+
+# Git identity for guest-init: the name from the host's ~/.gitconfig_host (host-local, README),
+# the email per guest, since it differs by project:
+#   CAYO_INIT_GIT_EMAIL=you@example.com cayo new trusted <project>
+CAYO_INIT_GIT_NAME=$(git config --file ~/.gitconfig_host user.name 2>/dev/null || true)
