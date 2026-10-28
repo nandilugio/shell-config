@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 
-# Tests for the Pref Z column maximize in tmux.conf — run directly:
+# Tests for the custom behavior in tmux.conf — run directly:
 #   ~/.config/tmux/tmux.test.sh [generic|setup]    (default: both)
 #
-# generic: layout and state cases in plain sh panes, plus the history case with
-#   a clean `zsh -f`, which redraws its prompt on resize -- what loses the view
-#   of a collapsed pane unless it is held in copy mode.
-# setup: the history case with your own shell and config (tmux's default-shell),
-#   e.g. a multi-line prompt like Pure.
+# generic: Pref Z column maximize, layout and state cases in plain sh panes,
+#   plus the history case with a clean `zsh -f`, which redraws its prompt on
+#   resize -- what loses the view of a collapsed pane unless it is held in copy
+#   mode.
+# setup: what depends on your own shell, config and plugins: the Pref Z history
+#   case with tmux's default-shell (e.g. a multi-line prompt like Pure), and
+#   login shells in new and tmux-resurrect restored panes.
 #
 # The real tmux.conf is driven by keypresses from a client attached inside a
 # second tmux server, so the key bindings run as they do for you. Both servers
@@ -271,12 +273,51 @@ setup_history() {
     history "your shell"
 }
 
+### Login shells #####################################################
+
+# login <pane> <label>: the pane runs your shell as a login shell, as tmux
+# starts it (-zsh) or as default-command does ($SHELL -l)
+login() {
+    local args; args=$(ps -o args= -p "$(t display -p -t "$1" '#{pane_pid}')")
+    case "$args" in
+        "-${SHELL##*/}"|"$SHELL -l") ok ;;
+        *) ko "$2: $1 not a login shell (runs: '$args')" ;;
+    esac
+}
+
+# A login shell is what gets ~/.zprofile (PATH, rbenv, aliases...): panes
+# don't inherit them from the server, which a terminal starts with a bare
+# environment. Resurrect restores panes into default-command, or default-shell
+# without -l. Saved, then restored into a restarted server, as after a reboot.
+setup_login_shells() {
+    echo "· new and resurrect restored panes run login shells"
+    local scripts=~/Projects/thirds/tmux-resurrect/scripts dir
+    [ -d "$scripts" ] || { echo "  SKIP: tmux-resurrect not installed"; return; }
+    dir=$(mktemp -d)
+    CMD=""
+
+    cleanup
+    pane new-session -d -s r; pane split-window -t r:1; nap
+    login r:1.1 "new session"; login r:1.2 "new pane"
+    t set -g @resurrect-dir "$dir"
+    t run-shell "$scripts/save.sh quiet"
+
+    t kill-server; nap 0.3
+    pane new-session -d -s t
+    t set -g @resurrect-dir "$dir"
+    t run-shell "$scripts/restore.sh"; nap 2
+    eq "$(t list-panes -t r:1 -F . 2>/dev/null | wc -l | tr -d ' ')" 2 "restored: both panes"
+    login r:1.1 "restored"; login r:1.2 "restored"
+
+    rm -rf "$dir"
+}
+
 ### Run ##############################################################
 
 for suite in $SUITES; do
     case "$suite" in
         generic) echo "## generic"; generic_layout; generic_changes; generic_history ;;
-        setup)   echo "## setup";   setup_history ;;
+        setup)   echo "## setup";   setup_history; setup_login_shells ;;
         *) echo "unknown suite: $suite (generic|setup)" >&2; exit 2 ;;
     esac
 done
