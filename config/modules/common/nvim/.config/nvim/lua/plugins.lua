@@ -26,6 +26,17 @@ local specs = {
 -- Parsers must be compiled, so this needs a toolchain.
 if have("cc") or have("gcc") or have("clang") then
   table.insert(specs, { src = gh("nvim-treesitter/nvim-treesitter"), version = "main" })
+  -- Each revision of the plugin pins the parsers it was tested with, so an
+  -- update of one means a rebuild of the others (its README: "you must make
+  -- sure that all installed parsers are updated"). setup/treesitter.lua only
+  -- installs what is missing.
+  vim.api.nvim_create_autocmd("PackChanged", {
+    callback = function(ev)
+      if ev.data.kind == "update" and ev.data.spec.name == "nvim-treesitter" then
+        require("nvim-treesitter").update()
+      end
+    end,
+  })
 end
 
 -- Wraps the fzf binary. Without it, <leader>f* fall back to :find and :grep.
