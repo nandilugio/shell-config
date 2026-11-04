@@ -11,7 +11,7 @@ vim.diagnostic.config({
   underline = true,
   severity_sort = true,
   update_in_insert = false, -- do not churn while typing
-  float = { border = "single", source = true },
+  float = { source = true },
   signs = {
     text = {
       [vim.diagnostic.severity.ERROR] = "E",

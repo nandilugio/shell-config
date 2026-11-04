@@ -33,7 +33,6 @@ if ok then
       topdelete = { text = "‾", show_count = true },
       changedelete = { text = "≃", show_count = true },
     },
-    preview_config = { border = "single" },
   })
 end
 

@@ -40,6 +40,12 @@ vim.o.showmode = false -- the statusline has a mode block
 vim.o.list = true
 vim.opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
 
+-- One border for every float. Without one the text runs into the buffer
+-- behind it and reads as corruption. Hover, signature help, diagnostics,
+-- gitsigns' previews and mini.files all read this; fzf-lua and the cheatsheet
+-- draw the same square one themselves. which-key opts out (setup/keymaps.lua).
+vim.o.winborder = "single"
+
 -- Yanking is the one edit that leaves no trace in the buffer, so nothing else
 -- confirms that `yap` took the paragraph you meant.
 vim.api.nvim_create_autocmd("TextYankPost", {

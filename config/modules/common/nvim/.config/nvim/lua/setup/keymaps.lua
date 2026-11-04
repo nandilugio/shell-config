@@ -174,6 +174,8 @@ if ok then
     -- Show immediately: this is a reference you reach for on purpose.
     -- 'timeoutlen' still governs when a pending mapping resolves.
     delay = 0,
+    -- Sizes itself as borderless, so it must not inherit 'winborder'.
+    win = { border = "none" },
   })
 
   local groups = {}

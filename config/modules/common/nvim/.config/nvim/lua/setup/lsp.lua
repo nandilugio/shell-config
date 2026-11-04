@@ -223,19 +223,6 @@ if #servers > 0 then
   vim.lsp.enable(servers)
 end
 
--- Without a border the text runs into the buffer behind it and reads as
--- corruption. Square, matching the file browser and cheatsheet; keymaps.lua
--- binds Esc to close.
-local float = { border = "single", max_width = 80 }
-
-vim.lsp.buf.hover = (function(orig)
-  return function(opts) return orig(vim.tbl_extend("force", float, opts or {})) end
-end)(vim.lsp.buf.hover)
-
-vim.lsp.buf.signature_help = (function(orig)
-  return function(opts) return orig(vim.tbl_extend("force", float, opts or {})) end
-end)(vim.lsp.buf.signature_help)
-
 vim.api.nvim_create_autocmd("LspAttach", {
   callback = function(args)
     local client = vim.lsp.get_client_by_id(args.data.client_id)
