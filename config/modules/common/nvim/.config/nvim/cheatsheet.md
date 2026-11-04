@@ -41,12 +41,13 @@ fzf's own keys, so they are the same ones the shell's fzf uses.
 <C-s>,<C-v>     open in a split, a vsplit       <C-t>  in a tab
 <C-f>,<C-b>     half page down, up              <C-u>  clear the query
 <S-Up>,<S-Down> scroll the preview              <C-a>,<C-e>  start, end of query
-Tab             tick one, M-a ticks all         M-q    ticked to quickfix
+Tab             tick one, M-a M-a ticks all     M-q    ticked to quickfix
 F1 help · F4 hide the preview · M-i include ignored · M-f follow symlinks
 
 Tab does nothing where a pick must be single: buffers and file history.
-M-h (include hidden) is tmux's pane-left and never arrives; M-i is the one
-you want anyway, since .gitignore hides more here than dotfiles do.
+M-a is the tmux prefix, so it has to be pressed twice to get through. M-h
+(include hidden) is tmux's pane-left and never arrives; M-i is the one you
+want anyway, since .gitignore hides more here than dotfiles do.
 
 <leader><leader>  buffers                       <leader>ff  files
 <leader>fg or /   grep the project              <leader>fw  word under cursor
@@ -113,7 +114,8 @@ body that changed with it.
 Inside the blame panel: <CR> menu · s,S show commit in a split, a tab
 r reblame at that commit · R at its parent · d,D diff it in a tab
 r and R land you in a read-only revision of the file: the statusline then
-reads name@sha in red. <C-o> comes back. They error across a rename.
+reads path[sha], as the pickers do. <C-o> comes back. They error across a
+rename.
 
 Its toggles are under <leader>ug — see Toggles below.
 

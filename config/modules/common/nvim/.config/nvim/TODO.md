@@ -650,7 +650,7 @@ disorientation that "no way back to the working tree" is about.
 
 ---
 
-## 17. `M-a` in the pickers is the tmux prefix
+## 17. ~~`M-a` in the pickers is the tmux prefix~~ DONE 2026-11-04
 
 **Where:** `cheatsheet.md:44`, and fzf-lua's default `keymap.fzf`
 (`fzf-lua/lua/fzf-lua/defaults.lua:242`, `["alt-a"] = "toggle-all"`).
@@ -668,9 +668,11 @@ toggle-all another key in `setup/fzf.lua`. Careful with the second: as that
 file notes, a `keymap.fzf` table *replaces* fzf-lua's defaults rather than
 extending them, so the whole set would have to be restated.
 
+**Done:** the cheatsheet says `M-a M-a`, next to the `M-h` note.
+
 ---
 
-## 18. Cheatsheet still describes the old revision marker
+## 18. ~~Cheatsheet still describes the old revision marker~~ DONE 2026-11-04
 
 **Where:** `cheatsheet.md:115-116`
 
@@ -685,9 +687,11 @@ the same shape fzf-lua uses, and not in red: the colour was dropped on purpose
 
 **Do:** Change it to something like "the statusline then reads path[sha]".
 
+**Done:** as suggested.
+
 ---
 
-## 19. `keymaps.lua` header lists `]n` / `[n` as normal-mode defaults
+## 19. ~~`keymaps.lua` header lists `]n` / `[n` as normal-mode defaults~~ DONE 2026-11-04
 
 **Where:** `lua/keymaps.lua:15-17`
 
@@ -704,6 +708,8 @@ unmapped. `an` / `in` are visual and operator-pending (`:470`, `:478`), which
 the comment gets right. The cheatsheet does not repeat the mistake.
 
 **Do:** Comment only, e.g. `an in (x/o)  ]n [n (x)`. No behaviour change.
+
+**Done:** as suggested, in the same commit that dropped `<leader>fb`.
 
 ---
 
