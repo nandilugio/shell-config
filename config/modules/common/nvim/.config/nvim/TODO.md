@@ -938,7 +938,7 @@ tmux pane, with and without the `default-title` border title.
 
 ---
 
-## 25. Visual-mode maps: Select mode, and selections they ignore
+## 25. ~~Visual-mode maps: Select mode, and selections they ignore~~ DONE 2026-11-04
 
 **Where:** `lua/keymaps.lua` — the `"v"` entries at `:29` (`<leader>g` group),
 `:212` (`<leader>gs`), `:219` (`<leader>gr`), `:248` (`<leader>gl` selection),
@@ -980,6 +980,13 @@ tmux pane, with and without the `default-title` border title.
    `vim.snippet.expand("foo(${1:arg})")` in a scratch tmux) and the partial
    stage in a scratch repo. Also decide whether the selection maps should
    leave Visual mode afterwards, as `line_history` does (`setup/git.lua:140`).
+
+**Done:** all five are `"x"`, and `gs` / `gr` / `=` have a separate selection
+entry with its own label; the hunk ones pass the range. Verified headless: no
+`<Space>` mapping is left in Select mode, and in a scratch repo `V<leader>gs`
+on one line of a two-line hunk staged only that line. Not decided: leaving
+Visual mode afterwards. gitsigns' own README mapping stays in it, so these do
+too; `gl` is the odd one out, since it opens a window.
 
 ---
 

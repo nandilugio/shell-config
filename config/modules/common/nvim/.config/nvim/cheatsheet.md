@@ -66,7 +66,7 @@ gO              symbols in this file
 
 grn             rename                          gra  code action
 grr             references, into quickfix       grx  run codelens
-gq {motion}     format                          <leader>=  the whole buffer
+gq {motion}     format                          <leader>=  the buffer, or the selection
 gcc, gc         comment line, selection
 
 grr finds what the server can resolve. For a metaprogrammed name or a word in
@@ -85,8 +85,8 @@ a comment, grep instead: <leader>fw or <leader>fg.
 Hunks and history here; commits and rebases belong in a tmux pane.
 Capital = the whole buffer, where the lowercase is one hunk.
 
-<leader>gs,gS   stage hunk (or selection), buffer
-<leader>gr,gR   reset hunk (or selection), buffer
+<leader>gs,gS   stage hunk (or the selected lines), buffer
+<leader>gr,gR   reset hunk (or the selected lines), buffer
 <leader>gp      preview hunk                    <leader>gq  hunks to quickfix
 <leader>gd      diff this file
 ih              the hunk as a text object: dih, yih

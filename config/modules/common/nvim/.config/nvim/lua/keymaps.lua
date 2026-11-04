@@ -3,6 +3,10 @@
 -- Entry shape:
 --   { lhs, rhs, desc = "...", mode = "n"|{"n","x"}, needs = "...", fallback = rhs, expr = true }
 --
+--   mode      "x" for a selection, never "v": that is Visual AND Select, and a
+--             snippet placeholder is in Select mode, where a leader map would
+--             swallow the space typed into it.
+--
 --   needs     what `rhs` depends on: a bare name is an executable on PATH,
 --             "mod:x" a Lua module, "cmd:X" an Ex command.
 --             When missing, `fallback` is used instead; with no fallback the
@@ -26,7 +30,7 @@ local M = {}
 M.groups = {
   -- Leader namespaces
   { "<leader>f", "find" },
-  { "<leader>g", "git", mode = { "n", "v" } },
+  { "<leader>g", "git", mode = { "n", "x" } },
   { "<leader>u", "toggle (ui)" },
   { "<leader>ug", "git" }, -- the only nested group: git has three of its own
   { "<leader>b", "buffer" },
@@ -205,18 +209,22 @@ M.maps = {
   -- gitsigns these keep Vim's own meaning: next/previous change in diff mode.
   { "]c", function() require("gitsigns").nav_hunk("next") end, desc = "Next hunk", needs = "mod:gitsigns", fallback = "]c" },
   { "[c", function() require("gitsigns").nav_hunk("prev") end, desc = "Previous hunk", needs = "mod:gitsigns", fallback = "[c" },
+  { "<leader>gs", function() require("gitsigns").stage_hunk() end, desc = "Stage hunk", needs = "mod:gitsigns" },
+  { "<leader>gr", function() require("gitsigns").reset_hunk() end, desc = "Reset hunk", needs = "mod:gitsigns" },
+  -- On a selection, only the selected lines: without the range gitsigns takes
+  -- the whole hunk under the cursor. It sorts the two ends itself.
   {
     "<leader>gs",
-    function() require("gitsigns").stage_hunk() end,
-    desc = "Stage hunk",
-    mode = { "n", "v" },
+    function() require("gitsigns").stage_hunk({ vim.fn.line("v"), vim.fn.line(".") }) end,
+    desc = "Stage selection",
+    mode = "x",
     needs = "mod:gitsigns",
   },
   {
     "<leader>gr",
-    function() require("gitsigns").reset_hunk() end,
-    desc = "Reset hunk",
-    mode = { "n", "v" },
+    function() require("gitsigns").reset_hunk({ vim.fn.line("v"), vim.fn.line(".") }) end,
+    desc = "Reset selection",
+    mode = "x",
     needs = "mod:gitsigns",
   },
   { "<leader>gp", function() require("gitsigns").preview_hunk() end, desc = "Preview hunk", needs = "mod:gitsigns" },
@@ -245,7 +253,7 @@ M.maps = {
     "<leader>gl",
     function() require("setup.git").line_history(true) end,
     desc = "Line history (selection)",
-    mode = "v",
+    mode = "x",
     needs = "git",
   },
   -- The whole function, tracked as it moves and is renamed. Better than gl on
@@ -363,7 +371,9 @@ M.maps = {
 
   -- ── Edit ──────────────────────────────────────────────────────────────────
   -- = is Vim's own format operator, so <leader>= reads as "format everything".
-  { "<leader>=", function() vim.lsp.buf.format({ timeout_ms = 2000 }) end, desc = "Format buffer", mode = { "n", "v" } },
+  { "<leader>=", function() vim.lsp.buf.format({ timeout_ms = 2000 }) end, desc = "Format buffer" },
+  -- format() takes the selection by itself in visual mode.
+  { "<leader>=", function() vim.lsp.buf.format({ timeout_ms = 2000 }) end, desc = "Format selection", mode = "x" },
 
   -- ── Folds: z ──────────────────────────────────────────────────────────────
   -- The built-ins, showing the fold column (off by default) once something is

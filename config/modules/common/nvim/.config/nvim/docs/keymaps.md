@@ -105,8 +105,8 @@ credits tpope in the source.
 ## 5 · Git — `<leader>g`
 | Key | Action | Why |
 |---|---|---|
-| `<leader>gs` | **S**tage hunk | 🟨 |
-| `<leader>gr` | **R**eset hunk | 🟨 |
+| `<leader>gs` | **S**tage hunk; in visual, the selected lines | 🟨 |
+| `<leader>gr` | **R**eset hunk; in visual, the selected lines | 🟨 |
 | `<leader>gp` | **P**review hunk | 🟨 |
 | `<leader>gb` | **B**lame line | 🟨 |
 | `<leader>gB` | **B**lame file (side panel) | 🟨 capital = wider scope, as `gO`/`gW` |
@@ -168,7 +168,7 @@ Tradeoff: faster to type, invisible to which-key. `<leader>u` optimizes discover
 |---|---|---|
 | `gq`/`gw` | Format motion | ⬛ core, LSP-backed via `formatexpr`. **Native in IdeaVim** |
 | `=` | Indent motion | ⬛ core; works in vscode-neovim, VSCodeVim, Zed |
-| `<leader>=` | Format buffer | 🟨 `=` is vim's own format operator |
+| `<leader>=` | Format buffer; in visual, the selection | 🟨 `=` is vim's own format operator |
 | `gc`/`gcc` | Comment | ⬛ core. IdeaVim via `set commentary`; VS Code native |
 | `<C-w>d` | Line diagnostic float | ⬛ core |
 
