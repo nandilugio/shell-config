@@ -5,8 +5,9 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = ","
 
--- netrw is deprecated, unmaintained, and ships a code-execution path via
--- .netrwhist (GHSA-crm5-rh6j-2c7c, unpatched in 0.12.5). mini.files replaces it.
+-- netrw is deprecated and being dismantled upstream; it also shipped a
+-- code-execution path via .netrwhist (GHSA-crm5-rh6j-2c7c, patched only in
+-- 0.12.6). mini.files replaces it.
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 

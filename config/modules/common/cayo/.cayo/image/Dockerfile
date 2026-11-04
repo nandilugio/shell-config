@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # nvim, a release: Debian stable's package lags behind. Downloaded at build time, outside any
 # guest, so no allow-list needs GitHub for it.
-ARG NVIM_VERSION=v0.12.5
+ARG NVIM_VERSION=v0.12.6
 RUN arch=$(uname -m | sed 's/aarch64/arm64/') \
     && curl -fsSL "https://github.com/neovim/neovim/releases/download/$NVIM_VERSION/nvim-linux-$arch.tar.gz" \
       | tar -xz -C /usr/local --strip-components=1

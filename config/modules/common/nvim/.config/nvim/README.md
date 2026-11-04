@@ -122,8 +122,8 @@ repository state, hunk counts and the attached servers. `setup/winbar.lua` draws
 breadcrumbs from the language server's symbol tree. Both colour themselves from
 groups the colorscheme defines, so they follow it when it changes.
 
-**No `netrw`.** Deprecated upstream, and 0.12 still carries an unpatched path
-that executes code from `.netrwhist`. Disabled; `mini.files` replaces it.
+**No `netrw`.** Deprecated upstream, and until 0.12.6 it carried a path that
+executes code from `.netrwhist`. Disabled; `mini.files` replaces it.
 
 **No formatter or linter plugin.** `gq` formats through the LSP because 0.12
 sets `'formatexpr'`. Ruff and RuboCop already publish diagnostics.
@@ -194,5 +194,5 @@ RBENV_VERSION=3.x gem install ruby-lsp   # any Ruby >= 3; the newest is used
 ## Further reading
 
 `docs/` holds the notes behind these choices: what the ecosystem converged on,
-the churn and size measurements, and the awkward cases — netrw's unpatched code
+the churn and size measurements, and the awkward cases — netrw's code-injection
 path, a Ruby 2.7 codebase. Useful when a decision here looks arbitrary.

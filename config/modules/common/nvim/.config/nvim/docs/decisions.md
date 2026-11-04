@@ -113,7 +113,8 @@ diagnostic counts, ruler.
 jobs: "what's in here" vs "where is X")
 NOT netrw: live RCE path in this build (GHSA-crm5-rh6j-2c7c) — autoload/netrw.vim:2905 writes
 dir names UNESCAPED into single-quoted vimscript in .netrwhist, and NetrwBookHistRead SOURCES
-it at startup. Fix not in 0.12.5. Plus core is dismantling netrw (#32280) and 0.13's dir.lua
+it at startup. Fix not in 0.12.5 (it landed in 0.12.6, 2026-10-09, as vim patch 9.2.0495;
+the other two reasons stand). Plus core is dismantling netrw (#32280) and 0.13's dir.lua
 replacement is READ-ONLY BY DESIGN (file manipulation permanently out of core scope).
 NOT oil.nvim: 2 open MAINTAINER-UNACKNOWLEDGED double-free crashes on delete (#761, #768),
 one credible data-loss (deleted a project tree incl. .git).
