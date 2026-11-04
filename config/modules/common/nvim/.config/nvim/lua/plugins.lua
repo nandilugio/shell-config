@@ -19,9 +19,6 @@ local specs = {
   -- File browser as an editable buffer. Pure Lua.
   gh("nvim-mini/mini.files"),
 
-  -- Teaches lua_ls the Neovim API. Only useful for editing this config.
-  gh("folke/lazydev.nvim"),
-
   -- Notes.
   gh("vimwiki/vimwiki"),
 }

@@ -195,12 +195,14 @@ vim.lsp.config("ruby_lsp", {
 })
 
 -- ── Lua ─────────────────────────────────────────────────────────────────────
--- lazydev supplies the API types, so no workspace library. `vim` still has to
--- be declared: lazydev types the module, it does not stop lua_ls calling a bare
--- `vim` undefined.
+-- Only for editing this config. The Neovim API comes from the runtime's own
+-- type annotations, read as a library; vim.uv from lua_ls' bundled luv stubs.
+-- `vim` still has to be declared a global for the bare name.
 vim.lsp.config("lua_ls", {
   settings = {
     Lua = {
+      runtime = { version = "LuaJIT" },
+      workspace = { library = { vim.env.VIMRUNTIME, "${3rd}/luv/library" } },
       completion = { callSnippet = "Replace" },
       diagnostics = { globals = { "vim" } },
     },

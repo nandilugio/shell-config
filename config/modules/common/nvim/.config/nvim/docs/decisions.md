@@ -11,7 +11,7 @@ research-plugins.md · research-keybindings.md
   degradation. Same keys, less power.
 - tmux is the base of the workflow, but must NOT be a hard dependency of the nvim config.
 
-## FINAL PLUGIN LIST — 8 (from 24)
+## FINAL PLUGIN LIST — 8 (from 24), then 7 (lazydev dropped 2026-11-04, see below)
 1. nvim-lspconfig   — DATA ONLY (415 server configs). Never require() it.
 2. nvim-treesitter  — `main` branch (master is frozen/0.11-scoped). Needs tree-sitter-cli.
 3. gitsigns.nvim    — zero deps; ambient git layer (signs, ]c/[c, stage hunk, blame)
@@ -162,6 +162,10 @@ Ruby (work, 2.7 -> 3 soon): see the Ruby section in language-servers.md — SOLV
   files indexed. rubocop 1.28.2 works natively on 2.7 => reach it via built-in compiler/rubocop.vim
   into quickfix. Zero config changes at Ruby 3 migration.
 Lua (tertiary): lua_ls + lazydev. No stylua.
+  REVISED 2026-11-04: lazydev DROPPED. It was never setup() -- found in a review,
+  lua_ls had no workspace library the whole time (client.settings.Lua.workspace was
+  nil after attach). What it does lazily, $VIMRUNTIME plus luv's stubs as
+  workspace.library does in two lines of lua_ls settings, so no plugin.
 
 ## Done during implementation
 1. save.nvim removed; replaced by a built-in toggle on <leader>oa. <F4> freed.

@@ -83,7 +83,6 @@ thing:
 | `gitsigns` | hunk signs, navigation, staging |
 | `fzf-lua` | wraps the `fzf` binary; no build step, no dependencies |
 | `mini.files` | file browser as an editable buffer |
-| `lazydev` | teaches `lua_ls` the Neovim API |
 | `which-key` | shows what a prefix contains |
 | `vimwiki` | notes |
 
@@ -166,7 +165,7 @@ the config portable, and it keeps every binding in one readable file.
 |---|---|---|
 | Python | `basedpyright` + `ruff` | `uv tool install` |
 | Ruby | `ruby-lsp` | `gem install`, into any Ruby ≥ 3 |
-| Lua | `lua_ls` + `lazydev` | `brew` |
+| Lua | `lua_ls` | `brew` |
 
 `basedpyright` bundles its own Node, so projects pinning different Node
 versions cannot disturb it. Virtualenvs are detected per project — `VIRTUAL_ENV`,
