@@ -37,7 +37,7 @@ panel's `D` opens the commit under the cursor, all hunks, in a tab.
 
 ---
 
-## 2. Completion autotrigger contradicts `'autocomplete'`
+## 2. ~~Completion autotrigger contradicts `'autocomplete'`~~ DONE 2026-11-04
 
 **Where:** `lua/options.lua:67` vs `lua/setup/lsp.lua:184`
 
@@ -71,6 +71,11 @@ It fires on the server's `triggerCharacters` only (`completion.lua:1141`,
 `:1232`), not on every keystroke — so expect the menu to open by itself after
 `.` (or whatever the server declares), and nowhere else. Still worth
 confirming by typing, but the contradiction is real.
+
+**Done:** `autotrigger = false`, honouring the config and its docs. The
+alternative (keep the trigger-character popups and rewrite the docs) was
+considered and parked: earlier attempts at it never settled, so revisit only
+if the manual menu turns out to be missed.
 
 ---
 

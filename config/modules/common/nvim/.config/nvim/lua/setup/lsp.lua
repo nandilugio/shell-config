@@ -240,9 +240,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
     if not client then return end
 
     -- Feeds Neovim's own popup menu. <C-y> accepts and applies side effects:
-    -- snippet expansion, auto-imports.
+    -- snippet expansion, auto-imports. No autotrigger: that would open the
+    -- menu on the server's trigger characters, against options.lua's rule that
+    -- the menu is asked for, never volunteered.
     if client:supports_method("textDocument/completion") then
-      vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
+      vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = false })
     end
 
     -- ruff and pyright both answer hover; pyright's is the useful one.
