@@ -19,7 +19,7 @@
 --               [ ] iterate lists · <C-w> windows · F-keys bridge other editors
 -- Nvim 0.12 defaults we deliberately do NOT redefine (they are already right):
 --   grn gra grr grx gO   K   ]d [d ]D [D   ]q [q ]Q [Q   ]b [b   ]<Space> [<Space>
---   gc gcc   <C-]> <C-t>   an in ]n [n
+--   gc gcc   <C-]> <C-t>   an in (x/o)   ]n [n (x)
 
 local M = {}
 
@@ -130,13 +130,6 @@ M.maps = {
     desc = "Recent files",
     needs = "fzf",
     fallback = ":browse oldfiles<CR>",
-  },
-  {
-    "<leader>fb",
-    function() require("setup.fzf").buffers() end,
-    desc = "Buffers",
-    needs = "fzf",
-    fallback = ":ls<CR>:buffer ",
   },
   {
     "<leader>fh",
