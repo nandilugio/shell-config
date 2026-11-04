@@ -14,9 +14,10 @@ local M = {}
 local function have(exe) return vim.fn.executable(exe) == 1 end
 
 -- ── Python ──────────────────────────────────────────────────────────────────
--- pyright does not look for .venv itself, the usual source of phantom import
--- errors. Resolved in before_init, where root_dir is known, so two projects
--- with different virtualenvs work in one session.
+-- basedpyright finds <root>/.venv on its own; pyright does not, and neither
+-- looks at $VIRTUAL_ENV, $CONDA_PREFIX or a venv/ without the dot -- the usual
+-- source of phantom import errors. Resolved in before_init, where root_dir is
+-- known, so two projects with different virtualenvs work in one session.
 local function project_python(root)
   for _, dir in ipairs({ vim.env.VIRTUAL_ENV, vim.env.CONDA_PREFIX }) do
     if dir and vim.uv.fs_stat(dir .. "/bin/python") then
@@ -37,9 +38,10 @@ local pyright_settings = {
   before_init = function(_, config)
     local python = project_python(config.root_dir)
     if python then
-      config.settings = vim.tbl_deep_extend("force", config.settings or {}, {
-        python = { pythonPath = python },
-      })
+      -- In place: the client took a reference to config.settings when it was
+      -- created, before this runs, so a replacement table would never reach
+      -- it (client.lua:409 vs :571). nvim-lspconfig always supplies the table.
+      config.settings.python = vim.tbl_deep_extend("force", config.settings.python or {}, { pythonPath = python })
     end
   end,
   -- nvim-lspconfig supplies cmd, filetypes, root markers and diagnosticMode.

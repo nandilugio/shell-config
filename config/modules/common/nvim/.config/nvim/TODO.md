@@ -864,7 +864,7 @@ test file had none.
 
 ---
 
-## 23. The venv hook never reaches the server
+## 23. ~~The venv hook never reaches the server~~ DONE 2026-11-04
 
 **Where:** `lua/setup/lsp.lua:36-46` (`before_init`), and the comment at
 `:17-19`
@@ -896,6 +896,12 @@ run on either.
 re-check the headless test above with `VIRTUAL_ENV` set to a venv that is not
 the project's `.venv`. Fix the comment. Consider reporting the docstring
 upstream.
+
+**Done:** `config.settings.python` is assigned into the existing table, which
+is the one the client holds (`client.lua:409` takes the reference, `:571` runs
+the hook). Verified headless with `VIRTUAL_ENV` pointing at a venv outside the
+project: `client.settings.python.pythonPath` is now that venv's interpreter.
+The docstring upstream still shows the replacing form; not reported.
 
 ---
 
