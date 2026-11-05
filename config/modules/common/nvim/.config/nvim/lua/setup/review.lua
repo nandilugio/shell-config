@@ -386,10 +386,13 @@ local function complete(arglead)
     local on_branch, branch = git(root, { "symbolic-ref", "--short", "-q", "HEAD" })
     first = on_branch and select(3, detected(root, branch)) or {}
   end
-  local _, out = git(root, { "for-each-ref", "--format=%(refname:short)", "refs/heads", "refs/remotes" })
+  -- Not refs/remotes/*/HEAD: it only points at the remote's default branch,
+  -- already listed, and its short name is the bare remote ("origin").
+  local _, out = git(root, { "for-each-ref", "--format=%(refname)", "refs/heads", "refs/remotes" })
   local all = vim.deepcopy(first)
-  for _, r in ipairs(lines(out)) do
-    if not vim.tbl_contains(all, r) then table.insert(all, r) end
+  for _, full in ipairs(lines(out)) do
+    local r = full:gsub("^refs/heads/", ""):gsub("^refs/remotes/", "")
+    if not full:match("^refs/remotes/[^/]+/HEAD$") and not vim.tbl_contains(all, r) then table.insert(all, r) end
   end
   return arglead == "" and all or vim.fn.matchfuzzy(all, arglead)
 end
