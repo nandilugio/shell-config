@@ -220,6 +220,9 @@ Now two independent settings (setup/diagnostics.lua):
   view does not move as the cursor does either (virtual_lines current_line would
   insert lines below the cursor on every landing). Long messages truncate there;
   <C-w>d shows them whole. "Every line" keeps virtual_lines: a survey, never cut off.
+  Underlines only in "every line" (2026-11-04, after trying it): in the other two
+  they marked the whole file while its messages were hidden. Underlining just
+  the cursor line would need a custom handler; <C-w>d covers that case.
 - severity, <leader>uD: all -> warnings+errors -> errors. Filters messages AND
   underlines. Signs are NEVER filtered, by decision: the gutter must always say
   something is there, so a filter never hides an error's existence.

@@ -4,8 +4,9 @@
 -- Two independent settings, each with its own toggle:
 --
 --   scope     where messages are written out: the cursor line, every line, or
---             nowhere. <leader>ud.
---   severity  the least severe one written out, and underlined. <leader>uD.
+--             nowhere. Underlines only with every line: elsewhere they would
+--             mark the whole file while the messages are hidden. <leader>ud.
+--   severity  the least severe one written out and underlined. <leader>uD.
 --
 -- Signs are outside both, deliberately: the gutter always marks every
 -- diagnostic, so a filter can hide a message but never the fact that there is
@@ -42,7 +43,7 @@ local function apply()
   vim.diagnostic.config({
     virtual_text = state.scope == "current line" and vim.tbl_extend("force", filter, { current_line = true }) or false,
     virtual_lines = state.scope == "every line" and filter or false,
-    underline = filter,
+    underline = state.scope == "every line" and filter or false,
   })
 end
 
@@ -95,7 +96,7 @@ end
 function M.cycle_severity()
   local labels = vim.tbl_map(function(s) return s.label end, SEVERITIES)
   M.set({ severity = next_of(labels, state.severity) })
-  vim.notify("Diagnostics shown: " .. state.severity .. " (signs: all)")
+  vim.notify("Diagnostics shown: " .. state.severity)
 end
 
 return M

@@ -175,7 +175,7 @@ Closing a fold shows the fold column (+ closed); zR and zn hide it again,
 
 uw wrap · us spell · ul line numbers · ur relative numbers · ub light/dark
 uh inlay hints
-ud diagnostics written out: cursor line → every line → none
+ud diagnostics written out: cursor line → every line (underlined) → none
 uD diagnostics shown: all → warnings+errors → errors (signs always show all)
 um markdown table alignment (on by default for markdown)
 uz fold column (see Folds above)
