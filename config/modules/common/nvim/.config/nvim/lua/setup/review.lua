@@ -50,14 +50,24 @@ local PRESETS = {
 -- nil in edit mode. In review:
 --   kind     "branch" or "commit"
 --   root     the repository
+--   head     the commit under review (a branch review: the branch's tip)
 --   base     the sha the signs compare against
---   name     how to show the base: "develop", "origin/develop", a ref you gave
---   branch   the branch under review (for a commit, the one containing it)
+--   name     how to show a branch review's base: "develop", a ref you gave
+--   branch   the line of history the commit sits on, and ]v [v walk: the
+--            branch under review, or for a commit the one containing it.
+--            nil for a commit no branch contains
+--   list     that branch's own commits, oldest first: its first-parent line
+--            from the base, merges left out. nil on a trunk, where the line
+--            has no start (master~3 has no n/m)
+--   pos      for a commit with a list, its index in it
+--   back     for a commit with a branch, its distance from the tip (the ~N)
+--   conv     { sha, name }: the base a walk returns to for branch review
 --   nearer   branches forking nearer than the conventional base (nearer_forks)
 --   choices  what :Review <Tab> offers first: the conventional base, then those
 --   by_hand  the base came from :Review <ref>, so a fetch must not replace it
---   list, pos, back   for a commit: the branch's own commits oldest first,
---                     this one's index in them, and its distance from the tip
+--   home     where review started, to go back to on leaving: { branch = name }
+--            or { sha = commit } for a detached HEAD
+--   at       where review has left HEAD; anything else means it moved outside
 local state = nil
 
 -- ── git ─────────────────────────────────────────────────────────────────────
@@ -217,15 +227,18 @@ local function detect_branch(root, branch, ref)
     if not conv then return nil, nil, true end
     s.base, s.name = conv.sha, conv.name
   end
-  if s.base == sha(root, "HEAD") then
+  s.head = sha(root, "HEAD")
+  if s.base == s.head then
     if not ref then return nil, nil, true end
     return nil, ("%s is already in %s: nothing to review"):format(branch, s.name)
   end
+  s.conv = { sha = s.base, name = s.name }
+  s.list = lines(select(2, git(root, { "rev-list", "--first-parent", "--no-merges", "--reverse", s.base .. "..HEAD" })))
   return s
 end
 
 -- HEAD against its parent, placed on a line of history when there is one, so
--- the label can say where it is (and ]r [r can move along it):
+-- the label can say where it is (and ]v [v can move along it):
 --   a feature branch's own commits   feature-x~3 4/7   bounded, hence n/m
 --   a trunk's history                master~3          unbounded: no total
 --   no branch at all                 abc1234
@@ -250,6 +263,7 @@ local function detect_commit(root, branch)
     if pos > 0 then
       local _, back = git(root, { "rev-list", "--count", "--first-parent", "HEAD.." .. b.ref })
       s.branch, s.list, s.pos, s.back = b.ref, list, pos, tonumber(back)
+      s.conv = { sha = conv.sha, name = conv.name }
       return s
     end
   end
@@ -296,7 +310,7 @@ end
 -- there is no place to give, so it names the comparison itself, in git's
 -- notation: master^..master, the parent of master to master.
 local function describe(s)
-  if s.kind == "branch" then return ("%s...%s"):format(s.name, s.branch) end
+  if s.kind == "branch" then return ("%s...%s"):format(s.name or s.conv.name, s.branch) end
   local at = not s.branch and G.short_rev(s.head)
     or s.back == 0 and s.branch
     or ("%s~%d"):format(s.branch, s.back)
@@ -308,6 +322,12 @@ end
 -- terminal to ask for a password on (a prompt would draw over the editor);
 -- GIT_TERMINAL_PROMPT=0 for https. No network, no credentials: it fails
 -- quietly and the local answer stands. If it lands and the base moved, switch.
+-- "Branch review: develop...feature-x", "Commit review: feature-x~3 4/7":
+-- the statusline's bR and cR, in words.
+local function headline(s)
+  return (s.kind == "branch" and "Branch review: " or "Commit review: ") .. describe(s)
+end
+
 local function refresh_after_fetch(s)
   vim.system({ "git", "-C", s.root, "fetch", "--quiet" }, {
     detach = true,
@@ -315,12 +335,14 @@ local function refresh_after_fetch(s)
     env = { GIT_TERMINAL_PROMPT = "0" },
   }, function(res)
     vim.schedule(function()
-      if state ~= s or s.by_hand or res.code ~= 0 then return end
+      -- Only while still on the branch as entered: a walk has moved HEAD.
+      if state ~= s or s.by_hand or res.code ~= 0 or s.kind ~= "branch" or s.at ~= s.head then return end
       local conv = conventional_base(s.root, "HEAD", s.branch)
       if conv and conv.sha ~= s.base then
-        s.base, s.name = conv.sha, conv.name
+        s.base, s.name, s.conv = conv.sha, conv.name, { sha = conv.sha, name = conv.name }
+        s.list = lines(select(2, git(s.root, { "rev-list", "--first-parent", "--no-merges", "--reverse", s.base .. "..HEAD" })))
         set_base(s.base)
-        vim.notify(fit("Fetched: reviewing " .. describe(s)))
+        vim.notify(fit("Fetched: " .. headline(s)))
       end
     end)
   end)
@@ -349,6 +371,8 @@ local function enter(ref)
     return
   end
 
+  s.home = on_branch and { branch = branch } or { sha = s.head }
+  s.at = s.head
   state = s
   local tc, tc_level = apply(PRESETS.review, s.base)
 
@@ -367,17 +391,130 @@ local function enter(ref)
   if #warnings > 0 then
     vim.notify(fit(table.concat(warnings, "; ")), vim.log.levels.WARN)
   else
-    vim.notify(fit("Review mode: " .. describe(s)))
+    vim.notify(fit(headline(s)))
   end
 
   if s.kind == "branch" and not s.by_hand then refresh_after_fetch(s) end
 end
 
+-- ── Walk ────────────────────────────────────────────────────────────────────
+-- ]v and [v check out the next and previous commit under review, so each is
+-- read in a real working tree: the language server, tests, everything sees
+-- that commit. Along a branch's own commits it is a cycle through the whole
+-- branch: branch review, its oldest commit, ..., its tip, branch review again.
+-- On a trunk, back through history and forward to the tip. Leaving review
+-- checks out where it started.
+--
+-- Checkouts move every file under the editor, so a step is refused when
+-- anything would be lost or carried along with it: edits in a buffer (they
+-- cannot be saved in review, and a reload would clash with them), uncommitted
+-- changes in the tree, or a HEAD moved by hand since the last step.
+
+local function unsaved_buffer()
+  for _, b in ipairs(vim.api.nvim_list_bufs()) do
+    local name = vim.api.nvim_buf_get_name(b)
+    if vim.bo[b].modified and vim.bo[b].buftype == "" and name ~= "" then
+      return vim.fn.fnamemodify(name, ":~:.")
+    end
+  end
+end
+
+local function blocked(s)
+  if sha(s.root, "HEAD") ~= s.at then
+    return "HEAD was moved outside review mode: :Review twice to start again from here"
+  end
+  local name = unsaved_buffer()
+  if name then return name .. " has edits: :e! to drop them first" end
+  local _, dirty = git(s.root, { "status", "--porcelain", "--untracked-files=no" })
+  if dirty ~= "" then return "Uncommitted changes would travel along: commit or stash them first" end
+end
+
+-- Attached when the target is the tip of the branch review started on, so
+-- coming back to it leaves you on the branch rather than a detached HEAD.
+local function checkout(s, target)
+  local b = s.home.branch
+  local args = (b and sha(s.root, b) == target) and { "checkout", "-q", b } or { "checkout", "-q", "--detach", target }
+  local ok, _, err = git(s.root, args)
+  if not ok then
+    vim.notify(fit(err), vim.log.levels.WARN)
+    return false
+  end
+  s.at = target
+  -- Reload what changed; a file absent at this commit keeps its text, quietly.
+  vim.cmd("silent! checktime")
+  return true
+end
+
+--- Steps to the next (1) or previous (-1) commit under review.
+--- @param dir 1|-1
+function M.step(dir)
+  local s = state
+  if not s then
+    vim.notify("]v and [v walk the commits under review: <leader>uR first")
+    return
+  end
+
+  local target, whole_branch
+  if s.list then
+    -- Position 0 is the whole branch, so the cycle passes through it.
+    local pos = s.kind == "branch" and 0 or s.pos
+    local new = (pos + dir) % (#s.list + 1)
+    if new == 0 then
+      target, whole_branch = sha(s.root, s.branch), true
+    else
+      target = s.list[new]
+    end
+  elseif dir < 0 then
+    target = sha(s.root, s.head .. "^")
+    if not target then return vim.notify("A root commit: there is nothing older") end
+    -- A root commit has no parent to review it against.
+    if not sha(s.root, target .. "^") then return vim.notify("The next one back is the root commit, which has no parent to compare against") end
+  elseif s.branch then
+    target = lines(select(2, git(s.root, { "rev-list", "--first-parent", "--reverse", s.head .. ".." .. s.branch })))[1]
+    if not target then return vim.notify("At the tip of " .. s.branch) end
+  else
+    return vim.notify("No branch has this commit, and git records no children: only [v goes on")
+  end
+
+  local why = blocked(s)
+  if why then return vim.notify(fit(why), vim.log.levels.WARN) end
+  if not checkout(s, target) then return end
+
+  s.head = target
+  if whole_branch then
+    s.kind, s.base, s.name = "branch", s.conv.sha, s.conv.name
+  else
+    s.kind, s.base = "commit", sha(s.root, target .. "^")
+    if s.list then s.pos = vim.fn.index(s.list, target) + 1 end
+    if s.branch then
+      s.back = tonumber((select(2, git(s.root, { "rev-list", "--count", "--first-parent", target .. ".." .. s.branch }))))
+    end
+  end
+  set_base(s.base)
+  local subject = s.kind == "commit" and select(2, git(s.root, { "log", "-1", "--format=%s", target })) or ""
+  vim.notify(fit(headline(s) .. (subject ~= "" and "  " .. subject or "")))
+end
+
 local function leave()
+  local s = state
+  local home = s.home.branch and sha(s.root, s.home.branch) or s.home.sha
+  local note = ""
+  if s.at ~= home then
+    if sha(s.root, "HEAD") ~= s.at then
+      note = "; HEAD was moved by hand, so it stays"
+    else
+      local why = blocked(s)
+      if why then return vim.notify(fit("Still reviewing: " .. why), vim.log.levels.WARN) end
+      local ok, _, err = git(s.root, s.home.branch and { "checkout", "-q", s.home.branch } or { "checkout", "-q", "--detach", home })
+      if not ok then return vim.notify(fit("Still reviewing: " .. err), vim.log.levels.WARN) end
+      vim.cmd("silent! checktime")
+      note = "; back on " .. (s.home.branch or G.short_rev(home))
+    end
+  end
   state = nil
   local tc, tc_level = apply(PRESETS.edit, nil)
   local warn = tc_level == vim.log.levels.WARN
-  vim.notify(fit("Edit mode" .. (warn and "; " .. tc or "")), warn and tc_level or nil)
+  vim.notify(fit("Edit mode" .. note .. (warn and "; " .. tc or "")), warn and tc_level or nil)
 end
 
 -- ── Public ──────────────────────────────────────────────────────────────────

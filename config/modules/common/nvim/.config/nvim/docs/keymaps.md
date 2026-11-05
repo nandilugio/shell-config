@@ -85,6 +85,7 @@ credits tpope in the source.
 | `]b`/`[b` | **B**uffer | ⬛ Core |
 | `]<Space>`/`[<Space>` | Blank line | ⬛ Core |
 | `]n`/`[n`/`an`/`in` | Treesitter node | ⬛ New in 0.12 |
+| `]v`/`[v` | Commit under review (re**v**ision), checked out in turn | 🟨 review mode only. `]r` was the first choice and is core's "next rare word" (spell); of the free letters, g/h mean hunk in Helix/LazyVim and o/x/y belong to unimpaired |
 
 ## 4 · Find — `<leader>f`
 | Key | Action | Why |

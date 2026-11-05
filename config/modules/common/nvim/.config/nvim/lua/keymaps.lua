@@ -92,6 +92,11 @@ M.maps = {
     function() vim.diagnostic.jump({ count = -1, severity = vim.diagnostic.severity.WARN, float = true }) end,
     desc = "Previous warning",
   },
+  -- The commits under review (setup/review.lua): each is checked out in turn.
+  -- v for revision: ]r is Neovim's "next rare word", and the other free
+  -- letters mean hunk or something else in Helix, LazyVim or unimpaired.
+  { "]v", function() require("setup.review").step(1) end, desc = "Next commit under review", needs = "mod:gitsigns" },
+  { "[v", function() require("setup.review").step(-1) end, desc = "Previous commit under review", needs = "mod:gitsigns" },
 
   -- ── Find: <leader>f ───────────────────────────────────────────────────────
   -- Falls back to :find / :grep, which fill the quickfix list. Same keys,
