@@ -242,4 +242,47 @@ function M.base(buf)
   return ok and rev or nil
 end
 
+--- A revision as the eye wants it: a full sha cut to git's default 7.
+--- @param rev string
+function M.short_rev(rev)
+  if #rev > 7 and rev:match("^%x+$") then return rev:sub(1, 7) end
+  return rev
+end
+
+-- ── Staging ─────────────────────────────────────────────────────────────────
+-- Staging writes the index, which only makes sense while the hunks are
+-- measured against it. Against another base a hunk is that base's diff:
+-- staging it puts the wrong text in the index, and resetting rewrites the
+-- file to the base -- in review mode, undoing the author's change in your
+-- working tree. gitsigns does both without asking, so <leader>gs/gS/gr/gR go
+-- through these, which refuse instead. (:Gitsigns stage_hunk still works.)
+
+local function against_index(what)
+  local base = M.base(0)
+  if not base then return true end
+  vim.notify(
+    ("The signs compare against %s, not the index, so %s is off until they do again"):format(M.short_rev(base), what),
+    vim.log.levels.WARN
+  )
+  return false
+end
+
+--- @param range [integer, integer]?
+function M.stage_hunk(range)
+  if against_index("staging") then require("gitsigns").stage_hunk(range) end
+end
+
+--- @param range [integer, integer]?
+function M.reset_hunk(range)
+  if against_index("resetting") then require("gitsigns").reset_hunk(range) end
+end
+
+function M.stage_buffer()
+  if against_index("staging") then require("gitsigns").stage_buffer() end
+end
+
+function M.reset_buffer()
+  if against_index("resetting") then require("gitsigns").reset_buffer() end
+end
+
 return M

@@ -116,6 +116,7 @@ credits tpope in the source.
 | `<leader>gf` | **F**ile history | 🟦 LazyVim's only use of `gf`; fzf-lua's picker, ours as fallback |
 | `<leader>gS`/`gR` | **S**tage / **R**eset buffer | 🟨 capitals of `gs`/`gr`, as gitsigns names them |
 | `<leader>gq` | Hunks to **q**uickfix | 🟨 `q` as in `<leader>xq` |
+| `<leader>gQ` | Every changed file's hunks to **q**uickfix | 🟨 capital = all files, as `gS`/`gR`. In review mode, the whole branch |
 | `<leader>ug*` | Git toggles: `ugd` deleted, `ugw` word diff, `ugb` line blame | 🟨 the one nested group |
 | `]c`/`[c` | Navigate hunks | 🟦 see §3 |
 

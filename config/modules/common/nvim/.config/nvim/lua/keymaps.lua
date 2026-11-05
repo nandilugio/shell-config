@@ -202,20 +202,22 @@ M.maps = {
   -- gitsigns these keep Vim's own meaning: next/previous change in diff mode.
   { "]c", function() require("gitsigns").nav_hunk("next") end, desc = "Next hunk", needs = "mod:gitsigns", fallback = "]c" },
   { "[c", function() require("gitsigns").nav_hunk("prev") end, desc = "Previous hunk", needs = "mod:gitsigns", fallback = "[c" },
-  { "<leader>gs", function() require("gitsigns").stage_hunk() end, desc = "Stage hunk", needs = "mod:gitsigns" },
-  { "<leader>gr", function() require("gitsigns").reset_hunk() end, desc = "Reset hunk", needs = "mod:gitsigns" },
+  -- Through setup/git.lua, which refuses while the signs compare against
+  -- anything but the index (review mode, a :Gitsigns change_base).
+  { "<leader>gs", function() require("setup.git").stage_hunk() end, desc = "Stage hunk", needs = "mod:gitsigns" },
+  { "<leader>gr", function() require("setup.git").reset_hunk() end, desc = "Reset hunk", needs = "mod:gitsigns" },
   -- On a selection, only the selected lines: without the range gitsigns takes
   -- the whole hunk under the cursor. It sorts the two ends itself.
   {
     "<leader>gs",
-    function() require("gitsigns").stage_hunk({ vim.fn.line("v"), vim.fn.line(".") }) end,
+    function() require("setup.git").stage_hunk({ vim.fn.line("v"), vim.fn.line(".") }) end,
     desc = "Stage selection",
     mode = "x",
     needs = "mod:gitsigns",
   },
   {
     "<leader>gr",
-    function() require("gitsigns").reset_hunk({ vim.fn.line("v"), vim.fn.line(".") }) end,
+    function() require("setup.git").reset_hunk({ vim.fn.line("v"), vim.fn.line(".") }) end,
     desc = "Reset selection",
     mode = "x",
     needs = "mod:gitsigns",
@@ -229,10 +231,13 @@ M.maps = {
   { "<leader>gB", "<Cmd>Gitsigns blame<CR>", desc = "Blame file", needs = "mod:gitsigns" },
   -- Capitals of the hunk actions, meaning "all of them", as gitsigns names
   -- them: stage_hunk/stage_buffer, reset_hunk/reset_buffer.
-  { "<leader>gS", function() require("gitsigns").stage_buffer() end, desc = "Stage buffer", needs = "mod:gitsigns" },
-  { "<leader>gR", function() require("gitsigns").reset_buffer() end, desc = "Reset buffer", needs = "mod:gitsigns" },
-  -- q as in <leader>xq: the quickfix list, which ]q and [q then walk.
+  { "<leader>gS", function() require("setup.git").stage_buffer() end, desc = "Stage buffer", needs = "mod:gitsigns" },
+  { "<leader>gR", function() require("setup.git").reset_buffer() end, desc = "Reset buffer", needs = "mod:gitsigns" },
+  -- q as in <leader>xq: the quickfix list, which ]q and [q then walk. The
+  -- capital is every changed file in the repository, open or not, against the
+  -- same base -- in review mode, the whole branch.
   { "<leader>gq", function() require("gitsigns").setqflist() end, desc = "Hunks to quickfix", needs = "mod:gitsigns" },
+  { "<leader>gQ", function() require("gitsigns").setqflist("all") end, desc = "All files' hunks to quickfix", needs = "mod:gitsigns" },
   -- How a line got here, as opposed to who touched it last: git log -L, which
   -- blame and gitsigns have no equivalent for. Normal mode takes the cursor
   -- line, visual the selection.

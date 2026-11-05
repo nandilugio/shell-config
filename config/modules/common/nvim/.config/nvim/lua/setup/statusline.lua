@@ -230,10 +230,10 @@ end
 -- "..." would claim the merge-base. setup/review.lua extends this to the
 -- three-dot form, where the base really is one.
 local function head_label(head)
-  local base = require("setup.git").base(0)
+  local git = require("setup.git")
+  local base = git.base(0)
   if not base then return head end
-  if #base > 7 and base:match("^%x+$") then base = base:sub(1, 7) end
-  return ("%s..%s"):format(base, head)
+  return ("%s..%s"):format(git.short_rev(base), head)
 end
 
 function M.git()

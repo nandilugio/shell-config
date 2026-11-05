@@ -89,6 +89,7 @@ Capital = the whole buffer, where the lowercase is one hunk.
 <leader>gs,gS   stage hunk (or the selected lines), buffer
 <leader>gr,gR   reset hunk (or the selected lines), buffer
 <leader>gp      preview hunk                    <leader>gq  hunks to quickfix
+<leader>gQ      every changed file's hunks, open or not, to quickfix
 <leader>gd      diff this file
 ih              the hunk as a text object: dih, yih
 
@@ -118,7 +119,8 @@ reads path[sha], as the pickers do. <C-o> comes back. They error across a
 rename.
 
 After :Gitsigns change_base X, the statusline reads X..branch: the signs and
-counts now compare against X, as `git diff X` would.
+counts now compare against X, as `git diff X` would. Staging and resetting
+refuse until the base is the index again: a hunk against X is X's diff.
 
 Its toggles are under <leader>ug — see Toggles below.
 
