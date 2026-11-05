@@ -80,7 +80,50 @@ local function project_config(root)
   end
 end
 
--- Global, like <leader>ud: running clients switch now, later ones start in it.
+--- Merges `patch` into a server's settings: running clients switch now, ones
+--- started later begin with it. Any server, so a future one with a setting
+--- worth switching needs no new plumbing.
+--- @param server string
+--- @param patch table
+--- @return vim.lsp.Client[] the running clients that were told
+function M.patch_settings(server, patch)
+  vim.lsp.config(server, { settings = patch })
+  local clients = vim.lsp.get_clients({ name = server })
+  for _, client in ipairs(clients) do
+    client.settings = vim.tbl_deep_extend("force", client.settings, patch)
+    -- :lsp restart starts from the client's config, not vim.lsp.config.
+    client.config.settings = vim.tbl_deep_extend("force", client.config.settings or {}, patch)
+    client:notify("workspace/didChangeConfiguration", { settings = client.settings })
+  end
+  return clients
+end
+
+--- The type checker's mode, or nil when there is no checker.
+function M.type_checking() return type_checking end
+
+--- Sets the checker's mode; nil means the checker's own default. Global, like
+--- <leader>ud. Says nothing itself, so a caller changing several things at
+--- once (setup/review.lua) can report them together.
+--- @param mode string?
+--- @return string? summary, integer? log level -- nil when there is no checker
+function M.set_type_checking(mode)
+  if not checker then return nil end
+  mode = mode or CHECKERS[checker].default
+  assert(vim.tbl_contains(CHECKERS[checker].modes, mode), ("%s has no mode %s"):format(checker, mode))
+  type_checking = mode
+  local patch = { [CHECKERS[checker].section] = { analysis = { typeCheckingMode = mode } } }
+  local ignored = {}
+  for _, client in ipairs(M.patch_settings(checker, patch)) do
+    local cfg = project_config(client.root_dir)
+    if cfg then table.insert(ignored, vim.fn.fnamemodify(client.root_dir, ":~") .. "/" .. cfg) end
+  end
+  if #ignored > 0 then
+    return ("type checking %s, except where the project's own config wins: %s"):format(mode, table.concat(ignored, ", ")),
+      vim.log.levels.WARN
+  end
+  return "type checking " .. mode, vim.log.levels.INFO
+end
+
 function M.pick_type_checking()
   if not checker then
     vim.notify("No basedpyright or pyright on PATH", vim.log.levels.WARN)
@@ -91,26 +134,8 @@ function M.pick_type_checking()
     format_item = function(mode) return mode == type_checking and mode .. " (current)" or mode end,
   }, function(mode)
     if not mode then return end
-    type_checking = mode
-    local patch = { [CHECKERS[checker].section] = { analysis = { typeCheckingMode = mode } } }
-    vim.lsp.config(checker, { settings = patch })
-    local ignored = {}
-    for _, client in ipairs(vim.lsp.get_clients({ name = checker })) do
-      client.settings = vim.tbl_deep_extend("force", client.settings, patch)
-      -- :lsp restart starts from the client's config, not vim.lsp.config.
-      client.config.settings = vim.tbl_deep_extend("force", client.config.settings or {}, patch)
-      client:notify("workspace/didChangeConfiguration", { settings = client.settings })
-      local cfg = project_config(client.root_dir)
-      if cfg then table.insert(ignored, vim.fn.fnamemodify(client.root_dir, ":~") .. "/" .. cfg) end
-    end
-    if #ignored > 0 then
-      vim.notify(
-        ("Type checking: %s, except where the project's own config wins: %s"):format(mode, table.concat(ignored, ", ")),
-        vim.log.levels.WARN
-      )
-    else
-      vim.notify("Type checking: " .. mode)
-    end
+    local msg, level = M.set_type_checking(mode)
+    vim.notify(msg, level)
   end)
 end
 
