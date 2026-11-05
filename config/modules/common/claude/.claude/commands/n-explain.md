@@ -10,7 +10,7 @@ Then **investigate thoroughly**. Dive deep into the implementation and related c
 Be extensive here — this phase is for you, not for the output. Ask me whenever the investigation needs something outside your reach: a query against a production datastore, infrastructure config, env vars, access to a private dashboard, etc. I can run it for you. Don't substitute a guess.
 
 First, describe the feature context. Structure your explanation from the outside in:
-1. **Product context** — what feature(s) the target relates to, and where they sit in the product as a whole.
+1. **Product context** — what feature(s) the target relates to, and where they sit in the product as a whole. It's also useful to summarize the relevant terminology.
 2. **Implementation** — how those features are built and how the relevant pieces fit together. Structure it so it's easy to refer to the code as a walkthrough.
     - Schematize the relevant section of the domain model as expressed in the code.
     - Describe the main modules of code involved (classes, modules, etc.) and how they cooperate to implement the features in question. Describe the main intent of the whole module as context to the functions/methods used in the code paths to describe.
