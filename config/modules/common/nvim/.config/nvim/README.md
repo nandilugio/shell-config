@@ -16,8 +16,8 @@ usually done, not abandoned. Preferred over a larger one that changes weekly,
 even when the larger one is more popular.
 
 **Few dependencies, not a sparse interface.** The aim is less to install, not
-less on screen. Breadcrumbs, a mode-coloured statusline, diagnostics on their
-own lines, fuzzy completion and bordered floats are all here — from options
+less on screen. Breadcrumbs, a mode-coloured statusline, diagnostics written
+out where you ask for them, fuzzy completion and bordered floats are all here — from options
 Neovim already has, not from plugins that draw them.
 
 **Every external tool is optional.** Clone this onto a bare server and it

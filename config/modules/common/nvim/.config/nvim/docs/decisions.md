@@ -209,3 +209,18 @@ less. Display only; the file is untouched. <leader>uH toggles.
 Four distinct shades, not six: a bounded range over fewer steps is the only lever that
 widened the gap without costing contrast, so #### and deeper share one colour.
 Design notes, measurements and the colour derivation: lua/mdheading/DESIGN.md
+
+### Diagnostics: two toggles, cursor line by default (2026-11-04)
+Was: virtual_lines on every line, one <leader>ud cycling all/warn/errors/off,
+which filtered the virtual lines only (signs and underlines showed everything).
+Now two independent settings (setup/diagnostics.lua):
+- scope, <leader>ud: current line -> every line -> none. DEFAULT current line.
+  Messages under every line push code around while typing, the user's complaint.
+  Current line is virtual_text with current_line=true, at end of line, so the
+  view does not move as the cursor does either (virtual_lines current_line would
+  insert lines below the cursor on every landing). Long messages truncate there;
+  <C-w>d shows them whole. "Every line" keeps virtual_lines: a survey, never cut off.
+- severity, <leader>uD: all -> warnings+errors -> errors. Filters messages AND
+  underlines. Signs are NEVER filtered, by decision: the gutter must always say
+  something is there, so a filter never hides an error's existence.
+Review mode (setup/review.lua) sets both: every line, errors only.

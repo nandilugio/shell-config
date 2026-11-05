@@ -132,7 +132,8 @@ All letters below are LazyVim/AstroNvim-identical (the only 7 they agree on).
 |---|---|
 | `<leader>uw` | **W**rap |
 | `<leader>us` | **S**pell |
-| `<leader>ud` | **D**iagnostics |
+| `<leader>ud` | **D**iagnostics: where messages are written out — cursor line, every line, none |
+| `<leader>uD` | **D**iagnostics: how severe — all, warnings and errors, errors. Capital, as the second dimension of `ud`. Signs are never filtered |
 | `<leader>uh` | Inlay **h**ints |
 | `<leader>uf` | Auto**f**ormat |
 | `<leader>ub` | **B**ackground |

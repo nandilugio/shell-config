@@ -283,9 +283,10 @@ M.maps = {
   { "<leader>us", "<Cmd>set spell!<CR>", desc = "Spell" },
   { "<leader>ul", "<Cmd>set number!<CR>", desc = "Line numbers" },
   { "<leader>ur", "<Cmd>set relativenumber!<CR>", desc = "Relative numbers" },
-  -- Steps all / warnings+errors / errors / off: a noisy file usually wants
-  -- less, not none.
-  { "<leader>ud", function() require("setup.diagnostics").cycle() end, desc = "Diagnostics shown (cycle)" },
+  -- Two dimensions, two keys (setup/diagnostics.lua): where messages are
+  -- written out, and how severe they must be. Signs always show everything.
+  { "<leader>ud", function() require("setup.diagnostics").cycle_scope() end, desc = "Diagnostics: cursor line, every line, none" },
+  { "<leader>uD", function() require("setup.diagnostics").cycle_severity() end, desc = "Diagnostics: all, warnings+errors, errors" },
   {
     "<leader>uh",
     function() vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({})) end,

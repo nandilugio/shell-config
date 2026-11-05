@@ -148,7 +148,9 @@ Closing a fold shows the fold column (+ closed); zR and zn hide it again,
 ## Toggles — <leader>u
 
 uw wrap · us spell · ul line numbers · ur relative numbers · ub light/dark
-uh inlay hints       ud diagnostics: all → warnings+errors → errors → off
+uh inlay hints
+ud diagnostics written out: cursor line → every line → none
+uD diagnostics shown: all → warnings+errors → errors (signs always show all)
 um markdown table alignment (on by default for markdown)
 uz fold column (see Folds above)
 ua autosave: writes on leaving insert or the buffer, off by default
