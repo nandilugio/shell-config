@@ -330,6 +330,9 @@ M.maps = {
   -- A setting like the rest, so a toggle here rather than an action under
   -- <leader>o. Off by default (setup/autosave.lua says why).
   { "<leader>ua", function() require("setup.autosave").toggle() end, desc = "Autosave" },
+  -- Many settings at once, as two presets (setup/review.lua). Capital R:
+  -- <leader>ur is relative numbers.
+  { "<leader>uR", function() require("setup.review").toggle() end, desc = "Review mode", needs = "mod:gitsigns" },
   -- Git's own toggles, nested because there are three of them and <leader>u's
   -- single letters are spoken for (ud diagnostics, uw wrap, ub background).
   {

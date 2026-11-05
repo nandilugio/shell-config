@@ -226,13 +226,18 @@ end
 -- git's own notation for what the signs and counts are measured against.
 --   feature-x           the index, as usual
 --   HEAD~2..feature-x   a base set by hand: the comparison `git diff HEAD~2` makes
--- Two dots, not three: the signs compare against that revision itself, and
--- "..." would claim the merge-base. setup/review.lua extends this to the
--- three-dot form, where the base really is one.
+--   develop...feature-x review mode, against the merge-base: what "..." means
+--   feature-x~3 4/7     review mode, one commit of the branch against its parent
+-- Two dots for a base set by hand: the signs compare against that revision
+-- itself, and "..." would claim the merge-base. Review mode names its own,
+-- for the buffers whose base it set.
 local function head_label(head)
   local git = require("setup.git")
   local base = git.base(0)
   if not base then return head end
+  local review = package.loaded["setup.review"]
+  local label = review and review.label(base)
+  if label then return label end
   return ("%s..%s"):format(git.short_rev(base), head)
 end
 
@@ -286,6 +291,14 @@ function M.search()
   return ("%%#StatuslineMuted#[%d/%d] %%*"):format(s.current, s.total)
 end
 
+-- Review is a mode of sorts too, and changes what the signs and counts mean,
+-- so it gets a block, in the colour that says writes are refused.
+function M.review()
+  local review = package.loaded["setup.review"]
+  if not (review and review.active()) then return "" end
+  return "%#StatuslineReplace# R %*"
+end
+
 -- Recording is a mode of sorts, so it reads as a block beside the mode rather
 -- than as another item in the line.
 function M.recording()
@@ -307,6 +320,7 @@ local DIAGNOSTICS = "%{% luaeval('(package.loaded[\"vim.diagnostic\"] "
 function M.render()
   return table.concat({
     M.mode(),
+    M.review(),
     M.recording(),
     " %<",
     "%#StatuslineAccent#",

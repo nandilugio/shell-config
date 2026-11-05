@@ -125,6 +125,27 @@ refuse until the base is the index again: a hunk against X is X's diff.
 Its toggles are under <leader>ug — see Toggles below.
 
 
+## Review mode — <leader>uR
+
+Reads a branch the way its pull request shows it, then puts everything back.
+On a branch: against where it forked, the nearest of develop, master and main,
+local or remote. On a detached HEAD: that one commit against its parent. Only
+local git; a fetch runs in the background and moves the base if the remote did.
+
+The statusline shows R, and develop...feature-x (one commit: feature-x~3 4/7).
+The usual keys then read the review:
+
+]c,[c           the branch's hunks              <leader>gD  its changed files
+<leader>gQ      every hunk, to quickfix         <leader>gd  this file vs the base
+:ReviewBase     review against another branch (lists the nearer forks)
+
+Undone on leaving: diagnostics on every line, errors only · type checking
+standard · deleted lines, word diff and line blame shown · writes refused.
+Edits are not: change something and the language server sees it, nothing is
+saved. :set write to run tests on an edit; :qa! to quit without saving.
+Staging and resetting refuse while the base is not the index.
+
+
 ## Windows and buffers
 
 <C-h,j,k,l>     move between windows            tmux uses M-h,j,k,l for panes
@@ -158,6 +179,7 @@ ud diagnostics written out: cursor line → every line → none
 uD diagnostics shown: all → warnings+errors → errors (signs always show all)
 um markdown table alignment (on by default for markdown)
 uz fold column (see Folds above)
+uR review mode (see Review mode above)
 ua autosave: writes on leaving insert or the buffer, off by default
 ug* git: ugd deleted lines · ugw word diff · ugb blame every line
 

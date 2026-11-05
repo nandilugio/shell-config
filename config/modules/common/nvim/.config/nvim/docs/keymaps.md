@@ -151,6 +151,7 @@ a fold closes. Autosave is off until asked for.
 | `<leader>um` | **M**arkdown table alignment (`lua/mdtable`) |
 | `<leader>uH` | Markdown **h**eading colours (`lua/mdheading`) — capital, since `uh` is inlay hints |
 | `<leader>uz` | Fold column — `z` for the fold commands. The closing `z` commands turn it on, `zR`/`zn` off |
+| `<leader>uR` | **R**eview mode — two presets of many settings at once (`setup/review.lua`). Capital, as `ur` is relative numbers |
 | `<leader>ua` | **A**utosave — was `<leader>oa` until 2026-11-04: a setting, so a toggle, where `<leader>o` holds actions |
 
 Optional companion: tpope's `yo<x>` — 2 keystrokes, free namespace.

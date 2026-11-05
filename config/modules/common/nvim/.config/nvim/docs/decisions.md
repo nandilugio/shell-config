@@ -224,3 +224,35 @@ Now two independent settings (setup/diagnostics.lua):
   underlines. Signs are NEVER filtered, by decision: the gutter must always say
   something is there, so a filter never hides an error's existence.
 Review mode (setup/review.lua) sets both: every line, errors only.
+
+### Review mode (2026-11-04) — setup/review.lua, <leader>uR
+One toggle between two PRESETS, each a complete set of absolute values (not
+save-and-restore): edit is the normal state, named; leaving review always lands
+in the same place.
+  review: gitsigns base = merge-base · diagnostics every line, errors · basedpyright
+          standard · deleted lines, word diff, line blame on · 'write' off
+- NO HOSTS: only local git, no gh. On a branch, branch review; on a detached HEAD,
+  that commit vs its parent (works when nvim starts detached).
+- BASE = the nearest merge-base among develop/master/main and each remote's default
+  branch, local and remote. Nearest, not first: a stale local develop loses to a
+  fresher origin/develop, a hotfix off master is reviewed against master.
+  gitsigns gets the merge-base SHA: given "develop" it would diff against develop's
+  TIP (verified it rejects a range like develop...HEAD).
+- Git records no "branched from" (the reflog's "Created from" is local and
+  expires). A stacked branch's nearer fork is found from the graph -- the
+  branch's own first-parent commits, one rev-list -- but a parent and a child
+  branch look alike from there, so it is a HINT in the entry message with
+  :ReviewBase to switch, never a prompt. Only shown when the fork is newer
+  than the conventional base, which drops a child that forked before develop
+  was merged in.
+- Fetch on entry, never awaited: detached (no terminal for ssh to prompt on),
+  GIT_TERMINAL_PROMPT=0, 60s timeout. If it moves the base, switch and say so.
+- 'write' off, edits allowed: in review the working tree IS the branch, and a
+  saved edit is a hunk the same colour as the author's (gitsigns dims only
+  index-staged hunks). The LSP reads buffers, so experiments need no write.
+- Staging/resetting refuse whenever the base is not the index (setup/git.lua):
+  a hunk is the base's diff, and reset would rewrite the file to the base.
+- Statusline: base..head (two dots) for a base set by hand -- what gitsigns
+  compares; develop...head (three) only where review set the merge-base.
+- Measured on the work monorepo (1524 refs): detection's git calls < 0.2s.
+- Messages fit v:echospace: longer raises hit-enter, which ate the next keys.

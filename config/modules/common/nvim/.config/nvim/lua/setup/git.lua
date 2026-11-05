@@ -294,8 +294,10 @@ end
 local function against_index(what)
   local base = M.base(0)
   if not base then return true end
+  local review = package.loaded["setup.review"]
+  local name = review and review.label(base) or M.short_rev(base)
   vim.notify(
-    ("The signs compare against %s, not the index, so %s is off until they do again"):format(M.short_rev(base), what),
+    ("Signs compare against %s, not the index: %s is off"):format(name, what),
     vim.log.levels.WARN
   )
   return false

@@ -24,6 +24,7 @@ require("setup.lsp")
 require("setup.treesitter")
 require("setup.files")
 require("setup.git")
+require("setup.review") -- for :ReviewBase; does nothing until asked
 require("setup.wiki")
 
 -- Local plugins, structured so they could move to their own repos unchanged —
