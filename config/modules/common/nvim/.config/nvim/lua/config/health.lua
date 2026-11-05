@@ -156,11 +156,41 @@ local function check_keymaps()
   end
 end
 
+-- setup/git.lua reads each buffer's gitsigns base from gitsigns' cache, an
+-- internal table with no public getter. If gitsigns reshapes it, the read
+-- quietly returns nil -- as if every buffer compared against the index --
+-- so this is the place that says so.
+local function check_gitsigns_internals()
+  H.start("gitsigns internals")
+  if not pcall(require, "gitsigns") then
+    H.info("gitsigns is not installed")
+    return
+  end
+  local ok, cache = pcall(require, "gitsigns.cache")
+  if not ok or type(cache.cache) ~= "table" then
+    H.warn("gitsigns.cache.cache is gone: the statusline no longer shows a changed base", {
+      "Update M.base in lua/setup/git.lua for this gitsigns revision.",
+    })
+    return
+  end
+  local _, entry = next(cache.cache)
+  if not entry then
+    H.info("no buffer attached to gitsigns, so its base field went unchecked: run this from a file in a repository")
+  elseif type(entry.git_obj) == "table" and type(entry.git_obj.change_revision) == "function" then
+    H.ok("the base of each buffer is readable (cache[buf].git_obj.revision)")
+  else
+    H.warn("gitsigns' cache entries changed shape: the statusline no longer shows a changed base", {
+      "Update M.base in lua/setup/git.lua for this gitsigns revision.",
+    })
+  end
+end
+
 function M.check()
   check_tools()
   check_servers()
   check_parsers()
   check_keymaps()
+  check_gitsigns_internals()
 end
 
 return M

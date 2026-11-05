@@ -221,4 +221,25 @@ function M.file_history()
   run({ "git", "log", "--follow", "--oneline", "--", file }, cwd, file)
 end
 
+-- ── Base ────────────────────────────────────────────────────────────────────
+-- What a buffer's signs compare against: the index, unless something changed
+-- it with :Gitsigns change_base (or setup/review.lua did). Everything that
+-- reads a hunk depends on it -- the statusline's counts, staging.
+--
+-- gitsigns has no getter, so this reads its cache, an internal table. Each
+-- attached buffer keeps its own effective base there (git_obj.revision), set
+-- by a global change_base and a per-buffer one alike, so reading it per buffer
+-- is right either way. The string is kept as given: "develop", a sha, or
+-- HEAD~2 (a bare ~2 gets HEAD prepended). nil means the index.
+--
+-- Guarded: if gitsigns reshapes its cache this returns nil, as if comparing
+-- against the index, and :checkhealth config reports the breakage.
+--- @param buf integer?
+--- @return string?
+function M.base(buf)
+  buf = (buf == nil or buf == 0) and vim.api.nvim_get_current_buf() or buf
+  local ok, rev = pcall(function() return require("gitsigns.cache").cache[buf].git_obj.revision end)
+  return ok and rev or nil
+end
+
 return M

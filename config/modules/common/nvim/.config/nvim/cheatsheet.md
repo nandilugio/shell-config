@@ -117,6 +117,9 @@ r and R land you in a read-only revision of the file: the statusline then
 reads path[sha], as the pickers do. <C-o> comes back. They error across a
 rename.
 
+After :Gitsigns change_base X, the statusline reads X..branch: the signs and
+counts now compare against X, as `git diff X` would.
+
 Its toggles are under <leader>ug — see Toggles below.
 
 

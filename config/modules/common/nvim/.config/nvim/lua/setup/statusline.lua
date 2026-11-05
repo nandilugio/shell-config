@@ -223,11 +223,24 @@ function M.repo()
   return out
 end
 
+-- git's own notation for what the signs and counts are measured against.
+--   feature-x           the index, as usual
+--   HEAD~2..feature-x   a base set by hand: the comparison `git diff HEAD~2` makes
+-- Two dots, not three: the signs compare against that revision itself, and
+-- "..." would claim the merge-base. setup/review.lua extends this to the
+-- three-dot form, where the base really is one.
+local function head_label(head)
+  local base = require("setup.git").base(0)
+  if not base then return head end
+  if #base > 7 and base:match("^%x+$") then base = base:sub(1, 7) end
+  return ("%s..%s"):format(base, head)
+end
+
 function M.git()
   local d = vim.b.gitsigns_status_dict
   if not d or not d.head or d.head == "" then return "" end
 
-  local out = (" %s"):format(d.head) .. M.repo()
+  local out = (" %s"):format(head_label(d.head)) .. M.repo()
   -- Hunk counts only where there is room; they are the first thing to drop.
   if wide_enough("hunks") then
     if (d.added or 0) > 0 then out = out .. ("%%#StatuslineAdd# +%d%%*"):format(d.added) end
