@@ -271,3 +271,11 @@ in the same place.
   NOT to the upstream: that would hide commit review whenever you are ahead,
   and :Review @{u} says it explicitly.
 - Messages fit v:echospace: longer raises hit-enter, which ate the next keys.
+
+### :help for the config's own features (2026-11-05) — doc/config.txt
+The cheatsheet says what to press; doc/config.txt says how things behave, as
+real Vim help (:help review-mode, :help :Review, <leader>fh); this file says
+why. Neovim reads doc/ from every runtimepath entry, the config dir included.
+init.lua runs :helptags only when config.txt is newer than doc/tags, which is
+gitignored. Index tag is config.txt, not config: :help config is Neovim's own
+(starting.txt).

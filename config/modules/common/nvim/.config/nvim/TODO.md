@@ -996,7 +996,17 @@ too; `gl` is the odd one out, since it opens a window.
 
 ---
 
-## 26. A "review mode": one toggle that sets the editor up for code review
+## 26. ~~A "review mode": one toggle that sets the editor up for code review~~ DONE 2026-11-05
+
+**Done:** `setup/review.lua`, on `<leader>uR` and `:Review`, documented in
+`:help review-mode` (`doc/config.txt`) with the reasoning in
+`docs/decisions.md`. What changed from the plan below: the base is detected
+from local git only (the nearest merge-base among develop, master, main and
+the remotes' defaults), never asked for; two kinds, branch and commit
+review, shown as `bR` / `cR`; a walk through the commits on `]v` / `[v`;
+presets rather than save-and-restore. `<leader>gQ` and `<leader>gD` (items 4
+and 5) are mode-independent, and staging refuses whenever the base is not the
+index. The plan, as written then:
 
 **Where:** new; it would drive `setup/diagnostics.lua`, `setup/lsp.lua`
 (`pick_type_checking`) and gitsigns. The key is not chosen yet: `<leader>u*`

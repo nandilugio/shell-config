@@ -36,3 +36,10 @@ require("mdtable").setup({ filetypes = { "markdown" } })
 require("mdheading").setup({ filetypes = { "markdown" } })
 
 require("setup.keymaps")
+
+-- :help for this config's own features, from doc/config.txt. The tags file
+-- is generated, so not in git; rebuilt only when the help is newer.
+local doc = vim.fn.stdpath("config") .. "/doc"
+if vim.fn.getftime(doc .. "/config.txt") > vim.fn.getftime(doc .. "/tags") then
+  vim.cmd.helptags(vim.fn.fnameescape(doc))
+end

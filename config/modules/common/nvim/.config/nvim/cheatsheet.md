@@ -127,27 +127,15 @@ Its toggles are under <leader>ug — see Toggles below.
 
 ## Review mode — <leader>uR
 
-Reads a branch the way its pull request shows it, then puts everything back.
-On a branch: against where it forked, the nearest of develop, master and main,
-local or remote. On a detached HEAD, or a branch with nothing to compare it
-with (master, when that is all there is): one commit against its parent. Only
-local git; a fetch runs in the background and moves the base if the remote did.
+A branch the way its pull request shows it (bR develop...feature-x), or one
+commit against its parent (cR feature-x~3 4/7). Writes refused, edits not.
+All of it, :help review-mode.
 
-The statusline shows bR develop...feature-x for a branch, and cR for one
-commit: feature-x~3 4/7 on a feature branch, else master^..master.
-The usual keys then read the review:
-
-]c,[c           the branch's hunks              <leader>gD  its changed files
-<leader>gQ      every hunk, to quickfix         <leader>gd  this file vs the base
-:Review         on or off, as <leader>uR      :Review {ref}  against that ref
-                <Tab> offers the bases it detected first, then every ref
-:Review @{u}    what is not pushed yet (offered when there is something)
-
-Undone on leaving: diagnostics on every line, errors only · type checking
-standard · deleted lines, word diff and line blame shown · writes refused.
-Edits are not: change something and the language server sees it, nothing is
-saved. :set write to run tests on an edit; :qa! to quit without saving.
-Staging and resetting refuse while the base is not the index.
+:Review         on or off, as <leader>uR    :Review {ref}  against that ref
+:Review @{u}    what is not pushed yet      <Tab>  the detected bases first
+]v,[v           next, previous commit under review, checked out in turn
+]c,[c           the hunks under review      <leader>gD  the changed files
+<leader>gQ      every hunk, to quickfix     <leader>gd  this file vs the base
 
 
 ## Windows and buffers

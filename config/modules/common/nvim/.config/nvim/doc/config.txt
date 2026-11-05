@@ -1,0 +1,138 @@
+*config.txt*	This configuration's own features
+
+How the features this config adds behave, for when the cheatsheet
+(<leader>oh) is not enough. Why they are built this way is in
+docs/decisions.md, next to this file's directory.
+
+1. Review mode				|review-mode|
+
+==============================================================================
+1. Review mode						*review-mode*
+
+One switch that sets the editor up to read changes the way a pull request
+shows them, and one that puts everything back. Only local git is used: no
+host, no pull request, no network beyond an optional fetch.
+
+<leader>uR			Toggle review mode.
+
+							*:Review*
+:Review			Toggle review mode, as <leader>uR.
+:Review {ref}		Review the current branch against {ref}'s merge-base,
+			entering review mode or switching the base of the
+			review in progress. <Tab> offers the detected bases
+			first, then @{u} when there is something unpushed,
+			then every branch.
+
+Inside review mode the usual keys read the review:
+
+	]c [c		the hunks under review
+	<leader>gD	the changed files, as a picker
+	<leader>gQ	every hunk of every changed file, to quickfix
+	<leader>gd	this file against the base, in a split
+	gd grr K	as ever: the code under review is the real working tree
+	]v [v		the next and previous commit under review |review-walk|
+
+------------------------------------------------------------------------------
+KINDS							*review-kinds*
+
+Branch review		A branch against where it forked. The statusline shows
+			bR and the range: >
+				bR develop...feature-x
+<			Three dots, as in git: the base is the merge-base.
+
+Commit review		One commit against its parent. The statusline shows cR
+			and the commit: >
+				cR feature-x~3 4/7	a feature branch's commit
+				cR master^..master	any other commit
+<			On a feature branch, ~3 is three commits below its
+			tip and 4/7 its place among the branch's own commits.
+			Elsewhere there is no such place to give, so the label
+			is the comparison itself, in git's notation.
+
+Which one you get:
+- On a branch with something to compare against: branch review.
+- On a detached HEAD: commit review of that commit. It works however you got
+  there, including starting Neovim on a detached HEAD.
+- On a branch with nothing to compare against, such as master in a repository
+  that only commits there: commit review of its last commit. The unpushed
+  commits are a branch review away: |:Review| @{u}.
+
+------------------------------------------------------------------------------
+THE BASE						*review-base*
+
+Git records no "branched from", so the base is worked out from the graph:
+
+1. The candidates are develop, master and main, plus whatever each remote
+   names as its default branch, each local and remote, except the branch
+   under review.
+2. The one whose merge-base with HEAD is nearest wins. Nearest rather than
+   first, so a stale local develop loses to a fresher origin/develop, and a
+   hotfix cut from master is reviewed against master even where develop
+   exists.
+3. If another branch forks from this one nearer than that, as the parent of
+   a stacked branch does, the entry message names it: >
+	feature-a fork nearer (:Review <Tab>)
+<   It is a hint, not a question: a parent branch and a child branch cut from
+   this one later look alike from the graph. |:Review| {ref} switches.
+
+On entering a branch review, a fetch runs in the background. It never waits
+and never asks for a password; without network or credentials it fails
+quietly. If it moves the base, the review switches and says so.
+
+------------------------------------------------------------------------------
+WALKING THE COMMITS				*review-walk* *]v* *[v*
+
+]v			Check out the next commit under review.
+[v			Check out the previous one.
+
+Each commit is checked out, so it is read in a real working tree: the
+language server, tests and everything else see that commit.
+
+Along a feature branch the walk is a cycle through the whole branch: branch
+review, the oldest commit, ..., the tip, branch review again. On a trunk it
+goes back through history and forward to the tip. A commit no branch contains
+can only go back: git records parents, not children.
+
+A step is refused, with the reason, when it would lose or carry something:
+- a buffer with edits, which cannot be saved in review (:e! drops them);
+- uncommitted changes in the working tree;
+- HEAD moved outside review mode since the last step.
+The walk also stops before a root commit, which has no parent to compare
+against.
+
+Leaving review mode checks out where it started: the branch, or the detached
+commit you entered on.
+
+------------------------------------------------------------------------------
+WHAT CHANGES						*review-presets*
+
+Two presets, each a complete set of values. Leaving always lands in the same
+place, so a setting changed by hand while reviewing is reset on leaving.
+
+	setting		edit			review ~
+	base		the index		see |review-base|
+	diagnostics	cursor line, all	every line, errors only
+	type checking	the checker's default	standard (basedpyright)
+	hunk display	off			deleted lines, word diff, blame
+	'write'		on			off
+
+Writes are refused, edits are not. Change something and the language server
+sees it, while nothing is saved: in review the working tree is the change
+under review, and a saved edit would look exactly like the author's. To run
+tests on an edit, :set write deliberately. To quit without saving, :qa!.
+
+Staging and resetting hunks (<leader>gs gS gr gR) refuse whenever the base is
+not the index, in review or after a hand-set :Gitsigns change_base: a hunk is
+then the base's diff, and would stage the wrong text.
+
+------------------------------------------------------------------------------
+LIMITS							*review-limits*
+
+- A commit is placed on the branch whose tip is nearest. When a child branch
+  forked off later, that can be the child rather than the parent; the label
+  stays correct for the branch it names.
+- A file absent at a walked commit keeps its text in an open buffer.
+- The base shown in the statusline is read from gitsigns' internal cache.
+  :checkhealth config warns if a gitsigns update moves it.
+
+ vim:tw=78:ts=8:noet:ft=help:norl:
