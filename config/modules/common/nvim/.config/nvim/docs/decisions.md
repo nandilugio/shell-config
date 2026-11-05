@@ -261,4 +261,11 @@ in the same place.
 - Statusline: base..head (two dots) for a base set by hand -- what gitsigns
   compares; develop...head (three) only where review set the merge-base.
 - Measured on the work monorepo (1524 refs): detection's git calls < 0.2s.
+- Two kinds, shown as bR / cR in the statusline. Commit review = HEAD vs its
+  parent, placed on a line of history: a feature branch's own commits
+  (feature-x~3 4/7, bounded), else a trunk's first-parent line (master~3, no
+  total), else the bare sha. A branch with nothing to compare against (master
+  in a repo that only commits there) falls back to commit review of its tip,
+  NOT to the upstream: that would hide commit review whenever you are ahead,
+  and :Review @{u} says it explicitly.
 - Messages fit v:echospace: longer raises hit-enter, which ate the next keys.

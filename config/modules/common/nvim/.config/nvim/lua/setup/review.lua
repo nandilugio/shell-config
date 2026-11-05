@@ -80,12 +80,17 @@ local CONVENTIONAL = { "develop", "master", "main" }
 -- master and main, plus whatever each remote names as its default branch (so a
 -- repository whose default is called something else still works). Each local
 -- and remote, minus the branch under review, ordered so ties go to the first.
-local function conventional_refs(root, branch)
+local function trunk_names(root)
   local names = vim.deepcopy(CONVENTIONAL)
   local _, defaults = git(root, { "for-each-ref", "--format=%(symref:lstrip=3)", "refs/remotes/*/HEAD" })
   for _, d in ipairs(lines(defaults)) do
     if not vim.tbl_contains(names, d) then table.insert(names, d) end
   end
+  return names
+end
+
+local function conventional_refs(root, branch)
+  local names = trunk_names(root)
 
   local patterns = { "for-each-ref", "--format=%(refname)" }
   for _, n in ipairs(names) do
@@ -159,20 +164,25 @@ end
 
 -- For a detached HEAD: the branch it belongs to, as the one containing it
 -- whose tip is nearest -- local or remote, so a colleague's branch checked out
--- as origin/x counts. The conventional branches are left out: containing it
--- there means it was merged, not that it is theirs.
-local function containing_branch(root)
+-- as origin/x counts; local wins a tie. With trunk = false the conventional
+-- branches are left out (containing it there means it was merged, not that it
+-- is theirs); with trunk = true only they are considered.
+--
+-- The ref is named as measured, origin/ included when remote: a ~N counted
+-- on origin/x would be wrong on a local x that has moved.
+local function containing_branch(root, trunk)
+  local trunks = trunk_names(root)
   local _, out = git(root, { "for-each-ref", "--contains", "HEAD", "--format=%(refname)", "refs/heads", "refs/remotes" })
   local best
   for _, full in ipairs(lines(out)) do
     local short = full:gsub("^refs/heads/", ""):gsub("^refs/remotes/", "")
     local name = short:match("[^/]+$")
     local remote = full:find("^refs/remotes/") ~= nil
-    if name ~= "HEAD" and not vim.tbl_contains(CONVENTIONAL, name) then
+    if name ~= "HEAD" and vim.tbl_contains(trunks, name) == trunk then
       local _, n = git(root, { "rev-list", "--count", "HEAD.." .. short })
       n = tonumber(n)
       if not best or n < best.distance or (n == best.distance and best.remote and not remote) then
-        best = { ref = short, name = remote and short:gsub("^[^/]+/", "") or short, distance = n, remote = remote }
+        best = { ref = short, distance = n, remote = remote }
       end
     end
   end
@@ -199,33 +209,55 @@ local function detect_branch(root, branch, ref)
     if not sha(root, ref) or s.base == "" then return nil, ("%s: no such ref, or nothing in common with HEAD"):format(ref) end
     s.name, s.by_hand = ref, true
   else
-    if not conv then
-      return nil, "No develop, master or main here, nor a remote default branch: :Review <ref> to name one"
-    end
+    -- Nothing to compare the branch with: the third return asks the caller to
+    -- review its last commit instead.
+    if not conv then return nil, nil, true end
     s.base, s.name = conv.sha, conv.name
   end
   if s.base == sha(root, "HEAD") then
+    if not ref then return nil, nil, true end
     return nil, ("%s is already in %s: nothing to review"):format(branch, s.name)
   end
   return s
 end
 
-local function detect_commit(root)
+-- HEAD against its parent, placed on a line of history when there is one, so
+-- the label can say where it is (and ]r [r can move along it):
+--   a feature branch's own commits   feature-x~3 4/7   bounded, hence n/m
+--   a trunk's history                master~3          unbounded: no total
+--   no branch at all                 abc1234
+-- `branch` is given when HEAD is the tip of it: the fallback for a branch
+-- with nothing to compare against, master in a repo that commits only there.
+local function detect_commit(root, branch)
   local head = sha(root, "HEAD")
   local parent = sha(root, "HEAD^")
   if not parent then return nil, "A root commit has no parent to compare against" end
   local s = { kind = "commit", root = root, base = parent, head = head, nearer = {} }
+  if branch then
+    s.branch, s.back = branch, 0
+    return s
+  end
 
-  local b = containing_branch(root)
-  local conv = b and conventional_base(root, b.ref, b.name)
+  local b = containing_branch(root, false)
+  local conv = b and conventional_base(root, b.ref, (b.ref:gsub("^[^/]+/", "")))
   if conv then
     local _, out = git(root, { "rev-list", "--first-parent", "--no-merges", "--reverse", conv.sha .. ".." .. b.ref })
     local list = lines(out)
     local pos = vim.fn.index(list, head) + 1
     if pos > 0 then
       local _, back = git(root, { "rev-list", "--count", "--first-parent", "HEAD.." .. b.ref })
-      s.branch, s.list, s.pos, s.back = b.name, list, pos, tonumber(back)
+      s.branch, s.list, s.pos, s.back = b.ref, list, pos, tonumber(back)
+      return s
     end
+  end
+
+  -- On a trunk, ~N is exact only along its first-parent line: a commit that
+  -- arrived through a merge's other side has no such name, and keeps the sha.
+  local t = containing_branch(root, true)
+  if t then
+    local _, back = git(root, { "rev-list", "--count", "--first-parent", "HEAD.." .. t.ref })
+    back = tonumber(back)
+    if sha(root, ("%s~%d"):format(t.ref, back)) == head then s.branch, s.back = t.ref, back end
   end
   return s
 end
@@ -256,11 +288,13 @@ local function fit(msg)
   return vim.fn.strcharpart(msg, 0, room - 1) .. "…"
 end
 
+-- Branch review names a range; commit review names one commit, since the
+-- statusline's cR already says "against its parent".
 local function describe(s)
   if s.kind == "branch" then return ("%s...%s"):format(s.name, s.branch) end
-  if not s.list then return ("%s^..%s"):format(G.short_rev(s.head), G.short_rev(s.head)) end
+  if not s.branch then return G.short_rev(s.head) end
   local at = s.back == 0 and s.branch or ("%s~%d"):format(s.branch, s.back)
-  return ("%s %d/%d"):format(at, s.pos, #s.list)
+  return s.list and ("%s %d/%d"):format(at, s.pos, #s.list) or at
 end
 
 -- A fetch on entry, so the base reflects the remote rather than whenever you
@@ -301,8 +335,9 @@ local function enter(ref)
     vim.notify("A detached HEAD is reviewed against its parent; :Review <ref> needs a branch", vim.log.levels.WARN)
     return
   end
-  local s, err
-  if on_branch then s, err = detect_branch(root, branch, ref) else s, err = detect_commit(root) end
+  local s, err, fallback
+  if on_branch then s, err, fallback = detect_branch(root, branch, ref) end
+  if not on_branch or fallback then s, err = detect_commit(root, fallback and branch or nil) end
   if not s then
     vim.notify(err, vim.log.levels.WARN)
     return
@@ -342,6 +377,9 @@ end
 -- ── Public ──────────────────────────────────────────────────────────────────
 
 function M.active() return state ~= nil end
+
+--- "branch" or "commit" while reviewing, nil otherwise.
+function M.kind() return state and state.kind end
 
 function M.toggle()
   if state then leave() else enter() end

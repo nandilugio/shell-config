@@ -227,7 +227,7 @@ end
 --   feature-x           the index, as usual
 --   HEAD~2..feature-x   a base set by hand: the comparison `git diff HEAD~2` makes
 --   develop...feature-x review mode, against the merge-base: what "..." means
---   feature-x~3 4/7     review mode, one commit of the branch against its parent
+--   feature-x~3 4/7     review mode, one commit against its parent (cR)
 -- Two dots for a base set by hand: the signs compare against that revision
 -- itself, and "..." would claim the merge-base. Review mode names its own,
 -- for the buffers whose base it set.
@@ -292,11 +292,13 @@ function M.search()
 end
 
 -- Review is a mode of sorts too, and changes what the signs and counts mean,
--- so it gets a block, in the colour that says writes are refused.
+-- so it gets a block, in the colour that says writes are refused: bR for a
+-- branch against its base, cR for one commit against its parent.
 function M.review()
   local review = package.loaded["setup.review"]
-  if not (review and review.active()) then return "" end
-  return "%#StatuslineReplace# R %*"
+  local kind = review and review.kind()
+  if not kind then return "" end
+  return ("%%#StatuslineReplace# %sR %%*"):format(kind:sub(1, 1))
 end
 
 -- Recording is a mode of sorts, so it reads as a block beside the mode rather

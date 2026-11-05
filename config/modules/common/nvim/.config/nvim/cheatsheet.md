@@ -129,10 +129,12 @@ Its toggles are under <leader>ug — see Toggles below.
 
 Reads a branch the way its pull request shows it, then puts everything back.
 On a branch: against where it forked, the nearest of develop, master and main,
-local or remote. On a detached HEAD: that one commit against its parent. Only
+local or remote. On a detached HEAD, or a branch with nothing to compare it
+with (master, when that is all there is): one commit against its parent. Only
 local git; a fetch runs in the background and moves the base if the remote did.
 
-The statusline shows R, and develop...feature-x (one commit: feature-x~3 4/7).
+The statusline shows bR develop...feature-x for a branch, and cR with the
+commit's place for one commit: feature-x~3 4/7, master~3, or a bare sha.
 The usual keys then read the review:
 
 ]c,[c           the branch's hunks              <leader>gD  its changed files
