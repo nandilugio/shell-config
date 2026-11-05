@@ -90,7 +90,7 @@ Capital = the whole buffer, where the lowercase is one hunk.
 <leader>gr,gR   reset hunk (or the selected lines), buffer
 <leader>gp      preview hunk                    <leader>gq  hunks to quickfix
 <leader>gQ      every changed file's hunks, open or not, to quickfix
-<leader>gd      diff this file
+<leader>gd      diff this file                  <leader>gD  every changed file, a picker
 ih              the hunk as a text object: dih, yih
 
 gs on a hunk that is already staged unstages it — the signs dim when staged,

@@ -238,6 +238,19 @@ M.maps = {
   -- same base -- in review mode, the whole branch.
   { "<leader>gq", function() require("gitsigns").setqflist() end, desc = "Hunks to quickfix", needs = "mod:gitsigns" },
   { "<leader>gQ", function() require("gitsigns").setqflist("all") end, desc = "All files' hunks to quickfix", needs = "mod:gitsigns" },
+  -- The changed files themselves, against the signs' base: capital of gd, as
+  -- "the diff, every file". An empty ref is the index, which is what the signs
+  -- show; fzf-lua's own default would be HEAD.
+  {
+    "<leader>gD",
+    function()
+      local git = require("setup.git")
+      require("setup.fzf").git_diff({ ref = git.base(0) or "", cwd = git.root() })
+    end,
+    desc = "Changed files",
+    needs = "fzf",
+    fallback = function() require("setup.git").changed_files() end,
+  },
   -- How a line got here, as opposed to who touched it last: git log -L, which
   -- blame and gitsigns have no equivalent for. Normal mode takes the cursor
   -- line, visual the selection.

@@ -111,6 +111,7 @@ credits tpope in the source.
 | `<leader>gb` | **B**lame line | 🟨 |
 | `<leader>gB` | **B**lame file (side panel) | 🟨 capital = wider scope, as `gO`/`gW` |
 | `<leader>gd` | **D**iff | 🟨 |
+| `<leader>gD` | Changed files, as a picker with each one's diff | 🟨 capital = every file. Against the signs' base, so in review mode the branch's files. Without fzf, the argument list (`]a`/`[a`) |
 | `<leader>gl` | **L**ine history (`git log -L`) | 🟨 no convention exists; see research |
 | `<leader>gt` | Function history (**t**race) | 🟨 Magit's `magit-log-trace-definition`, the only tool with a default key for it |
 | `<leader>gf` | **F**ile history | 🟦 LazyVim's only use of `gf`; fzf-lua's picker, ours as fallback |

@@ -249,6 +249,40 @@ function M.short_rev(rev)
   return rev
 end
 
+--- The repository holding the current buffer's file, or nil outside one.
+--- @return string?
+function M.root()
+  local d = vim.b.gitsigns_status_dict
+  if d and d.root then return d.root end
+  local name = vim.api.nvim_buf_get_name(0)
+  local dir = name ~= "" and vim.fs.dirname(name) or vim.uv.cwd()
+  local res = vim.system({ "git", "rev-parse", "--show-toplevel" }, { cwd = dir, text = true }):wait()
+  return res.code == 0 and vim.trim(res.stdout) or nil
+end
+
+-- The files whose signs show something, against the same base: unstaged
+-- changes normally, the whole branch in review mode. <leader>gD prefers
+-- fzf-lua's git_diff, a picker with each file's diff as preview; this is the
+-- fallback where there is no fzf -- the argument list, which ]a and [a walk.
+-- Deleted files are left out: there is nothing to open.
+function M.changed_files()
+  local root = M.root()
+  if not root then
+    vim.notify("Not in a git repository", vim.log.levels.WARN)
+    return
+  end
+  local cmd = { "git", "-C", root, "diff", "--name-only", "--diff-filter=d" }
+  table.insert(cmd, M.base(0))
+  local res = vim.system(cmd, { text = true }):wait()
+  local files = vim.split(res.stdout or "", "\n", { trimempty = true })
+  if res.code ~= 0 or #files == 0 then
+    vim.notify(res.code ~= 0 and vim.trim(res.stderr) or "No changed files", vim.log.levels.INFO)
+    return
+  end
+  vim.cmd.args(vim.tbl_map(function(f) return vim.fn.fnameescape(root .. "/" .. f) end, files))
+  vim.notify(("%d changed files in the argument list: ]a and [a walk them"):format(#files))
+end
+
 -- ── Staging ─────────────────────────────────────────────────────────────────
 -- Staging writes the index, which only makes sense while the hunks are
 -- measured against it. Against another base a hunk is that base's diff:
