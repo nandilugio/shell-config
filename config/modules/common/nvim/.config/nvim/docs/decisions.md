@@ -244,10 +244,13 @@ in the same place.
 - Git records no "branched from" (the reflog's "Created from" is local and
   expires). A stacked branch's nearer fork is found from the graph -- the
   branch's own first-parent commits, one rev-list -- but a parent and a child
-  branch look alike from there, so it is a HINT in the entry message with
-  :ReviewBase to switch, never a prompt. Only shown when the fork is newer
-  than the conventional base, which drops a child that forked before develop
-  was merged in.
+  branch look alike from there, so it is a HINT in the entry message, never a
+  prompt. Only shown when the fork is newer than the conventional base, which
+  drops a child that forked before develop was merged in.
+- :Review toggles, like <leader>uR, so the mode can be left from the command
+  line too; :Review <ref> enters or switches the base, and <Tab> offers the
+  detected bases first. (Was :ReviewBase with a picker: one command, and
+  completion instead of a picker, is one concept fewer.)
 - Fetch on entry, never awaited: detached (no terminal for ssh to prompt on),
   GIT_TERMINAL_PROMPT=0, 60s timeout. If it moves the base, switch and say so.
 - 'write' off, edits allowed: in review the working tree IS the branch, and a

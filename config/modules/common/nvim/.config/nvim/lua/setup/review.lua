@@ -54,8 +54,8 @@ local PRESETS = {
 --   name     how to show the base: "develop", "origin/develop", a ref you gave
 --   branch   the branch under review (for a commit, the one containing it)
 --   nearer   branches forking nearer than the conventional base (nearer_forks)
---   choices  what :ReviewBase offers: the conventional base, then those
---   by_hand  the base came from :ReviewBase, so a fetch must not replace it
+--   choices  what :Review <Tab> offers first: the conventional base, then those
+--   by_hand  the base came from :Review <ref>, so a fetch must not replace it
 --   list, pos, back   for a commit: the branch's own commits oldest first,
 --                     this one's index in them, and its distance from the tip
 local state = nil
@@ -181,19 +181,26 @@ end
 
 -- ── Detection ───────────────────────────────────────────────────────────────
 
-local function detect_branch(root, branch, ref)
-  local s = { kind = "branch", root = root, branch = branch, nearer = {} }
-  -- Detected even when a ref is given, so :ReviewBase can offer them.
+-- The conventional base and the nearer forks, in that order, as names.
+local function detected(root, branch)
   local conv = conventional_base(root, "HEAD", branch)
-  if conv then s.nearer = nearer_forks(root, "HEAD", branch, conv.sha) end
-  s.choices = vim.list_extend(conv and { conv.name } or {}, vim.deepcopy(s.nearer))
+  if not conv then return nil, {}, {} end
+  local nearer = nearer_forks(root, "HEAD", branch, conv.sha)
+  return conv, nearer, vim.list_extend({ conv.name }, vim.deepcopy(nearer))
+end
+
+local function detect_branch(root, branch, ref)
+  local s = { kind = "branch", root = root, branch = branch }
+  -- Detected even when a ref is given, so :Review <Tab> can offer them.
+  local conv
+  conv, s.nearer, s.choices = detected(root, branch)
   if ref then
     s.base = select(2, git(root, { "merge-base", "HEAD", ref }))
     if not sha(root, ref) or s.base == "" then return nil, ("%s: no such ref, or nothing in common with HEAD"):format(ref) end
     s.name, s.by_hand = ref, true
   else
     if not conv then
-      return nil, "No develop, master or main here, nor a remote default branch: :ReviewBase <ref> to name one"
+      return nil, "No develop, master or main here, nor a remote default branch: :Review <ref> to name one"
     end
     s.base, s.name = conv.sha, conv.name
   end
@@ -291,7 +298,7 @@ local function enter(ref)
   end
   local on_branch, branch = git(root, { "symbolic-ref", "--short", "-q", "HEAD" })
   if ref and not on_branch then
-    vim.notify("A detached HEAD is reviewed against its parent; :ReviewBase needs a branch", vim.log.levels.WARN)
+    vim.notify("A detached HEAD is reviewed against its parent; :Review <ref> needs a branch", vim.log.levels.WARN)
     return
   end
   local s, err
@@ -312,7 +319,7 @@ local function enter(ref)
   local warnings = {}
   if tc_level == vim.log.levels.WARN then table.insert(warnings, tc) end
   if #s.nearer > 0 and not s.by_hand then
-    table.insert(warnings, table.concat(s.nearer, ", ") .. " fork nearer (:ReviewBase)")
+    table.insert(warnings, table.concat(s.nearer, ", ") .. " fork nearer (:Review <Tab>)")
   end
   local _, dirty = git(root, { "status", "--porcelain", "--untracked-files=no" })
   if dirty ~= "" then table.insert(warnings, "uncommitted changes included") end
@@ -369,31 +376,34 @@ function M.review_against(ref)
   vim.notify("Reviewing " .. describe(state))
 end
 
-vim.api.nvim_create_user_command("ReviewBase", function(o)
-  if o.args ~= "" then return M.review_against(o.args) end
-  if not state or state.kind ~= "branch" then
-    vim.notify("Give a ref (:ReviewBase origin/develop), or run it while reviewing a branch to pick one")
-    return
+-- What <Tab> offers: the detected bases first -- the ones this review would
+-- consider, or would if it were on -- then every other ref, for anything else.
+local function complete(arglead)
+  local root = G.root()
+  if not root then return {} end
+  local first = state and state.choices
+  if not first then
+    local on_branch, branch = git(root, { "symbolic-ref", "--short", "-q", "HEAD" })
+    first = on_branch and select(3, detected(root, branch)) or {}
   end
-  if #state.choices == 0 then
-    vim.notify("Nothing detected to offer: give a ref, :ReviewBase origin/develop")
-    return
+  local _, out = git(root, { "for-each-ref", "--format=%(refname:short)", "refs/heads", "refs/remotes" })
+  local all = vim.deepcopy(first)
+  for _, r in ipairs(lines(out)) do
+    if not vim.tbl_contains(all, r) then table.insert(all, r) end
   end
-  vim.ui.select(state.choices, {
-    prompt = "Review " .. state.branch .. " against",
-    format_item = function(c) return c == state.name and c .. " (current)" or c end,
-  }, function(c)
-    if c then M.review_against(c) end
-  end)
+  return arglead == "" and all or vim.fn.matchfuzzy(all, arglead)
+end
+
+-- :Review toggles, as <leader>uR does. :Review <ref> reviews the current
+-- branch against that ref's merge-base, entering review mode or switching the
+-- base of the one in progress.
+vim.api.nvim_create_user_command("Review", function(o)
+  if o.args == "" then return M.toggle() end
+  M.review_against(o.args)
 end, {
   nargs = "?",
-  desc = "Review the current branch against a ref's merge-base",
-  complete = function()
-    local root = G.root()
-    if not root then return {} end
-    local _, out = git(root, { "for-each-ref", "--format=%(refname:short)", "refs/heads", "refs/remotes" })
-    return lines(out)
-  end,
+  desc = "Toggle review mode, or review against a ref's merge-base",
+  complete = complete,
 })
 
 return M

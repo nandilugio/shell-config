@@ -137,7 +137,8 @@ The usual keys then read the review:
 
 ]c,[c           the branch's hunks              <leader>gD  its changed files
 <leader>gQ      every hunk, to quickfix         <leader>gd  this file vs the base
-:ReviewBase     review against another branch (lists the nearer forks)
+:Review         on or off, as <leader>uR      :Review {ref}  against that ref
+                <Tab> offers the bases it detected first, then every ref
 
 Undone on leaving: diagnostics on every line, errors only · type checking
 standard · deleted lines, word diff and line blame shown · writes refused.
