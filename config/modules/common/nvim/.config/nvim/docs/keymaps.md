@@ -138,16 +138,17 @@ All letters below are LazyVim/AstroNvim-identical (the only 7 they agree on).
 | `<leader>ub` | **B**ackground |
 | `<leader>ul` | **L**ine numbers |
 
-Three more are ours, not shared conventions — nothing else here renders
-anything, so there was no letter to borrow. The two markdown ones are display
-layers, on by default, so their toggles are the way out when one is in the
-way. The fold column is the reverse: off until a fold closes.
+Four more are ours, not shared conventions — there was no letter to borrow.
+The two markdown ones are display layers, on by default, so their toggles are
+the way out when one is in the way. The fold column is the reverse: off until
+a fold closes. Autosave is off until asked for.
 
 | Key | Action |
 |---|---|
 | `<leader>um` | **M**arkdown table alignment (`lua/mdtable`) |
 | `<leader>uH` | Markdown **h**eading colours (`lua/mdheading`) — capital, since `uh` is inlay hints |
 | `<leader>uz` | Fold column — `z` for the fold commands. The closing `z` commands turn it on, `zR`/`zn` off |
+| `<leader>ua` | **A**utosave — was `<leader>oa` until 2026-11-04: a setting, so a toggle, where `<leader>o` holds actions |
 
 Optional companion: tpope's `yo<x>` — 2 keystrokes, free namespace.
 Mnemonic (verbatim): "The mnemonic for y is that if you tilt it a bit it looks like a switch."

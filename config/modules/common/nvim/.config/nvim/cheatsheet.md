@@ -151,6 +151,7 @@ uw wrap · us spell · ul line numbers · ur relative numbers · ub light/dark
 uh inlay hints       ud diagnostics: all → warnings+errors → errors → off
 um markdown table alignment (on by default for markdown)
 uz fold column (see Folds above)
+ua autosave: writes on leaving insert or the buffer, off by default
 ug* git: ugd deleted lines · ugw word diff · ugb blame every line
 
 
@@ -164,7 +165,7 @@ ug* git: ugd deleted lines · ugw word diff · ugb blame every line
 
 Reserved: nothing else will ever claim these.
 
-oh  this cheatsheet    oa  autosave on/off    ox  strip trailing whitespace
+oh  this cheatsheet    ox  strip trailing whitespace
 ow  wiki index         od  diary today        oD  diary index
 
 

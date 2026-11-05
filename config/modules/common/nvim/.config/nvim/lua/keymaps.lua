@@ -308,6 +308,9 @@ M.maps = {
     function() vim.o.foldcolumn = vim.o.foldcolumn == "0" and "1" or "0" end,
     desc = "Fold column",
   },
+  -- A setting like the rest, so a toggle here rather than an action under
+  -- <leader>o. Off by default (setup/autosave.lua says why).
+  { "<leader>ua", function() require("setup.autosave").toggle() end, desc = "Autosave" },
   -- Git's own toggles, nested because there are three of them and <leader>u's
   -- single letters are spoken for (ud diagnostics, uw wrap, ub background).
   {
@@ -405,7 +408,6 @@ M.maps = {
   { "<leader>od", "<Cmd>VimwikiMakeDiaryNote<CR>", desc = "Wiki diary today", needs = "cmd:VimwikiMakeDiaryNote" },
   { "<leader>oD", "<Cmd>VimwikiDiaryIndex<CR>", desc = "Wiki diary index", needs = "cmd:VimwikiDiaryIndex" },
   { "<leader>oh", function() require("setup.cheatsheet").open() end, desc = "Cheatsheet" },
-  { "<leader>oa", function() require("setup.autosave").toggle() end, desc = "Autosave on/off" },
 
   -- ── Filetype actions: <LocalLeader> ───────────────────────────────────────
   -- Global rather than per-filetype, since setup/keymaps has no ft field. The

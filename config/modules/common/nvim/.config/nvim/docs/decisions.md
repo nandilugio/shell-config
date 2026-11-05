@@ -170,6 +170,8 @@ Lua (tertiary): lua_ls + lazydev. No stylua.
 
 ## Done during implementation
 1. save.nvim removed; replaced by a built-in toggle on <leader>oa. <F4> freed.
+   MOVED 2026-11-04 to <leader>ua: it is a setting, and <leader>u is where settings
+   toggle; <leader>o keeps the actions (cheatsheet, whitespace, wiki).
 2. The dead mason-lspconfig `handlers` block replaced by vim.lsp.config/enable.
    (It had been silently discarding the lua_ls settings.)
 3. `rbenv global` left alone — NOT needed. For Ruby < 3 projects the config finds
