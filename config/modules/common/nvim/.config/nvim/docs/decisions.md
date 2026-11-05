@@ -263,8 +263,10 @@ in the same place.
 - Measured on the work monorepo (1524 refs): detection's git calls < 0.2s.
 - Two kinds, shown as bR / cR in the statusline. Commit review = HEAD vs its
   parent, placed on a line of history: a feature branch's own commits
-  (feature-x~3 4/7, bounded), else a trunk's first-parent line (master~3, no
-  total), else the bare sha. A branch with nothing to compare against (master
+  (feature-x~3 4/7, bounded), else a trunk's first-parent line, else none.
+  Without a position the label is the comparison itself, master^..master,
+  master~3^..master~3 or abc1234^..abc1234: a bare "master" read as if the
+  whole branch were under review. A branch with nothing to compare against (master
   in a repo that only commits there) falls back to commit review of its tip,
   NOT to the upstream: that would hide commit review whenever you are ahead,
   and :Review @{u} says it explicitly.

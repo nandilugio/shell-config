@@ -133,14 +133,15 @@ local or remote. On a detached HEAD, or a branch with nothing to compare it
 with (master, when that is all there is): one commit against its parent. Only
 local git; a fetch runs in the background and moves the base if the remote did.
 
-The statusline shows bR develop...feature-x for a branch, and cR with the
-commit's place for one commit: feature-x~3 4/7, master~3, or a bare sha.
+The statusline shows bR develop...feature-x for a branch, and cR for one
+commit: feature-x~3 4/7 on a feature branch, else master^..master.
 The usual keys then read the review:
 
 ]c,[c           the branch's hunks              <leader>gD  its changed files
 <leader>gQ      every hunk, to quickfix         <leader>gd  this file vs the base
 :Review         on or off, as <leader>uR      :Review {ref}  against that ref
                 <Tab> offers the bases it detected first, then every ref
+:Review @{u}    what is not pushed yet (offered when there is something)
 
 Undone on leaving: diagnostics on every line, errors only · type checking
 standard · deleted lines, word diff and line blame shown · writes refused.

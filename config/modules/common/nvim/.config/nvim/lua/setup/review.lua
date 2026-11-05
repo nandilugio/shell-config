@@ -207,7 +207,10 @@ local function detect_branch(root, branch, ref)
   if ref then
     s.base = select(2, git(root, { "merge-base", "HEAD", ref }))
     if not sha(root, ref) or s.base == "" then return nil, ("%s: no such ref, or nothing in common with HEAD"):format(ref) end
-    s.name, s.by_hand = ref, true
+    -- @{u} and friends read better resolved: origin/master...master.
+    local ok, resolved = git(root, { "rev-parse", "--abbrev-ref", "--symbolic-full-name", ref })
+    s.name = (ref:find("@{", 1, true) and ok and resolved ~= "") and resolved or ref
+    s.by_hand = true
   else
     -- Nothing to compare the branch with: the third return asks the caller to
     -- review its last commit instead.
@@ -288,13 +291,16 @@ local function fit(msg)
   return vim.fn.strcharpart(msg, 0, room - 1) .. "…"
 end
 
--- Branch review names a range; commit review names one commit, since the
--- statusline's cR already says "against its parent".
+-- Branch review names a range. Commit review on a feature branch names the
+-- commit and its place among the branch's own (feature-x~3 4/7); elsewhere
+-- there is no place to give, so it names the comparison itself, in git's
+-- notation: master^..master, the parent of master to master.
 local function describe(s)
   if s.kind == "branch" then return ("%s...%s"):format(s.name, s.branch) end
-  if not s.branch then return G.short_rev(s.head) end
-  local at = s.back == 0 and s.branch or ("%s~%d"):format(s.branch, s.back)
-  return s.list and ("%s %d/%d"):format(at, s.pos, #s.list) or at
+  local at = not s.branch and G.short_rev(s.head)
+    or s.back == 0 and s.branch
+    or ("%s~%d"):format(s.branch, s.back)
+  return s.list and ("%s %d/%d"):format(at, s.pos, #s.list) or ("%s^..%s"):format(at, at)
 end
 
 -- A fetch on entry, so the base reflects the remote rather than whenever you
@@ -419,11 +425,11 @@ end
 local function complete(arglead)
   local root = G.root()
   if not root then return {} end
-  local first = state and state.choices
-  if not first then
-    local on_branch, branch = git(root, { "symbolic-ref", "--short", "-q", "HEAD" })
-    first = on_branch and select(3, detected(root, branch)) or {}
-  end
+  local on_branch, branch = git(root, { "symbolic-ref", "--short", "-q", "HEAD" })
+  local first = vim.deepcopy(state and state.choices or (on_branch and select(3, detected(root, branch))) or {})
+  -- The upstream, when there is something unpushed: review before pushing.
+  local _, ahead = git(root, { "rev-list", "--count", "@{u}..HEAD" })
+  if on_branch and (tonumber(ahead) or 0) > 0 then table.insert(first, "@{u}") end
   -- Not refs/remotes/*/HEAD: it only points at the remote's default branch,
   -- already listed, and its short name is the bare remote ("origin").
   local _, out = git(root, { "for-each-ref", "--format=%(refname)", "refs/heads", "refs/remotes" })
