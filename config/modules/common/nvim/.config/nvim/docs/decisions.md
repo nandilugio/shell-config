@@ -145,7 +145,6 @@ file the team hasn't agreed to reformat. Enabling later = one autocmd.
 | LSP          | the server binary            | <C-]> via tags, <C-n> keyword completion |
 | gitsigns     | `git`                        | nothing lost outside a repo            |
 | mini.files   | nothing (pure lua)           | —                                      |
-| lazydev      | nothing (pure lua)           | —                                      |
 | which-key    | nothing (pure lua)           | —                                      |
 Needs NOTHING: whole keymap layer, built-in completion, statusline, colorscheme, mini.files.
 

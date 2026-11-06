@@ -457,7 +457,8 @@ local FINISH = {
 --   cause  what is in the way, as a sentence
 --   hint   the way out, its git commands quoted
 --   fix    { text, args }: the one command that clears it, when there is a
---          clear one -- offered to run at exit and at the next start
+--          clear one -- offered to run at exit, and on entering review
+--          where a review was left behind
 -- At exit, unsaved buffers do not count: quitting has discarded them.
 local function blocked(s, exiting)
   if sha(s.root, "HEAD") ~= s.at then

@@ -138,7 +138,8 @@ lua/options.lua       editor behaviour
 lua/plugins.lua       what loads, and when
 lua/keymaps.lua       every binding, as data
 lua/setup/*.lua       per-feature configuration
-lua/config/health.lua :checkhealth config
+lua/config/health.lua :checkhealth config, and the plugin surface the config uses
+lua/**/*test.lua      tests, each run with nvim -l (see Plugins, below)
 lua/mdtable/          local plugin: markdown tables, with its own README + DESIGN
 lua/mdheading/        local plugin: markdown heading depth, likewise
 cheatsheet.md         key reference, shown by <leader>oh

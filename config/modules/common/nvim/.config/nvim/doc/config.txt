@@ -119,7 +119,11 @@ Checking out is the one thing review mode does to the repository, so:
 <  The default is no wherever more than HEAD would change.
 - A HEAD left away -- after a "no", or a crash -- is offered its way back
   the next time review mode is entered in that repository. Until then the
-  shell prompt shows it: a sha where the branch name would be.
+  shell prompt shows it: a sha where the branch name would be. Declined,
+  the review that starts there keeps the way back, so leaving it still
+  returns to the branch.
+- Review mode does not start during a rebase, merge, cherry-pick, revert or
+  bisect: the message names the commands that finish or abort it.
 - One review per repository: a second Neovim entering review is told which
   one is reviewing, and can't start its own. Each Neovim's review is recorded in
   ~/.local/state/nvim/review/, outside the repository.

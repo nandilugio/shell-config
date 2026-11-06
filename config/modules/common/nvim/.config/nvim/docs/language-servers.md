@@ -233,7 +233,7 @@ applying whatever the repo says rather than imposing personal preference.
 RECOMMENDATION: do NOT enable format-on-save initially. Use gq / <leader>= manually so you never
 reformat a file the team hasn't agreed to reformat. Enabling later = one autocmd.
 
-## LUA — one plugin, justified
+## LUA — one plugin, justified (DROPPED 2026-11-04: see decisions.md; lua_ls reads $VIMRUNTIME itself)
 lazydev.nvim: teaches lua_ls the nvim API + plugin types. Without it lua_ls flags `vim` as
 undefined and gives no nvim API completion. Small, one job, no built-in equivalent.
 Zero-plugin fallback: a .luarc.json in the config dir (manual, won't know plugin types).

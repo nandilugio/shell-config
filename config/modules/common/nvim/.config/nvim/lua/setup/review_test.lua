@@ -40,9 +40,9 @@ local function check_has(name, got, want)
   check(name, type(got) == "string" and got:find(want, 1, true) ~= nil and want or got, want)
 end
 
--- Review mode records a marker in Neovim's state directory when it leaves
--- HEAD away from home. Run again with a temporary one, so the suite -- and the
--- Neovims it starts -- never touch the real one.
+-- Review mode keeps a record of each review in Neovim's state directory. Run
+-- again with a temporary one, so the suite -- and the Neovims it starts --
+-- never touch the real one.
 if not vim.env.REVIEW_TEST_STATE then
   local state = vim.fn.tempname()
   local res = vim.system({ vim.v.progpath, "-l", debug.getinfo(1, "S").source:sub(2) }, {
@@ -136,19 +136,20 @@ vim.fn.confirm = function(text, choices, default)
   return 0
 end
 
--- The questions at quitting and at the next start need a screen to be asked
--- on; -l has none. Switched on where those are tested.
+-- The questions at quitting, and on entering where a review was left behind,
+-- need a screen to be asked on; -l has none. Switched on where those are
+-- tested.
 local ui = false
 local list_uis = vim.api.nvim_list_uis
 vim.api.nvim_list_uis = function() return ui and { {} } or list_uis() end
 
 -- Named after the repository as git resolves it: on macOS the temp dir is
 -- behind a symlink, /var -> /private/var.
-local function marker()
+local function record()
   local root = sh("git rev-parse --show-toplevel")
   return vim.fn.stdpath("state") .. "/review/" .. root:gsub("[/\\:]", "%%") .. ".json"
 end
-local function has_marker() return vim.uv.fs_stat(marker()) ~= nil end
+local function has_record() return vim.uv.fs_stat(record()) ~= nil end
 
 local function head() return sh("git rev-parse HEAD") end
 local function subject(rev) return sh("git log -1 --format=%s " .. (rev or "HEAD")) end
@@ -292,7 +293,7 @@ statusline_is("index again: plain", "feature-p")
 
 -- The first checkout asks, naming the command; n leaves everything as it was.
 toggle()
-check("record: written on entering", has_marker(), true)
+check("record: written on entering", has_record(), true)
 keys = { "n" }
 review.step(1)
 check("first checkout: asks", #asked, 1)
@@ -310,7 +311,7 @@ step(1)
 step(1)
 check("first checkout: the walk asks only once", #asked, 2)
 check("walk 3/3: the tip, back on the branch", { subject(), on_branch() }, { "p3", "feature-p" })
-check("record: kept while reviewing, even at home", has_marker(), true)
+check("record: kept while reviewing, even at home", has_record(), true)
 statusline_is("walk 3/3: statusline", "cR feature-p 3/3")
 step(1)
 check_has("walk past the tip: branch review again", last_msg(), "Branch review: develop...feature-p")
@@ -323,7 +324,7 @@ check("walk back: 2/3", subject(), "p2")
 toggle()
 check("leave mid-walk: back on the branch", { on_branch(), review.active() }, { "feature-p", false })
 check_has("leave mid-walk: says so, with the command", last_msg(), "back on feature-p (`git switch feature-p`)")
-check("leave mid-walk: record gone", has_marker(), false)
+check("leave mid-walk: record gone", has_record(), false)
 
 -- Leaving is refused on a step's grounds, and works once they are cleared.
 toggle()
@@ -345,7 +346,7 @@ step(1)
 sh("git branch -q -D gone")
 toggle()
 check_has("home deleted: leaving still works", last_msg(), "gone no longer exists, so HEAD stays")
-check("home deleted: out of review, no record", { review.active(), has_marker() }, { false, false })
+check("home deleted: out of review, no record", { review.active(), has_record() }, { false, false })
 git_checkout("feature-p")
 
 -- A home branch moved meanwhile -- reset, rebased, new commits -- is
@@ -477,10 +478,10 @@ sh("echo dirt >> p1.txt")
 keys = { "\r" }
 quit_hook()
 check("quit, dirty: the question", asked[#asked], "Review mode can't take HEAD back to feature-p: p1.txt has uncommitted changes.\nTo go back: `git stash; git switch feature-p`. Run?")
-check("quit, dirty: Enter is no, so nothing moves", { subject(), has_marker(), sh("git stash list") }, { "p1", true, "" })
+check("quit, dirty: Enter is no, so nothing moves", { subject(), has_record(), sh("git stash list") }, { "p1", true, "" })
 keys = { "y" }
 quit_hook()
-check("quit, dirty: y stashes and goes back", { on_branch(), has_marker(), sh("git stash list | wc -l | tr -d ' '") }, { "feature-p", false, "1" })
+check("quit, dirty: y stashes and goes back", { on_branch(), has_record(), sh("git stash list | wc -l | tr -d ' '") }, { "feature-p", false, "1" })
 sh("git stash drop -q")
 toggle()
 
@@ -526,15 +527,15 @@ end
 
 git_checkout("feature-p")
 child("clean")
-check("quit mid-walk, clean: HEAD back home", { on_branch(), has_marker() }, { "feature-p", false })
+check("quit mid-walk, clean: HEAD back home", { on_branch(), has_record() }, { "feature-p", false })
 child("unsaved")
-check("quit mid-walk, unsaved buffer: home all the same", { on_branch(), has_marker() }, { "feature-p", false })
+check("quit mid-walk, unsaved buffer: home all the same", { on_branch(), has_record() }, { "feature-p", false })
 child("moved")
-check("quit after a hand move: HEAD stays, no record", { subject(), has_marker() }, { "p2", false })
+check("quit after a hand move: HEAD stays, no record", { subject(), has_record() }, { "p2", false })
 git_checkout("feature-p")
 
 child("dirty")
-check("quit mid-walk, dirty: HEAD stays, record kept", { subject(), on_branch(), has_marker() }, { "p1", "", true })
+check("quit mid-walk, dirty: HEAD stays, record kept", { subject(), on_branch(), has_record() }, { "p1", "", true })
 -- Entering review here offers the way back first, as the next start would.
 ui = true
 keys = { "n" }
@@ -545,12 +546,12 @@ check("left behind, dirty: declined, review starts here", { review.kind(), subje
 sh("git checkout -- p1.txt")
 vim.cmd("silent! checktime")
 toggle()
-check("left behind, declined: leaving keeps the old promise", { on_branch(), has_marker() }, { "feature-p", false })
+check("left behind, declined: leaving keeps the old promise", { on_branch(), has_record() }, { "feature-p", false })
 check_has("left behind, declined: says so", last_msg(), "back on feature-p (`git switch feature-p`)")
 ui = false
 
 child("killed")
-check("killed mid-walk: HEAD stays, record kept", { subject(), has_marker() }, { "p1", true })
+check("killed mid-walk: HEAD stays, record kept", { subject(), has_record() }, { "p1", true })
 ui = true
 keys = { "y" }
 toggle()
@@ -561,12 +562,12 @@ ui = false
 
 -- Two Neovims, one repository: the second may not start a review of its own.
 local live = child("live", false)
-wait_for(function() return has_marker() end)
+wait_for(function() return has_record() end)
 toggle()
 check_has("another Neovim reviewing: refused, naming it", last_msg(), "is reviewing in this repository")
 check("another Neovim reviewing: nothing started here", review.active(), false)
 live:wait()
-check("another Neovim reviewing: it went home on quitting", { on_branch(), has_marker() }, { "feature-p", false })
+check("another Neovim reviewing: it went home on quitting", { on_branch(), has_record() }, { "feature-p", false })
 
 -- ── The fetch ───────────────────────────────────────────────────────────────
 -- feature-q forks from the remote's develop, so a stale origin/develop gives

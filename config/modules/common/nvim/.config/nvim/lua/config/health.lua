@@ -2,7 +2,9 @@
 --
 -- Reports on the things this config depends on but does not control: external
 -- binaries, language servers that must actually attach, parsers that must be
--- compiled, and keymaps that might have been claimed by a plugin.
+-- compiled, keymaps that might have been claimed by a plugin, and the surface
+-- it uses in each plugin, which an update can move (the contract, below).
+-- lua/config/health_test.lua runs it headless and fails on any error.
 --
 -- Everything here is optional by design — the config degrades rather than
 -- breaks — so a missing tool is a warning, never an error.
