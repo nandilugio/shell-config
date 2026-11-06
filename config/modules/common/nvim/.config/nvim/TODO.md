@@ -5,112 +5,35 @@ popup; 8-16 on 2026-09-18/19 while working on the git setup; 17-22 on
 2026-09-28 in a read-through of the nvim and tmux configs; 23-24 on 2026-09-30
 while setting up a Python project; 25 the same day, while reworking folds; 26
 the same day, as a feature request; 27-29 on 2026-11-05, while trying out and
-then testing review mode (26). Paths are relative to this directory.
+then testing review mode (26); 30 on 2026-11-06, from a review of the whole
+config. Paths are relative to this directory.
+
+Done items are cut to their outcome, with the commit where known; the full
+notes are in this file's history before 2026-11-06.
 
 ---
 
 ## 1. ~~Remove the lazygit binding~~ DONE 2026-09-19
 
-**Where:** `lua/keymaps.lua:203`
-
-```lua
-{ "<leader>gg", "<Cmd>terminal lazygit<CR>", desc = "Lazygit", needs = "lazygit" },
-```
-
-**Why:** It is a bad integration, not a plugin — just a custom binding shelling
-out to the `lazygit` binary. As written it opens the TUI in normal mode, so it
-renders once and freezes: keystrokes go to Vim, not lazygit. It also replaces
-the current window and inherits Neovim's cwd rather than the current file's
-repo.
-
-Making it *work* (own tab, `startinsert`, `vim.fs.root` for cwd) is possible but
-misses the point — what is actually wanted from the editor is "show me this
-commit", not "launch a git UI rooted somewhere". That is a real integration
-question, deferred deliberately. See item 5.
-
-**Done:** the binding, the `config/health.lua` row, the `brew install` line in
-`README.md`, the `docs/keymaps.md` entry, and the cheatsheet mentions.
-`<leader>gg` is now free.
-
-The deferred question in this item — "what is actually wanted is *show me this
-commit*" — was answered in the meantime by `<leader>gB` (item 6): the blame
-panel's `D` opens the commit under the cursor, all hunks, in a tab.
+The binding, its health row, install line and docs went. The deferred question, "show me this commit", was answered by `<leader>gB`'s `D` (item 6).
 
 ---
 
-## 2. ~~Completion autotrigger contradicts `'autocomplete'`~~ DONE 2026-11-04
+## 2. ~~Completion autotrigger contradicts `'autocomplete'`~~ DONE 2026-11-04 (f84d88f)
 
-**Where:** `lua/options.lua:67` vs `lua/setup/lsp.lua:184`
-
-```lua
--- options.lua:67
-vim.o.autocomplete = false
-
--- setup/lsp.lua:184
-vim.lsp.completion.enable(true, client.id, args.buf, { autotrigger = true })
-```
-
-**Why:** These fight. The long comment in `options.lua` says the menu should be
-"asked for, never volunteered", and notes that turning `'autocomplete'` off
-"only skips an InsertCharPre autocommand" — which is exactly what
-`autotrigger = true` puts back. In any buffer with a language server attached
-the menu most likely pops up on its own, contrary to the documented intent.
-
-**Do:** Set `autotrigger = false` in `setup/lsp.lua`, then confirm in a Python
-or Lua buffer that the menu only appears on `<C-n>` / `<C-x><C-o>` /
-`<C-Space>`.
-
-**Not yet verified:** whether the menu actually auto-appears in practice, or
-whether `'autocomplete' = false` suppresses it anyway. Check before deciding
-which of the two is wrong — the fix might equally be to drop the
-`options.lua` comment if autotrigger is what is wanted.
-
-**Source says (2026-09-28, v0.12.5):** `'autocomplete'` does not suppress it.
-`autotrigger = true` registers its own buffer-local `InsertCharPre` autocmd
-(`$VIMRUNTIME/lua/vim/lsp/completion.lua:1175`), independent of the option.
-It fires on the server's `triggerCharacters` only (`completion.lua:1141`,
-`:1232`), not on every keystroke — so expect the menu to open by itself after
-`.` (or whatever the server declares), and nowhere else. Still worth
-confirming by typing, but the contradiction is real.
-
-**Done:** `autotrigger = false`, honouring the config and its docs. The
-alternative (keep the trigger-character popups and rewrite the docs) was
-considered and parked: earlier attempts at it never settled, so revisit only
-if the manual menu turns out to be missed.
+`autotrigger = false` in `setup/lsp.lua`, honouring `options.lua`. Keeping the trigger-character popups and rewriting the docs was parked.
 
 ---
 
 ## 3. ~~`<C-s>` vs `<C-S>` in the cheatsheet~~ DONE 2026-09-21
 
-**Where:** `lua/setup/keymaps.lua:79-80`.
-
-**Was:** the cheatsheet wrote `<C-s>`, the core-label table wrote `<C-S>`.
-Cosmetic only — Ctrl strips case, so both spellings are the same key.
-
-**Done:** standardised on lowercase `<C-s>`, which is the spelling the
-cheatsheet and `docs/keymaps.md` already used, so the code now matches its own
-documentation rather than the other way round.
-
-The label is applied by a `maparg` lookup, so the spelling had to keep
-resolving to the same core mapping. Verified it does: `maparg("<C-s>", "i")`
-and `maparg("<C-S>", "i")` both return `lhs = "<C-S>"` with the callback
-present — Neovim normalises the case internally.
+Standardised on lowercase `<C-s>`; `maparg()` resolves both spellings to the same core mapping.
 
 ---
 
 ## 4. ~~`<leader>gr` vs `grr` — naming collision~~ NOT AN ISSUE 2026-09-21
 
-**Closed without action.** There is no collision. `gr` is core's LSP prefix
-(`grr`, `gri`, `grn`); `<leader>gr` is reset-hunk. `<leader>` is a distinct
-key, so the two sequences never race — no shadowing, no timeout ambiguity.
-Each namespace is coherent on its own terms: everything under `g` acts on
-symbols, everything under `<leader>g` is git.
-
-What this item actually described was that the *letters* `g`+`r` mean different
-things depending on whether leader was pressed first — a fact about English,
-not about the config. By that reasoning `<leader>gd` would collide with `grd`
-and the whole git namespace would be suspect. The leader key is the
-disambiguator, and it is pressed deliberately.
+No collision: `<leader>` is pressed deliberately and disambiguates `<leader>gr` from `grr`.
 
 ---
 
@@ -169,101 +92,19 @@ if it is absent, the swap held nothing newer. Clean up with
 
 ## 6. ~~Add `<leader>gB` — full-file blame~~ DONE 2026-09-19
 
-**Where:** `lua/keymaps.lua`, in the `<leader>g` git section.
-
-```lua
-{ "<leader>gB", "<Cmd>Gitsigns blame<CR>", desc = "Blame file", needs = "mod:gitsigns" },
-```
-
-**Why:** `:Gitsigns blame` opens a scroll-synced side panel with commit, author
-and date for every line — the `git blame` view, in the editor. Nothing in the
-config binds it today. `gB` pairs with the existing `<leader>gb` (blame line)
-and is free.
-
-Keys inside that window (gitsigns defines them, `actions/blame.lua:546+`):
-
-| key | does |
-|---|---|
-| `<CR>` | context menu for the commit under the cursor |
-| `r` | reblame *at* that commit — walk back through history |
-| `d` | diff, in a new tab |
-| `D` | diff **that commit**, in a new tab |
-
-`D` also resolves item 7: it opens the whole commit, all hunks, without having
-to copy a SHA out of the blame popup. Worth trying before building anything
-there.
-
-**Also worth a look, separately:** `current_line_blame` in the
-`gitsigns.setup({})` call in `setup/git.lua` — faint virtual text at end of
-line showing blame for the cursor line, updating as the cursor moves. Off by
-default in gitsigns.
-
-```lua
-current_line_blame = true,
-current_line_blame_opts = { delay = 300, virt_text_pos = "eol" },
-```
-
-Arguably the best fit for that file's stated purpose ("what an editor uniquely
-offers is the ambient layer"), but it is a persistent visual change — try it
-before keeping it.
-
-**Done:** `<leader>gB`, plus the rest of the namespace gaps in the same pass —
-`gS`/`gR` stage/reset buffer, `gq` hunks to quickfix, and the three toggles
-nested under `<leader>ug` (`ugd` deleted, `ugw` word diff, `ugb` current-line
-blame, the ambient layer this item suggested trying).
-
-`undo_stage_hunk` was deliberately left unbound: gitsigns deprecates it
-(`actions.lua:426`) in favour of `stage_hunk()` on a staged hunk, so
-`<leader>gs` already toggles. That is only usable now that staged signs are
-distinguishable — see item 8.
+`<leader>gB`, plus `gS`/`gR`, `gq` and the `<leader>ug*` toggles in the same pass. `undo_stage_hunk` left unbound: `stage_hunk()` on a staged hunk unstages, once item 8 made staged signs visible.
 
 ---
 
 ## 7. ~~Open question — seeing a commit from the editor~~ SETTLED 2026-09-21
 
-The thing that started all this: `<leader>gb` shows "Hunk 1 of 4", meaning the
-commit that last touched this line changed 4 hunks in this file, with no way to
-see the other 3 — gitsigns binds only `q` in that popup (`popup.lua:244`), and
-the hunks belong to a historical diff that is not on screen.
-
-**Settled by `<leader>gB`** (item 6). The blame panel's `D` opens the commit
-under the cursor, all hunks, in a tab — without copying a SHA out of the popup.
-That is better than both candidates this item originally listed: `:Gitsigns
-show <sha>` (still needs the SHA by hand) and diffview.nvim (a real dependency,
-against the few-plugins rule).
-
-Closed on the intended test — living with it rather than building on it.
+Settled by `<leader>gB`: `D` in the blame panel opens the commit under the cursor, all hunks, in a tab.
 
 ---
 
 ## 8. ~~`signs_staged` is unconfigured, so staged hunks show the default bars~~ DONE 2026-09-19
 
-**Where:** `lua/setup/git.lua`, the `gitsigns.setup({})` call.
-
-**Why:** gitsigns has **two** sign tables, and only one is set here. `signs`
-carries the deliberate `+ ~ - ‾ ≃ ┆` choice ("diff characters rather than
-gitsigns' bars, which leave the colour to carry the meaning"). `signs_staged`
-is untouched, and `signs_staged_enable` defaults to **true**
-(`lua/gitsigns/config.lua:299`), so staged hunks fall back to the shipped
-defaults (`config.lua:275`):
-
-```lua
-add = { text = '┃' }, change = { text = '┃' }, delete = { text = '▁' },
-topdelete = { text = '▔' }, changedelete = { text = '~' },
-```
-
-That is why the bars reappear after staging — the file's own comment about
-rejecting bars is silently half-applied. Found 2026-09-18.
-
-**Done:** option 1 — same characters as unstaged, colour carries staged-ness.
-`GitSignsStaged*` falls back to the unstaged group at half brightness, verified
-on the `default` scheme: add `#b3f6c0` → `#597b60`, delete `#ffc0b9` →
-`#7f605c`. Same hue, half luminance, so one glyph vocabulary reads for both.
-
-Note `signs_staged` takes no `untracked` key (nothing untracked can be staged);
-the other five mirror `signs`. Sign text is capped at **2 display cells**
-(`E239` on three), so a prepended marker like `┃+` is possible but would widen
-the gutter, which `signcolumn = "yes"` keeps at one column.
+`signs_staged` mirrors `signs`; the colour carries staged-ness, at half brightness on the `default` scheme.
 
 ---
 
@@ -304,159 +145,25 @@ can still bite.
 
 ## 10. ~~Statusline cannot distinguish a historical revision from the real file~~ DONE 2026-09-19
 
-**Where:** `lua/setup/statusline.lua`, `M.path()` / `refresh_path()`.
-
-**Why:** Fallout from item 9. `refresh_path()` stores
-`fnamemodify(name, ":.")`, so a buffer named
-`gitsigns://<gitdir>//<sha>:<relpath>` renders as an ordinary-looking path.
-Nothing indicates the buffer is read-only, historical, or which commit it is —
-so "am I looking at my working tree or at 2023?" is unanswerable at a glance.
-The same applies to any `fugitive://`-style scheme if one is ever added.
-
-**Done:** `refresh_path()` detects the scheme and rewrites it to
-`cheatsheet.md[d4d6c3af]`, which is the name fzf-lua already gives the same
-thing (`actions.lua:1135`), so the two arrive at one shape. Before this it
-rendered as a path and `pathshorten` mangled it to
-`g:///U/n/.s/.g//4/h/d/n/cheatsheet.md`.
-
-Only this direction is worth doing. `gitsigns://` is a scheme and cannot be
-mistaken for a real path; recognising `path[rev]` would mean a regex over every
-filename, and a file honestly called `report[abc123].md` would then be labelled
-a revision it is not. A marker that lies is worse than one that is quiet.
-
-Cost taken deliberately: an earlier version coloured the revision in
-`StatuslineDelete` so it read as a warning. Matching fzf's plainer form gives
-that up — `r`/`R` is a deliberate action, so the loudness matters less now the
-mechanism is known. Gitsigns' own buffer name is untouched: it keys off it in
-`diffthis.lua:132` and `:328`, so renaming would break reuse and refresh.
-
-Correction to what this item first claimed: `b:gitsigns_head` does **not**
-become the sha. `Status.update` merges with the existing dict
-(`status.lua:29`), so the real buffer's `head` survives and the statusline goes
-on saying `master` while showing a 2025 revision. The buffer name is the only
-reliable source, hence parsing it.
+`gitsigns://` buffers render as `path[sha]`, the shape fzf-lua gives the same thing. The buffer name is the only reliable source: `b:gitsigns_head` keeps the real buffer's branch.
 
 ---
 
 ## 11. ~~Git history bindings — the four operations~~ DONE 2026-09-19
 
-**Where:** `lua/keymaps.lua`, `<leader>g` section. Partly done: `<leader>gl`
-(line/selection history) shipped 2026-09-18 in `b51de90`.
-
-**Why:** Blame answers *who touched this last*; it takes a manual walk up the
-parents to learn *how the line got here*. `git log -L` answers that directly.
-Four related-but-distinct operations, which the letters kept colliding over
-(`l` = line or log, `f` = file or function, `h` = hunk or history):
-
-| op | binding | status |
-|---|---|---|
-| line blame | `<leader>gb` | done (gitsigns) |
-| line/selection history | `<leader>gl` | done (`b51de90`) |
-| function history | `<leader>gt` | done |
-| file history | `<leader>gf` | done |
-
-Letters chosen against researched convention (2026-09-18, primary sources —
-full notes in `docs/research-keybindings.md`, "GIT HISTORY bindings"):
-
-- **`b` = blame** is the strongest convention found anywhere: GitLens, Zed,
-  Magit, LazyVim (in name), AstroNvim's `gL`, and this config already.
-- **`t` = trace** for function history, from Magit's
-  `magit-log-trace-definition` (`C-c M-g t`), which is the only tool with a
-  distinct default key for the operation. Frees `f` to mean *file*
-  unambiguously, dissolving the file-or-function collision.
-- **`f` = file history** — weak but uncontested; only LazyVim binds it, for
-  exactly this.
-- **`h` deliberately avoided for history**: in Neovim `h` means *hunk*
-  (LazyVim's `<leader>gh` is a group literally named "hunks"; Kickstart uses
-  the whole `<leader>h` namespace for them), and `ih` is already the hunk text
-  object here. `h` = history is a VS Code/GitLens convention that does not
-  transfer.
-
-Also found: **no Neovim distro ships a default key for line or function
-history at all.** Fugitive (`:{range}Gclog`), diffview
-(`:'<,'>DiffviewFileHistory`, and the only plugin supporting `-L:funcname:`)
-and Neogit (`:NeogitLogCurrent`) expose them as ex-commands only. gitsigns has
-neither — its entire public API contains no `log -L`, no `--follow`. And
-LazyVim's `<leader>gb`, labelled "Git Blame Line", actually runs
-`git log -L <line>,+1:<file>` — i.e. line history, mislabelled.
-
-**Open decision — output shape.** `<leader>gl` currently dumps inline patches
-into a split (`setup/git.lua`). But `fzf-lua`, already installed, does much of
-this: `git_bcommits` in **visual** mode runs `git log -L <range>:<file>`
-(`providers/git.lua:264`) and in **normal** mode gives whole-file history; it
-presents a pickable commit list with a preview pane, `<CR>` to open the file at
-that commit, `<C-y>` to yank the sha. `git_blame` takes a range the same way.
-So:
-
-- the split dump suits *reading a whole evolution* and needs only `git`
-  (portability rule), and handles the bare cursor line, which fzf-lua does not;
-- the picker suits *navigating to a commit* and is already written, but needs
-  `fzf` and is visual-only.
-
-**Settled:** `gf` is fzf-lua's picker with our patch dump as the `needs`/
-`fallback`, so it degrades to git-only on a bare server. `gl` and `gt` stay
-ours — fzf-lua has no cursor-line case and no funcname form.
-
-One thing found the hard way: git ships funcname patterns but they are inert
-until a `.gitattributes` enables them per repository (`*.py diff=python`). An
-earlier note here claiming Ruby and Python were "covered" was wrong — shipping
-is not enabling. `gt` now says so when `-L` reports "no match".
-
-**Also relevant to item 7:** `-L` is *cursor-scoped* where gitsigns is
-*hunk-scoped*, which is why their diffs differ for the same commit. On a `def`
-line, `-L <line>,<line>` shows the signature changing but hides the body lines
-that changed with it; `-L :funcname:` (item's `<leader>gt`) shows the whole
-method each time, and is the better tool there.
-
-**Do:** Settle the output shape, then add `gt` and `gf`, and update
-`cheatsheet.md` `## Git` and `docs/keymaps.md` §5. (The convention research is
-already in `docs/research-keybindings.md`.)
+`<leader>gl` line, `gt` function (trace), `gf` file history (fzf-lua's picker, ours as fallback). git's funcname patterns are inert until `.gitattributes` enables them, and `gt` says so.
 
 ---
 
 ## 12. ~~Bind bare `:FzfLua` — the picker of pickers~~ DONE 2026-09-19
 
-**Where:** `lua/keymaps.lua`, `<leader>f` section.
-
-**Why:** fzf-lua ships **124** pickers; this config binds 12. The rest are
-invisible unless you already know they exist — which is how `<leader>gl` came
-to be written without noticing that `git_bcommits` in visual mode already runs
-`git log -L <range>:<file>` (`providers/git.lua:264`). Bare `:FzfLua` opens a
-searchable list of all of them, which is the cheapest fix for that whole class
-of mistake.
-
-Candidates worth knowing about, none bound today: `git_hunks`, `git_stash`,
-`git_reflog`, `git_status`, `blines`/`lines` (fuzzy search in buffer / all
-buffers), `resume` (reopen the last picker with its query), `changes`, `jumps`,
-`marks`, `registers`, `spell_suggest`, `treesitter`, `undotree`,
-`lsp_finder`, `lsp_incoming_calls` / `lsp_outgoing_calls`.
-
-**Do:** Add something like
-
-```lua
-{ "<leader>fF", function() require("setup.fzf").builtin() end,
-  desc = "All pickers", needs = "fzf" },
-```
-
-**Done:** `<leader>f?` — `f?` reads as "what else is there". Cheatsheet and
-`docs/keymaps.md` updated.
+`<leader>f?` opens fzf-lua's picker of pickers.
 
 ---
 
 ## 13. ~~Bind `FzfLua.resume` — reopen the last picker~~ DONE 2026-09-19
 
-**Where:** `lua/keymaps.lua`, `<leader>f` section.
-
-**Why:** Probably the highest-value unbound picker, and unlike item 12 it is a
-daily action rather than a discovery aid. Reopens the previous picker *with its
-query and cursor position intact* — the case is: grep for something, jump to the
-third hit, realise you wanted the fifth. Without it you retype the search.
-
-**Do:**
-
-**Done:** `<leader>f.` — `.` as "again", which nothing else here claims.
-There is no cross-distro convention to follow: LazyVim has no equivalent,
-Telescope used `<leader>f<Space>`, AstroNvim `<Leader>f'`.
+`<leader>f.` resumes the last picker with its query.
 
 ---
 
@@ -560,30 +267,7 @@ few-moving-parts rule.
 
 ## 15. ~~Statusline segments kept the active background in inactive windows~~ DONE 2026-09-19
 
-**Where:** `lua/setup/statusline.lua`, `set_highlights()`.
-
-**Was:** every segment group pinned `bg` to `StatusLine`'s background:
-
-```lua
-local bg = hl("StatusLine", "bg")
-vim.api.nvim_set_hl(0, "StatuslineAccent", { fg = ..., bg = bg })
-```
-
-An inactive window draws its line with `StatusLineNC` instead, which in the
-`default` scheme is `#2c2e33` against `StatusLine`'s `#4f5258`. So in every
-split that did not have focus, each coloured segment stayed lit at the active
-colour and read as a patch on a darker line — visible wherever two windows are
-open, not just beside the blame panel.
-
-**Done:** the five segment groups are foreground-only, so they inherit whichever
-statusline group the window is actually using. The mode blocks keep an explicit
-`bg`, which is right — a mode block is meant to be a solid colour in both
-states.
-
-First misdiagnosed as a gitsigns interaction, because the blame panel's span
-highlight (`CursorLine`, painted to the window edge with `hl_eol`) happens to be
-*exactly* `StatusLineNC` in this scheme, which made the boundary vanish there
-too. That part is real but incidental; the patches were ours.
+The five segment groups are foreground-only, so they inherit `StatusLineNC` in inactive windows.
 
 ---
 
@@ -651,105 +335,27 @@ disorientation that "no way back to the working tree" is about.
 
 ---
 
-## 17. ~~`M-a` in the pickers is the tmux prefix~~ DONE 2026-11-04
+## 17. ~~`M-a` in the pickers is the tmux prefix~~ DONE 2026-11-04 (7353c47)
 
-**Where:** `cheatsheet.md:44`, and fzf-lua's default `keymap.fzf`
-(`fzf-lua/lua/fzf-lua/defaults.lua:242`, `["alt-a"] = "toggle-all"`).
-
-**Why:** The cheatsheet lists "M-a ticks all", but `tmux.conf` sets
-`prefix M-a`, so tmux eats the key and fzf never sees it. Same class as the
-`M-h` note two lines below it in the cheatsheet, which is already documented.
-`M-a M-a` works, because `tmux.conf` binds it to `send-prefix`.
-
-The other Alt keys the cheatsheet lists (`M-q`, `M-i`, `M-f`) are not bound in
-tmux, so they get through.
-
-**Do:** Either note in the cheatsheet that it is `M-a M-a` under tmux, or give
-toggle-all another key in `setup/fzf.lua`. Careful with the second: as that
-file notes, a `keymap.fzf` table *replaces* fzf-lua's defaults rather than
-extending them, so the whole set would have to be restated.
-
-**Done:** the cheatsheet says `M-a M-a`, next to the `M-h` note.
+The cheatsheet says `M-a M-a`, next to the `M-h` note.
 
 ---
 
-## 18. ~~Cheatsheet still describes the old revision marker~~ DONE 2026-11-04
+## 18. ~~Cheatsheet still describes the old revision marker~~ DONE 2026-11-04 (7353c47)
 
-**Where:** `cheatsheet.md:115-116`
-
-```
-r and R land you in a read-only revision of the file: the statusline then
-reads name@sha in red.
-```
-
-**Why:** Out of date since item 10. The statusline now shows `path[sha]`,
-the same shape fzf-lua uses, and not in red: the colour was dropped on purpose
-(item 10, "Cost taken deliberately").
-
-**Do:** Change it to something like "the statusline then reads path[sha]".
-
-**Done:** as suggested.
+The cheatsheet says `path[sha]`.
 
 ---
 
-## 19. ~~`keymaps.lua` header lists `]n` / `[n` as normal-mode defaults~~ DONE 2026-11-04
+## 19. ~~`keymaps.lua` header lists `]n` / `[n` as normal-mode defaults~~ DONE 2026-11-04 (7353c47)
 
-**Where:** `lua/keymaps.lua:15-17`
-
-```lua
--- Nvim 0.12 defaults we deliberately do NOT redefine (they are already right):
---   grn gra grr grx gO   K   ]d [d ]D [D   ]q [q ]Q [Q   ]b [b   ]<Space> [<Space>
---   gc gcc   <C-]> <C-t>   an in ]n [n
-```
-
-**Why:** Core maps `]n` / `[n` (and `]N` / `[N`) in **visual mode only**:
-incremental selection, extending the selection to the next or previous node
-(`$VIMRUNTIME/lua/vim/_core/defaults.lua:454-458`). In normal mode they are
-unmapped. `an` / `in` are visual and operator-pending (`:470`, `:478`), which
-the comment gets right. The cheatsheet does not repeat the mistake.
-
-**Do:** Comment only, e.g. `an in (x/o)  ]n [n (x)`. No behaviour change.
-
-**Done:** as suggested, in the same commit that dropped `<leader>fb`.
+Comment fixed: `an in (x/o)  ]n [n (x)`.
 
 ---
 
 ## 20. ~~Teach `zm` / `zr` as **m**ask / **r**eveal~~ DONE 2026-09-30
 
-**Where:** `cheatsheet.md` (no folds section at all today) and the which-key
-popup under `z`.
-
-**Why:** Vim's own names are "Fold more" and "Reduce folding" (`:h zm`,
-`:h zr`), which which-key shows as "Fold more" / "Fold less"
-(`which-key.nvim/lua/which-key/plugins/presets.lua:148,150`). Both make you
-translate: `zm` *lowers* `'foldlevel'` to fold *more*. **Mask / reveal**
-states the effect directly, and carries over to the capitals: `zM` masks
-everything, `zR` reveals everything. Worth saying it is a level at a time,
-across the whole window: these set `'foldlevel'`, re-applying it to every fold
-and discarding any `zo` / `zc` done by hand. One section is `za` / `zc` / `zo`.
-
-**Do:**
-
-1. **Cheatsheet:** add a Folds section with the mnemonic. While there, the
-   one gotcha that makes `zm` look broken: `'foldlevel'` starts at 99, so the
-   first `zm`s close nothing — `zM` first, then `zr` to reveal levels.
-2. **which-key:** relabel the four, e.g. "Mask one more level (fold more)",
-   "Reveal one more level (fold less)", "Mask all", "Reveal all". Presets load
-   first so a user spec overrides them (`which-key/config.lua:280`), and they
-   create no mappings (`config.lua:44`), so a desc-only
-   `wk.add({ { "zm", desc = "..." } })` should be enough — not yet verified.
-
-   The catch is where it lives. `setup/keymaps.lua` feeds which-key only
-   `M.groups`, which are prefix *groups*, and `core_labels` relabels real
-   mappings via `maparg` — `zm` is neither, being a built-in command. Needs a
-   small third shape, e.g. `M.labels` in `keymaps.lua` (`{ lhs, desc }`, no
-   mapping, which-key only). Decide that before writing it.
-
-**Done:** the cheatsheet has a Folds section with the mnemonic and the
-`'foldlevel'` gotcha. The shape question went away: `zc zC za zA zm zM zR zn`
-became real mappings in `keymaps.lua` meanwhile (they show the fold column), so
-their `desc` is the label. `zr` is mapped to itself for its label. The labels
-also say what `zC` / `zA` really do, per item 22.
+Folds section in the cheatsheet with the mask/reveal mnemonic and the `'foldlevel'` gotcha; the `z` keys became real mappings, so their `desc` is the label.
 
 ---
 
@@ -871,44 +477,9 @@ test file had none.
 
 ---
 
-## 23. ~~The venv hook never reaches the server~~ DONE 2026-11-04
+## 23. ~~The venv hook never reaches the server~~ DONE 2026-11-04 (87d435b)
 
-**Where:** `lua/setup/lsp.lua:36-46` (`before_init`), and the comment at
-`:17-19`
-
-**Why:** `before_init` assigns a *new* table to `config.settings`, but the
-client took its `settings` from `config.settings` when it was created
-(`client.lua:409` in 0.12.5), before `before_init` runs (`:571`). What the
-server gets — the `workspace/configuration` answer (`handlers.lua:235`) and
-the `didChangeConfiguration` after `initialize` (`client.lua:602`) — is
-`client.settings`, which never sees the `pythonPath`. Nvim's own docstring
-example (`client.lua:36-40`) uses the same pattern, so possibly an upstream
-bug.
-
-**Verified** (2026-09-30, headless, in a project with a `.venv`):
-`client.settings.python` is `nil`, while `client.config.settings.python` has
-the `.venv` path.
-
-It looks like it works because basedpyright finds `<root>/.venv/bin/python`
-itself when no path is set (its `pyright-langserver.js`, "`defaultVenvPath =
-'.venv'`"). So the comment at `:17` is wrong for basedpyright, and the hook is
-dead in every case it exists for: `$VIRTUAL_ENV`, `$CONDA_PREFIX`, a `venv/`
-without the dot, and plain pyright.
-
-**Not understood:** after creating a `.venv`, `:lsp restart` did not pick it
-up and a full nvim restart did, although basedpyright's own detection should
-run on either.
-
-**Do:** Mutate `config.settings` in place rather than replace it, then
-re-check the headless test above with `VIRTUAL_ENV` set to a venv that is not
-the project's `.venv`. Fix the comment. Consider reporting the docstring
-upstream.
-
-**Done:** `config.settings.python` is assigned into the existing table, which
-is the one the client holds (`client.lua:409` takes the reference, `:571` runs
-the hook). Verified headless with `VIRTUAL_ENV` pointing at a venv outside the
-project: `client.settings.python.pythonPath` is now that venv's interpreter.
-The docstring upstream still shows the replacing form; not reported.
+`config.settings.python` is assigned into the table the client already holds. Verified headless with `VIRTUAL_ENV` outside the project.
 
 ---
 
@@ -935,166 +506,25 @@ end)
 
 The `+ 4` (border, prompt, info line) is a guess.
 
-**Related, left as is:** fzf-lua only takes over `vim.ui.select` once a
-picker has loaded it, so `,pt` before any picker shows nvim's own numbered
-list at the bottom. Fixing that means registering at startup, against the
-point of deferring the setup.
+**Related, done 2026-11-06:** fzf-lua only took over `vim.ui.select` once a
+picker had loaded it, so `,pt` before any picker showed nvim's own numbered
+list. `setup/fzf.lua` now stands in for `vim.ui.select` until the first call,
+which loads the plugin and hands over: the same lazy trick as the pickers.
 
 **Do:** Apply it, then check the `+ 4` by capturing the window in a scratch
 tmux pane, with and without the `default-title` border title.
 
 ---
 
-## 25. ~~Visual-mode maps: Select mode, and selections they ignore~~ DONE 2026-11-04
+## 25. ~~Visual-mode maps: Select mode, and selections they ignore~~ DONE 2026-11-04 (f18726e)
 
-**Where:** `lua/keymaps.lua` — the `"v"` entries at `:29` (`<leader>g` group),
-`:212` (`<leader>gs`), `:219` (`<leader>gr`), `:248` (`<leader>gl` selection),
-`:366` (`<leader>=`).
-
-**Why:** Three problems, found 2026-09-30:
-
-1. **`"v"` is Visual *and* Select mode.** Snippet placeholders (`vim.snippet`)
-   are selected in Select mode, where typing replaces them, so the leader maps
-   catch a space typed first into one. Verified with this config: `<Space>`
-   opens which-key's leader popup instead of inserting, and `<Space>=` runs
-   Format buffer — the placeholder stays, the space is lost. A key with no map
-   after it (`<Space>x`) types normally. Only the first key is at risk, since
-   it turns Select into Insert.
-2. **Visual `<leader>gs` / `<leader>gr` act on the whole hunk.** The
-   cheatsheet says "stage hunk (or selection)", but `stage_hunk()` /
-   `reset_hunk()` with no argument take the hunk under the cursor
-   (gitsigns `actions.lua:290`, `:378`); only a range stages part of one.
-   Verified in a scratch repo: one line of a two-line hunk selected, both
-   staged. With `{ vim.fn.line("v"), vim.fn.line(".") }` only the selected
-   line was. gitsigns sorts the range itself (`cache.lua:356`).
-3. **Visual `<leader>=` says "Format buffer".** It does format just the
-   selection: `vim.lsp.buf.format()` takes it in `v` / `V` mode
-   (`$VIMRUNTIME/lua/vim/lsp/buf.lua:618`). Label only.
-
-**Do:**
-
-1. `"v"` → `"x"` in all five. which-key takes `"x"` as is
-   (`which-key/mappings.lua:280`), and `:KeymapAudit` already splits `"v"`
-   into `x` and `s` (`setup/keymaps.lua:123`, `config/health.lua:134`), so it
-   needs no change.
-2. Split `gs`, `gr` and `=` like `<leader>gl` already is: the normal-mode entry
-   as today, plus an `"x"` one — "Stage selection" / "Reset selection" passing
-   the range, "Format selection". Keep the header's `mode = "n"|{"n","x"}`
-   example true.
-3. Update `cheatsheet.md` (`:69`, `:88-89`) and `docs/keymaps.md` (`:108-109`,
-   `:171`) to match.
-4. Re-run both checks: the snippet placeholder (via an `inoremap` calling
-   `vim.snippet.expand("foo(${1:arg})")` in a scratch tmux) and the partial
-   stage in a scratch repo. Also decide whether the selection maps should
-   leave Visual mode afterwards, as `line_history` does (`setup/git.lua:140`).
-
-**Done:** all five are `"x"`, and `gs` / `gr` / `=` have a separate selection
-entry with its own label; the hunk ones pass the range. Verified headless: no
-`<Space>` mapping is left in Select mode, and in a scratch repo `V<leader>gs`
-on one line of a two-line hunk staged only that line. Not decided: leaving
-Visual mode afterwards. gitsigns' own README mapping stays in it, so these do
-too; `gl` is the odd one out, since it opens a window.
+All five are `"x"`; `gs`/`gr`/`=` have selection entries, the hunk ones passing the range. Not decided: leaving Visual mode afterwards.
 
 ---
 
-## 26. ~~A "review mode": one toggle that sets the editor up for code review~~ DONE 2026-11-05
+## 26. ~~A "review mode": one toggle that sets the editor up for code review~~ DONE 2026-11-05 (ae5f1a4)
 
-**Done:** `setup/review.lua`, on `<leader>uR` and `:Review`, documented in
-`:help review-mode` (`doc/config.txt`) with the reasoning in
-`docs/decisions.md`. What changed from the plan below: the base is detected
-from local git only (the nearest merge-base among develop, master, main and
-the remotes' defaults), never asked for; two kinds, branch and commit
-review, shown as `bR` / `cR`; a walk through the commits on `]v` / `[v`;
-presets rather than save-and-restore. `<leader>gQ` and `<leader>gD` (items 4
-and 5) are mode-independent, and staging refuses whenever the base is not the
-index. The plan, as written then:
-
-**Where:** new; it would drive `setup/diagnostics.lua`, `setup/lsp.lua`
-(`pick_type_checking`) and gitsigns. The key is not chosen yet: `<leader>u*`
-is the toggle namespace, and `<leader>o` is kept for personal bindings.
-
-**Why:** Reviewing a branch takes several separate steps today, and each has
-to be undone afterwards. The idea is one toggle that switches all of these on
-and back off:
-
-| Setting | Today | Review mode |
-|---|---|---|
-| Diagnostics | `<leader>ud` cycle, level "all" | errors only |
-| Type checking | `,pt` picker; defaults to basedpyright `recommended` | `standard` |
-| gitsigns base | the index | the merge-base with `develop` / `master` / `main` |
-| Editing | normal | `:set nowrite`: edits allowed, writes refused |
-| Hunk display | `<leader>ugd` / `ugw` / `ugb` toggles, off | deleted lines, word diff and current-line blame on |
-
-**What exists, and what each piece needs (checked 2026-09-30):**
-
-- **Diagnostics.** `cycle()` only filters `virtual_lines` (`setup/diagnostics.lua:38-44`).
-  Signs and underlines still show every severity, so "errors only" today is
-  only partial. Review mode needs:
-  - a setter alongside `cycle()` that moves the same `level`, so the two don't
-    disagree afterwards;
-  - a decision on whether to also filter signs and underline (`severity = { min = ERROR }` works for both).
-- **Type checking.** `pick_type_checking()` is interactive
-  (`setup/lsp.lua:81`). Its body after `vim.ui.select` needs to become a
-  `set_type_checking(mode)` that review mode can call. Three things to keep:
-  - The project-config warning still applies: `pyrightconfig.json` or
-    `[tool.(based)pyright]` in the project overrides the editor's setting.
-  - Leaving review mode should restore the previous mode, not the default.
-  - Both checkers have a `standard` mode (`setup/lsp.lua:58`, `:61`).
-- **gitsigns base.** `require("gitsigns").change_base(rev, true)` applies to
-  every buffer and to the config (`gitsigns/actions.lua:794-806`), so buffers
-  opened later use it too. `reset_base(true)` goes back to the index. Two
-  problems:
-  - **Branch tip vs merge-base.** Diffing against the branch tip shows every
-    change made on that branch since you forked from it, reversed, as if the
-    current branch had made them. The PR's diff is against the merge-base:
-    `git merge-base HEAD origin/develop`, falling back to `master` or `main`.
-    This is a known git behaviour, not tested in gitsigns.
-  - **Staging.** Not checked: what `<leader>gs` and `<leader>gr` do while the
-    base isn't the index. That doesn't matter if review mode is also
-    read-only.
-- **Read-only** (`'write'` chosen, see Do 1). There are two separate options:
-  - `'write'` (global): `:set nowrite` blocks every write with E142 but still
-    allows edits (`:h 'write'`). Easy to toggle, but you can still change the
-    buffer by accident.
-  - `'modifiable'` (per buffer): blocks edits, but you would have to set it on
-    each open buffer, plus a `BufReadPost` autocmd for buffers opened later,
-    and restore it on the way out. It shouldn't touch buffers this config
-    already sets unmodifiable: the cheatsheet, the git windows
-    (`setup/git.lua:94`), and anything with a non-empty `buftype`.
-
-  Autosave already skips non-modifiable buffers (`setup/autosave.lua:17`).
-
-**Do:**
-
-1. **Decided 2026-09-30:** the gitsigns base is the merge-base, detected;
-   read-only is `:set nowrite`, so small test edits stay possible. Still open:
-   what to do when no base branch is found (ask with `vim.ui.select`, or
-   refuse), and the key.
-2. Give each piece a setter that can also report its current value, so review
-   mode can save the state on entry and restore it on exit.
-3. **Hunk display.** Switch on deleted lines, word diff and current-line
-   blame on entry, and put each back on exit. gitsigns' `toggle_deleted`,
-   `toggle_word_diff` and `toggle_current_line_blame` take a value to set and
-   return the new state (`gitsigns/actions.lua:208`, `:224`, `:239`). Not
-   checked: how to read the state without changing it, which item 2 needs.
-4. **Every hunk in the PR, in quickfix.** `setqflist("all")` diffs every
-   changed file against the global base, open or not
-   (`gitsigns/actions/qflist.lua:61-106`). With the merge-base set, that is
-   the whole PR, and `]q` / `[q` walk it. Today `<leader>gq` calls
-   `setqflist()`, which takes the current buffer only (`keymaps.lua:234`).
-   Decide whether `<leader>gq` itself changes, or review mode gets its own
-   key.
-5. **A picker over the changed files.** fzf-lua's `git_diff` runs
-   `git diff --name-only {ref1} {ref}`, with a diff preview
-   (`fzf-lua/defaults.lua:680-684`). Pass the merge-base as `ref`.
-6. **Statusline indicator** while review mode is on, since it changes what
-   the signs and diagnostics mean. Show the base too (the branch name, not
-   the merge-base sha).
-7. **Cheatsheet: a short "Review mode" section.** Besides the new keys, it
-   should say that `<leader>gd` (diffthis) already diffs against the current
-   base (`gitsigns/actions.lua:839`), so in review mode it shows the full file
-   against the merge-base. Nothing needs building for that. Also update
-   `docs/keymaps.md`.
+`setup/review.lua` on `<leader>uR` and `:Review`, `:help review-mode`, reasoning in `docs/decisions.md`. Changed from the plan: local git only, nearest merge-base among develop/master/main and the remotes' defaults; branch and commit review (`bR`/`cR`); `]v`/`[v` walk the commits; presets instead of save-and-restore; staging refuses off the index.
 
 ---
 
@@ -1213,3 +643,35 @@ other. Worth a line in the report.
 > **Expected:** the base set last wins. Re-reading `self.revision` after the
 > awaits in `refresh`, or holding `Obj:lock` in both the watcher handler and
 > `change_revision`, would do it.
+
+---
+
+## 30. Review mode: walk the commits in a worktree instead of moving HEAD
+
+**Where:** `lua/setup/review.lua`, the Walk section and everything that
+exists because of it.
+
+**Why:** Checking out is the one thing review mode does to the repository,
+and most of the module's weight is the consequence: four guards (unsaved
+edits, a dirty tree, an operation in progress, a HEAD moved by hand), the
+record in `stdpath("state")` with its pid check, the `VimLeavePre` prompt, and
+the offers to run `git stash` or `git switch`. A `git worktree add --detach
+<commit>` under `stdpath("cache")`, with `:cd` into it for the walk, would
+leave HEAD and the working tree alone: nothing to guard, nothing to record,
+and leaving would remove the worktree. The language server and the pickers
+would see the commit's tree through the cwd, as they do now.
+
+**The cost, found 2026-11-06:** untracked dependencies are not in a worktree.
+Reading loses nothing. Running the commit does: `.venv` is absent, so
+`setup/lsp.lua`'s detection falls back to `VIRTUAL_ENV` (export it in the
+pane) and `uv run` would build a venv there; `node_modules` is absent. Ruby
+loses nothing: gems live per rbenv Ruby, and the 2.7 path uses the standalone
+bundle anyway. When that matters: verifying a commit's claim by running the
+test it adds, bisecting which commit broke a test, running a script at that
+commit. The current design chose a real checkout for exactly those; how often
+they happen mid-walk is the question.
+
+**Do:** Decide whether tests-on-a-commit is a walk-time need or a "cd to the
+worktree in a pane" need. If the latter, prototype: `worktree add`, `:cd`,
+`gitsigns` base as today, `worktree remove` on leaving, and measure what the
+guards section shrinks to.

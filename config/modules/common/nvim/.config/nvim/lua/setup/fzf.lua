@@ -3,7 +3,8 @@
 -- :grep.
 --
 -- Nothing needs it until a picker opens, so setup is deferred to first use —
--- simpler than adopting a plugin manager for one plugin.
+-- simpler than adopting a plugin manager for one plugin. Requiring this module
+-- at startup only defines the loader below.
 
 local loaded = nil
 
@@ -42,6 +43,19 @@ local function load()
 
   loaded = fzf
   return fzf
+end
+
+-- vim.ui.select is also the picker's (register_ui_select, above), but only
+-- once something has loaded it. Until then this stands in: the first select --
+-- a code action, the ,pt modes -- loads the plugin and hands over.
+if vim.fn.executable("fzf") == 1 then
+  local builtin = vim.ui.select
+  local function first(...)
+    load()
+    if vim.ui.select ~= first then return vim.ui.select(...) end
+    return builtin(...)
+  end
+  vim.ui.select = first
 end
 
 -- keymaps.lua indexes this module, so the first picker call loads the plugin.

@@ -108,6 +108,12 @@ Design notes, measurements and the bug history: lua/mdtable/DESIGN.md
 ### Statusline: BUILT-IN. Colorscheme: BUILT-IN default (user likes the grey/green they have).
 0.12 default statusline already shows filename, modified/RO, LSP progress, ◐ busy indicator,
 diagnostic counts, ruler.
+CORRECTION 2026-11-06: "LSP progress" was wrong about Neovim. The default line's
+vim.ui.progress_status() listens to the Progress event, which the LSP client never
+raises (0.12.6: $/progress only raises LspProgress), and ◐ is the 'busy' option, which
+no server sets either. Dropping fidget had left nothing showing ruby-lsp index its
+thousands of files. setup/statusline.lua now keeps the latest LspProgress title and
+percentage per client and shows it before the server names.
 
 ### File browser: mini.files (user explicitly wants a browser AND a fuzzy finder — different
 jobs: "what's in here" vs "where is X")
@@ -330,3 +336,33 @@ at a keypress days later. The update hook (plugins.lua) says to run it.
 Found on the first run: a typo of mine, which is the class of error it is for.
 init.lua refuses to load below 0.12 with a message, instead of failing at
 vim.pack with one that names nothing.
+
+### Review fixes (2026-11-06) — a read-through against 0.12.6 and the locked plugins
+- A keymap FALLBACK must be an Ex command string or a function, never the name
+  of a mapping: fallbacks are applied noremap, so "gO" and "grr" never fired.
+  <leader>fs / fR / fS now fall back to the vim.lsp.buf functions themselves.
+- The override check (health, :KeymapAudit) compared our spellings with Vim's
+  (<S-h> is H, <LocalLeader>t is ,t, <C-h> is <C-H>) and so never matched those.
+  It now asks maparg() per created mapping; setup/keymaps.lua owns it.
+- <S-h>/<S-l> DROPPED: they are H and L, motions the cheatsheet teaches, and
+  LazyVim-only. ]b [b and <leader><leader> cover buffers.
+- ]e [e ]w [w use on_jump: `float` is deprecated in 0.12 (removed in 0.14).
+- vim.pack.add is pcall'd: installing needs git, and a box with neither git
+  nor the plugins on disk gets a bare editor rather than an init.lua that stops
+  before setup/ and the keymaps.
+- The winbar is decided per window on BufWinEnter and attach/detach, not set
+  once at attach: a window moving to a plain file lost the band, one coming to
+  a code file without a split had none.
+- vim.ui.select loads fzf-lua on first use (TODO 24's "left as is").
+- nvim-treesitter's get_installed() without an argument is parsers plus
+  queries; asked for "parsers".
+- Clipboard, considered and LEFT: 'clipboard' set to unnamedplus disables
+  Neovim's automatic OSC 52 fallback, so over SSH or in a cayo guest a yank
+  stays in Neovim (one warning per session). The alternative, an OSC 52
+  provider, has two costs: the bundled one queries the terminal on every
+  paste and tmux never answers, so `p` would hang; and a guest writing the
+  host's clipboard is an injection path into a sandbox meant to contain an
+  agent (tmux's `set-clipboard external` already forwards any pane's OSC 52,
+  worth knowing). tmux's copy mode, local to the host, is the bridge.
+- The vim module rewritten as the scheme's built-in subset for a box with only
+  Vim: offline, no plugins, mirrors keymaps.lua by hand. See its header.

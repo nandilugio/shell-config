@@ -119,8 +119,8 @@ Servers come from `uv`, `brew` and `gem`, so shell, CI and editor share one bina
 
 **No statusline, winbar or colorscheme plugin.** The bundled colorscheme is used
 as is. `setup/statusline.lua` builds on Neovim's default line — already carrying
-LSP progress and diagnostic counts — adding a mode block, the git branch and
-repository state, hunk counts and the attached servers. `setup/winbar.lua` draws
+diagnostic counts — adding a mode block, the git branch and repository state,
+hunk counts, and the attached servers with what they are busy on. `setup/winbar.lua` draws
 breadcrumbs from the language server's symbol tree. Both colour themselves from
 groups the colorscheme defines, so they follow it when it changes.
 
@@ -194,6 +194,13 @@ RBENV_VERSION=3.x gem install ruby-lsp   # any Ruby >= 3; the newest is used
 ```
 
 `:checkhealth config` reports what is present and what each gap costs.
+
+## Plain Vim
+
+`../vim/.vimrc` (the `vim` module) is this scheme's built-in subset for a box
+with only Vim: leader, the find, git, toggle, lists and own namespaces, windows
+and folds, no plugins and no network. Kept in sync by hand when a key moves in
+`lua/keymaps.lua`; its header lists what it mirrors.
 
 ## Further reading
 

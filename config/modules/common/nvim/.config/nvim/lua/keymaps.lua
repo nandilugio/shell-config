@@ -12,7 +12,9 @@
 --             When missing, `fallback` is used instead; with no fallback the
 --             mapping is skipped entirely. This is what lets the config work on
 --             a bare server with nothing installed.
---   fallback  a built-in that does the same job, less well.
+--   fallback  a built-in that does the same job, less well: an Ex command
+--             string or a function. Never the name of a mapping (gO, grr):
+--             mappings are applied noremap, so a mapped key would not fire.
 --   expr      rhs is a function returning the keys to run (:h map-expression).
 --
 -- Design rule:  g jumps · gr acts on symbols · <leader> opens tools
@@ -57,6 +59,21 @@ local function setting_foldcolumn(keys, width)
   end
 end
 
+-- For ]e [e ]w [w: a diagnostic step that shows the message in a float
+-- afterwards, as core's ]d does. `float` was the pre-0.12 spelling of this
+-- option and is deprecated for `on_jump`.
+local severity = vim.diagnostic.severity
+
+local function jumping(count, sev)
+  return function()
+    vim.diagnostic.jump({
+      count = count,
+      severity = sev,
+      on_jump = function(_, buf) vim.diagnostic.open_float({ bufnr = buf, scope = "cursor", focus = false }) end,
+    })
+  end
+end
+
 M.maps = {
 
   -- ── Jump: g + letter ──────────────────────────────────────────────────────
@@ -72,26 +89,10 @@ M.maps = {
   -- ── Iterate: [ and ] ──────────────────────────────────────────────────────
   -- tpope's rule: "[ always comes before ]". Lowercase steps, capital jumps to
   -- the first/last. Core already provides ]d ]q ]b ]<Space> and friends.
-  {
-    "]e",
-    function() vim.diagnostic.jump({ count = 1, severity = vim.diagnostic.severity.ERROR, float = true }) end,
-    desc = "Next error",
-  },
-  {
-    "[e",
-    function() vim.diagnostic.jump({ count = -1, severity = vim.diagnostic.severity.ERROR, float = true }) end,
-    desc = "Previous error",
-  },
-  {
-    "]w",
-    function() vim.diagnostic.jump({ count = 1, severity = vim.diagnostic.severity.WARN, float = true }) end,
-    desc = "Next warning",
-  },
-  {
-    "[w",
-    function() vim.diagnostic.jump({ count = -1, severity = vim.diagnostic.severity.WARN, float = true }) end,
-    desc = "Previous warning",
-  },
+  { "]e", jumping(1, severity.ERROR), desc = "Next error" },
+  { "[e", jumping(-1, severity.ERROR), desc = "Previous error" },
+  { "]w", jumping(1, severity.WARN), desc = "Next warning" },
+  { "[w", jumping(-1, severity.WARN), desc = "Previous warning" },
   -- The commits under review (setup/review.lua): each is checked out in turn.
   -- v for revision: ]r is Neovim's "next rare word", and the other free
   -- letters mean hunk or something else in Helix, LazyVim or unimpaired.
@@ -162,13 +163,14 @@ M.maps = {
     function() require("setup.fzf").lsp_document_symbols() end,
     desc = "Symbols",
     needs = "fzf",
-    fallback = "gO",
+    fallback = vim.lsp.buf.document_symbol,
   },
   {
     "<leader>fS",
     function() require("setup.fzf").lsp_live_workspace_symbols() end,
     desc = "Workspace symbols",
     needs = "fzf",
+    fallback = vim.lsp.buf.workspace_symbol,
   },
   {
     "<leader>/",
@@ -177,13 +179,13 @@ M.maps = {
     needs = "fzf",
     fallback = ":grep ",
   },
-  -- References through the picker when available; core's grr otherwise.
+  -- References through the picker when available; what grr runs otherwise.
   {
     "<leader>fR",
     function() require("setup.fzf").lsp_references() end,
     desc = "References",
     needs = "fzf",
-    fallback = "grr",
+    fallback = vim.lsp.buf.references,
   },
   -- fzf-lua ships 124 pickers and this binds a dozen; the rest are invisible
   -- unless you already know they exist. This is the way in.
@@ -370,8 +372,6 @@ M.maps = {
   -- tmux's mnemonic: | is a vertical divider, - a horizontal one.
   { "<leader>-", "<Cmd>split<CR>", desc = "Split below" },
   { "<leader>|", "<Cmd>vsplit<CR>", desc = "Split right" },
-  { "<S-h>", "<Cmd>bprevious<CR>", desc = "Previous buffer" },
-  { "<S-l>", "<Cmd>bnext<CR>", desc = "Next buffer" },
   { "<leader>bd", "<Cmd>bdelete<CR>", desc = "Delete buffer" },
 
   -- ── Lists: <leader>x ──────────────────────────────────────────────────────

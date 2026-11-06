@@ -21,8 +21,10 @@ local tools = {
   { "tree-sitter", "parser compilation", "regex syntax highlighting only" },
 }
 
+-- A row with several names is satisfied by any of them: setup/lsp.lua runs
+-- one type checker, basedpyright first.
 local servers = {
-  { "basedpyright", "python" },
+  { { "basedpyright", "pyright" }, "python" },
   { "ruff", "python" },
   { "lua-language-server", "lua" },
 }
@@ -42,11 +44,15 @@ end
 local function check_servers()
   H.start("Language servers")
   for _, s in ipairs(servers) do
-    local exe, lang = s[1], s[2]
-    if vim.fn.executable(exe) == 1 then
-      H.ok(("%s (%s)"):format(exe, lang))
+    local names, lang = type(s[1]) == "table" and s[1] or { s[1] }, s[2]
+    local found
+    for _, exe in ipairs(names) do
+      if not found and vim.fn.executable(exe) == 1 then found = exe end
+    end
+    if found then
+      H.ok(("%s (%s)"):format(found, lang))
     else
-      H.warn(("%s not found — no %s support"):format(exe, lang))
+      H.warn(("%s not found — no %s support"):format(table.concat(names, " or "), lang))
     end
   end
 
@@ -87,7 +93,7 @@ local function check_parsers()
   end
 
   local installed = {}
-  for _, lang in ipairs(ts.get_installed()) do
+  for _, lang in ipairs(ts.get_installed("parsers")) do
     installed[lang] = true
   end
 
@@ -96,7 +102,7 @@ local function check_parsers()
   local missing = vim.tbl_filter(function(l) return not installed[l] end, want)
 
   if #missing == 0 then
-    H.ok(("%d parsers installed, including all primary languages"):format(#ts.get_installed()))
+    H.ok(("%d parsers installed, including all primary languages"):format(#ts.get_installed("parsers")))
   else
     H.warn("missing parsers: " .. table.concat(missing, ", "), {
       "They install on next start when tree-sitter-cli is present.",
@@ -124,37 +130,18 @@ local function check_keymaps()
   end
 
   -- A plugin claiming one of our keys is the failure this catches.
-  local function norm(lhs)
-    return (lhs:gsub("<[Ll]eader>", vim.g.mapleader or "\\"))
-  end
-
-  local ours = {}
-  for _, m in ipairs(spec.maps) do
-    local modes = type(m.mode) == "table" and m.mode or { m.mode or "n" }
-    for _, mo in ipairs(modes) do
-      -- "v" covers x and s, which is how nvim_get_keymap() reports them.
-      for _, real in ipairs(mo == "v" and { "x", "s" } or { mo }) do
-        ours[real .. " " .. norm(m[1])] = m.desc
-      end
-    end
-  end
-
-  local stolen = {}
-  for _, mo in ipairs({ "n", "x", "o", "i", "t" }) do
-    for _, m in ipairs(vim.api.nvim_get_keymap(mo)) do
-      local key = mo .. " " .. m.lhs
-      if ours[key] and m.desc ~= ours[key] then
-        table.insert(stolen, ("%s is now %q, expected %q"):format(key, m.desc or "", ours[key]))
-      end
-    end
-  end
-
+  -- setup/keymaps.lua knows which entries became mappings and asks maparg()
+  -- for each, so Vim does the spelling of the key.
+  local stolen, shadowed = require("setup.keymaps").overridden()
   if #stolen == 0 then
     H.ok("no mappings overridden by plugins")
   else
     for _, s in ipairs(stolen) do
       H.error(s, { "Run :KeymapAudit for the full picture." })
     end
+  end
+  for _, s in ipairs(shadowed) do
+    H.info("shadowed in the current buffer: " .. s)
   end
 end
 

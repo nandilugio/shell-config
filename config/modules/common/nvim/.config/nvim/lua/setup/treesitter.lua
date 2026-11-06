@@ -18,7 +18,7 @@ local parsers = {
 }
 
 local installed = {}
-for _, lang in ipairs(ts.get_installed()) do
+for _, lang in ipairs(ts.get_installed("parsers")) do
   installed[lang] = true
 end
 

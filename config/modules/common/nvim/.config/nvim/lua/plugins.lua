@@ -62,4 +62,10 @@ vim.api.nvim_create_autocmd("PackChanged", {
   end,
 })
 
-vim.pack.add(specs)
+-- Installing needs git; once the plugins are on disk nothing here does. A
+-- box with neither leaves a bare editor rather than an init.lua that stops
+-- before the keymaps: every module below copes with a plugin being absent.
+local ok, err = pcall(vim.pack.add, specs)
+if not ok then
+  vim.notify("Plugins could not be installed: " .. tostring(err), vim.log.levels.WARN)
+end

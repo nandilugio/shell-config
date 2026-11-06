@@ -48,6 +48,8 @@ git clone https://github.com/Morantron/tmux-fingers ~/Projects/thirds/tmux-finge
 
 **tmux.** Config is `~/.config/tmux/tmux.conf`; don't also keep a `~/.tmux.conf` (tmux 3.1+ loads both). Resurrect saves with `prefix C-s`, restores with `prefix C-r`, and puts each pane's `claude --resume <id>` back (typed, not run; see `n.tmux-claude-sessions-*`). Saves include pane contents, so: `mkdir -p ~/.local/share/tmux/resurrect && chmod 700 ~/.local/share/tmux/resurrect`. Don't start session names with `%` (tmux's pane-id sigil): resurrect then restores only the first pane of each window.
 
+**vim.** `.vimrc` is the nvim keymap scheme's built-in subset for a box with only Vim: curl the one file, no plugins, no network. Kept in sync by hand with `nvim/lua/keymaps.lua` (see the nvim README).
+
 **Ghostty** opens every window into the `main` tmux session (`n.tmux-new-terminal-window`).
 
 **Claude Code.** `AGENTS.md` is shared by Claude (`~/.claude/CLAUDE.md`) and opencode. The statusline needs a `statusLine` entry in `~/.claude/settings.json` (see the script's header). Claude Code resolves `~/.claude/CLAUDE.md` and `commands` at session start and removes them if their targets move while a session runs: relink with no session open.

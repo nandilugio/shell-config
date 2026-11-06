@@ -22,7 +22,6 @@ end
 require("options")
 require("plugins")
 
--- setup.fzf is absent by design: keymaps.lua pulls it in on first use.
 require("setup.autosave")
 require("setup.cheatsheet")
 require("setup.diagnostics")
@@ -31,6 +30,7 @@ require("setup.winbar")
 require("setup.lsp")
 require("setup.treesitter")
 require("setup.files")
+require("setup.fzf") -- defines the loader only; the plugin is set up on first use
 require("setup.git")
 require("setup.review") -- for :Review; does nothing until asked
 require("setup.wiki")

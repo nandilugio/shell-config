@@ -1,4 +1,8 @@
--- Applies lua/keymaps.lua. The only place mappings are created.
+-- Applies lua/keymaps.lua. The only place mappings are created, and so the
+-- place that knows which ones exist: overridden() reports those a plugin has
+-- since replaced, for :KeymapAudit and :checkhealth config.
+
+local M = {}
 
 local spec = require("keymaps")
 
@@ -28,6 +32,7 @@ end
 -- ── Apply ───────────────────────────────────────────────────────────────────
 
 local skipped = {}
+local created = {} -- the entries that became mappings, for overridden()
 
 local function apply(m)
   local rhs = m[2]
@@ -39,6 +44,7 @@ local function apply(m)
     end
   end
   vim.keymap.set(m.mode or "n", m[1], rhs, { desc = m.desc, silent = true, expr = m.expr })
+  table.insert(created, m)
 end
 
 -- Vimscript plugins source their plugin/ files only after init.lua returns, so
@@ -106,57 +112,52 @@ vim.api.nvim_create_user_command("KeymapsSkipped", function()
   end
 end, { desc = "List keymaps disabled by missing dependencies" })
 
+-- ── Overrides ───────────────────────────────────────────────────────────────
 -- Plugins map keys of their own, and a Vimscript plugin can quietly claim a
--- whole namespace (vimwiki takes <leader>w unless told otherwise). Run this
--- after adding a plugin.
-vim.api.nvim_create_user_command("KeymapAudit", function()
-  -- nvim_get_keymap() reports lhs with <leader> already expanded, so expand
-  -- ours the same way before comparing. "v" covers both x and s.
-  local function norm(lhs)
-    return (lhs:gsub("<[Ll]eader>", vim.g.mapleader or "\\"))
-  end
+-- whole namespace (vimwiki takes <leader>w unless told otherwise). A mapping
+-- is ours while the one on its key still carries our description: maparg()
+-- is asked per key, so Vim does the spelling (<S-h> is H, <LocalLeader>t is
+-- ,t) rather than this file guessing it. Buffer-local mappings win over
+-- global ones and are what ftplugins and LspAttach create, so a check from
+-- a buffer also sees what shadows ours there.
 
+--- @return string[] global  "<mode> <lhs>: now <desc>, ours <desc>"
+--- @return string[] buflocal  the same, for THIS buffer's own mappings
+function M.overridden()
+  local global, buflocal = {}, {}
+  for _, m in ipairs(created) do
+    local modes = type(m.mode) == "table" and m.mode or { m.mode or "n" }
+    for _, mode in ipairs(modes) do
+      local cur = vim.fn.maparg(m[1], mode, false, true)
+      if cur.desc ~= m.desc then
+        local line = ("%s %s: now %s, ours %q"):format(mode, m[1], cur.lhs and ("%q"):format(cur.desc or "") or "unmapped", m.desc)
+        table.insert(cur.buffer == 1 and buflocal or global, line)
+      end
+    end
+  end
+  return global, buflocal
+end
+
+-- Run after adding a plugin.
+vim.api.nvim_create_user_command("KeymapAudit", function()
+  local overridden, buflocal = M.overridden()
+
+  -- Leader mappings nobody here defined: a plugin's own. nvim_get_keymap()
+  -- reports lhs with <leader> expanded, so match the key itself.
   local ours = {}
   for _, m in ipairs(spec.maps) do
-    local modes = type(m.mode) == "table" and m.mode or { m.mode or "n" }
-    for _, mo in ipairs(modes) do
-      if mo == "v" then
-        ours["x " .. norm(m[1])], ours["s " .. norm(m[1])] = m.desc, m.desc
-      else
-        ours[mo .. " " .. norm(m[1])] = m.desc
+    ours[(m[1]:gsub("<[Ll]eader>", vim.g.mapleader or "\\"))] = true
+  end
+  local foreign = {}
+  for _, mode in ipairs({ "n", "x", "o", "i", "t" }) do
+    for _, m in ipairs(vim.api.nvim_get_keymap(mode)) do
+      if m.lhs:match("^ ") and not ours[m.lhs] and not m.lhs:match("^<Plug>") then
+        table.insert(foreign, ("%s %s  %s"):format(mode, m.lhs, m.desc or "(no description)"))
       end
     end
   end
 
-  local overridden, foreign, buflocal = {}, {}, {}
-
-  for _, mo in ipairs({ "n", "x", "o", "i", "t" }) do
-    for _, m in ipairs(vim.api.nvim_get_keymap(mo)) do
-      local key = mo .. " " .. m.lhs
-      if ours[key] then
-        if m.desc ~= ours[key] then
-          table.insert(overridden, ("%s (ours: %s)"):format(key, ours[key]))
-        end
-      elseif m.lhs:match("^ ") and not m.lhs:match("^<Plug>") then
-        table.insert(foreign, ("%s  %s"):format(key, m.desc or "(no description)"))
-      end
-    end
-  end
-
-  -- Buffer-local maps too: ftplugins and LspAttach set these, and they are
-  -- invisible to nvim_get_keymap(). This is where a conflict hides.
-  for _, mo in ipairs({ "n", "x", "o" }) do
-    for _, m in ipairs(vim.api.nvim_buf_get_keymap(0, mo)) do
-      local key = mo .. " " .. m.lhs
-      if ours[key] and m.desc ~= ours[key] then
-        table.insert(buflocal, ("%s (ours: %s)"):format(key, ours[key]))
-      end
-    end
-  end
-
-  local out = {
-    ("%d of our mappings overridden"):format(#overridden),
-  }
+  local out = { ("%d of our mappings overridden"):format(#overridden) }
   vim.list_extend(out, overridden)
   table.insert(out, ("%d leader mappings we did not define"):format(#foreign))
   vim.list_extend(out, foreign)
@@ -184,3 +185,5 @@ if ok then
   end
   wk.add(groups)
 end
+
+return M

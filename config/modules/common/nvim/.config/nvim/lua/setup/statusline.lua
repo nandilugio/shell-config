@@ -1,10 +1,10 @@
--- Built on 0.12's default (filename, %m %r, LSP progress, busy spinner,
--- diagnostic counts, ruler), adding a mode block, git branch and hunk counts,
--- attached servers, filetype, and a warning on unusual encodings.
+-- Built on 0.12's default (filename, %m %r, busy spinner, diagnostic counts,
+-- ruler), adding a mode block, git branch and hunk counts, the language
+-- servers' progress and names, filetype, and a warning on unusual encodings.
 --
 -- Identity left, state right, as lualine and VS Code do:
 --
---   NORMAL  lua/setup/git.lua  master* ⇡ +1 ~2 -3    E:1 W:2  lua_ls  lua  42% 15:8
+--   NORMAL  lua/setup/git.lua  master* ⇡ +1 ~2 -3    E:1 W:2  Indexing 45% [lua_ls] lua  42% 15:8
 --
 -- The two costly calls are avoided: the path is cached per buffer, the search
 -- count computed only while a search is lit.
@@ -243,6 +243,42 @@ function M.git()
   return out .. " "
 end
 
+-- ── Language server progress ────────────────────────────────────────────────
+-- What a server is busy with: ruby-lsp indexing a few thousand files, lua_ls
+-- loading the workspace. Neovim raises LspProgress for each $/progress
+-- message and otherwise shows nothing; the default statusline's
+-- vim.ui.progress_status() listens to the Progress event, which the LSP
+-- client does not raise (0.12.6). So the latest message per client is kept
+-- here, "title percent", and dropped when the server reports the end.
+
+local progress = {}
+
+vim.api.nvim_create_autocmd("LspProgress", {
+  callback = function(ev)
+    local value = ev.data.params.value
+    if type(value) ~= "table" then return end
+    if value.kind == "end" then
+      progress[ev.data.client_id] = nil
+    else
+      progress[ev.data.client_id] = { title = value.title, percent = value.percentage }
+    end
+    vim.cmd.redrawstatus()
+  end,
+})
+
+function M.progress()
+  if not wide_enough("lsp") then return "" end
+  local parts = {}
+  for _, c in ipairs(vim.lsp.get_clients({ bufnr = 0 })) do
+    local p = progress[c.id]
+    if p and p.title then
+      parts[#parts + 1] = p.percent and ("%s %d%%%%"):format(p.title, p.percent) or p.title
+    end
+  end
+  if #parts == 0 then return "" end
+  return ("%%#StatuslineMuted#%s %%*"):format(table.concat(parts, " "))
+end
+
 -- Bracketed: servers are a different kind of fact from the file's own
 -- properties beside them, so no new colour is invented.
 function M.lsp()
@@ -304,8 +340,8 @@ local DIAGNOSTICS = "%{% luaeval('(package.loaded[\"vim.diagnostic\"] "
   .. "and vim.diagnostic.status() .. \" \") or \"\"') %}"
 
 -- ── Assembly ────────────────────────────────────────────────────────────────
--- The default's own pieces verbatim: %m %r, LSP progress and busy, the
--- diagnostic counts, the ruler.
+-- The default's own pieces verbatim: %m %r, busy, the diagnostic counts, the
+-- ruler.
 
 function M.render()
   return table.concat({
@@ -320,6 +356,7 @@ function M.render()
     "%=", -- right-hand side from here
     M.search(),
     DIAGNOSTICS,
+    M.progress(),
     M.lsp(),
     "%#StatuslineMuted#%{&filetype} %*",
     M.fileinfo(),

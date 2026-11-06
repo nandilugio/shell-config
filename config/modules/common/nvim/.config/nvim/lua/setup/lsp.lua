@@ -139,9 +139,8 @@ function M.pick_type_checking()
   end)
 end
 
--- ruff lints and formats, pyright does types. Both offer hover, so ruff's is
--- switched off below.
-vim.lsp.config("ruff", {})
+-- ruff lints and formats, pyright does types; nvim-lspconfig's definition
+-- is used as is. Both offer hover, so ruff's is switched off on attach.
 
 -- ── Ruby ────────────────────────────────────────────────────────────────────
 -- ruby-lsp needs Ruby >= 3.0, but not the PROJECT's Ruby: it re-execs with

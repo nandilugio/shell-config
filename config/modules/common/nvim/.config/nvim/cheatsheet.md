@@ -143,7 +143,7 @@ All of it, :help review-mode.
 <C-h,j,k,l>     move between windows            tmux uses M-h,j,k,l for panes
 <leader>-  |    split below, right              as in tmux
 <C-w>           c close · o only · = equalise · _ | maximise
-<S-h>,<S-l>     previous, next buffer           <leader>bd  close buffer
+]b,[b           next, previous buffer           <leader>bd  close buffer
 
 
 ## Folds — z

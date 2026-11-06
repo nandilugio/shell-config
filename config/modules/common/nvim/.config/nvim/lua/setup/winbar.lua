@@ -65,20 +65,39 @@ end
 set_highlight()
 vim.api.nvim_create_autocmd("ColorScheme", { callback = set_highlight })
 
--- Enabled when a server that can supply symbols attaches — stable, whereas
--- gating on the trail itself would add and remove a screen line as the cursor
--- moves.
-vim.api.nvim_create_autocmd("LspAttach", {
-  callback = function(args)
-    local client = vim.lsp.get_client_by_id(args.data.client_id)
-    if not client or not client:supports_method("textDocument/documentSymbol") then return end
-    if vim.bo[args.buf].buftype ~= "" then return end
+-- A window shows the bar while its buffer has a server that can supply
+-- symbols: decided when a buffer enters a window and when a server attaches
+-- or leaves, so a window that moves on to a plain file loses the band and
+-- one that comes to a code file gains it. Stable within a buffer, whereas
+-- gating on the trail itself would add and remove a screen line as the
+-- cursor moves.
+local BAR = "%{%v:lua.require'setup.winbar'.render()%}"
 
-    for _, win in ipairs(vim.fn.win_findbuf(args.buf)) do
-      if vim.api.nvim_win_get_config(win).relative == "" then
-        vim.wo[win].winbar = "%{%v:lua.require'setup.winbar'.render()%}"
+local function wants_bar(buf)
+  if vim.bo[buf].buftype ~= "" then return false end
+  return #vim.lsp.get_clients({ bufnr = buf, method = "textDocument/documentSymbol" }) > 0
+end
+
+local function decide(win, buf)
+  if vim.api.nvim_win_get_config(win).relative ~= "" then return end
+  local bar = wants_bar(buf) and BAR or ""
+  if vim.wo[win].winbar ~= bar then vim.wo[win].winbar = bar end
+end
+
+vim.api.nvim_create_autocmd("BufWinEnter", {
+  callback = function(args) decide(vim.api.nvim_get_current_win(), args.buf) end,
+})
+
+vim.api.nvim_create_autocmd({ "LspAttach", "LspDetach" }, {
+  callback = function(args)
+    -- On detach the client is still attached while this runs, so look again
+    -- once it has gone.
+    vim.schedule(function()
+      if not vim.api.nvim_buf_is_valid(args.buf) then return end
+      for _, win in ipairs(vim.fn.win_findbuf(args.buf)) do
+        decide(win, args.buf)
       end
-    end
+    end)
   end,
 })
 

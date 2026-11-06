@@ -1,171 +1,138 @@
-" === CHEATSHEET of things I tend to forget :p  ================================
+" ~/.vimrc: plain Vim, for a box that has only Vim. One file to curl, nothing
+" to install, no network at startup.
 "
-" == Navigation ==
-" {, }      Prev, next paragraph
-" %         Matching brace/parenthesis/bracket
-" H, M, L   Go to screen's top, middle, bottom (Hi, Mid, Lo?)
-"
-" == Scrolling ==
-" zz, zt, zb    Zcroll current line the center, top, bottom
-" C- y, e       Scroll 1 line up, down
-" 
-" == Select, search & replace ==
-" *, #         Search word under cursor (down, up)
-" va[, vi[     Select around, inside barackets (or parens, braces) (d, etc. too)
-" :%s//...     An empty search pattern will match highlighted results
-" : in visual  Will give you `:'<,'>` allowing you to `s///` or `norm` after it
-" // in visual Will search for visually selected text (custom mapping)
-"
-" == Search flags after :%s/// ==
-" g   Global
-" i   case-Insensitive
-" c   Confirm (one-by-one substitution)
+" The keys are the Neovim config's (config/modules/common/nvim, see its
+" cheatsheet), on the subset Vim has without plugins: leader and the find,
+" git, toggle, lists and own namespaces, windows, folds, completion. No LSP,
+" so gd, gr* and the F-keys stay as Vim ships them; no gitsigns, so <leader>g
+" is empty. Kept in sync BY HAND: when a key moves in nvim's lua/keymaps.lua,
+" move it here too. Everything version-dependent is behind a guard, so this
+" also loads on an old Vim, minus that feature.
 
-" ==============================================================================
+set nocompatible
+set encoding=utf-8
+scriptencoding utf-8
+filetype plugin indent on
+syntax on
 
-" This mappings fix some weird keyboard behaviors.
-" To test mappings: Insert mode, <C-v>, type whatever is wrongly being
-" interpreted. Literal escape sequence will be typed. A leading ^[ means
-" <ESC>.
-"
-" "Note that although escape sequences vary between terminals, conflicts (i.e.
-" an escape sequence that corresponds to different keys in different
-" terminals) are rare, so there's no particular need to try to apply the
-" mappings only on a particular terminal type."
-"
-" See: https://unix.stackexchange.com/questions/1709/how-to-fix-ctrl-arrows-in-vim
-"
-" Fixes for Linux + Gnome terminal
-map <ESC>[1;5D <C-Left>
-map <ESC>[1;5C <C-Right>
-map! <ESC>[1;5D <C-Left>
-map! <ESC>[1;5C <C-Right>
-" Ctrl+Up/Down, from the former macOS-only vimrc (config/macos/vimrc); kept, unused:
-" map <ESC>[1;5A <C-Up>
-" map <ESC>[1;5B <C-Down>
-" map! <ESC>[1;5A <C-Up>
-" map! <ESC>[1;5B <C-Down>
-map <ESC>[5;5~ <C-PageUp>
-map <ESC>[6;5~ <C-PageDown>
-map! <ESC>[5;5~ <C-PageUp>
-map! <ESC>[6;5~ <C-PageDown>
-
-" Basics
+" Vim captures the leader at definition time: before any mapping.
 let mapleader = " "
-nmap \ <leader>
+let maplocalleader = ","
 
-" Edit & reload .vimrc
-nnoremap <leader>, :e $MYVIMRC<cr>
-nnoremap <leader>r :source $MYVIMRC<cr>
+" ── Options, as nvim's options.lua ──────────────────────────────────────────
 
-" Buffers
-set hidden " Hide buffers when not displayed. This allow to switch between buffers without saving
-" Sudo save! (and make me a sandwich)
-nmap <leader>sudo :w !sudo tee %<cr>
+set updatetime=250
+set timeoutlen=300 ttimeoutlen=10
 
-nmap <leader><Left> :bp<cr>
-nmap <leader><Right> :bn<cr>
-nmap <leader><PageUp> :bp<cr>
-nmap <leader><PageDown> :bn<cr>
-nmap <leader>t :enew<cr>
-nmap <leader>w :bd<cr>
-nmap <leader>s :w<CR>
+set ignorecase smartcase
+set incsearch hlsearch
+silent! set inccommand=split
 
-nmap <C-Left> :bp<cr>
-nmap <C-Right> :bn<cr>
-nmap <C-PageUp> :bp<cr>
-nmap <C-PageDown> :bn<cr>
-nmap <C-t> :enew<cr>
-nmap <C-w> :bd<cr>
-" nmap <C-s> :w<CR>
-" <C-s> is trapped by the OS's terminal driver (use <C-s> to 'unfreeze' the terminal ;p).
-" See: https://unix.stackexchange.com/questions/12107/how-to-unfreeze-after-accidentally-pressing-ctrl-s-in-a-terminal
-
-" Clipboard
-set clipboard=unnamed " Global clipboard
-nnoremap <F2> :set invpaste<CR>
-"set pastetoggle=<F2>
-
-" Swap and backups
-set noswapfile
-set nobackup
-set nowritebackup
-
-" Search
-set hlsearch
-set incsearch
-nnoremap <leader>/ :nohl<cr>
-" To search visually selected text, type `//` after visual selection
-" https://vim.fandom.com/wiki/Search_for_visually_selected_text
-vnoremap // y/\V<C-R>=escape(@",'/\')<CR><CR>
-
-" Display
-colorscheme desert
-set number
-"set relativenumber 
-"set nowrap
-set wrap linebreak nolist
-"set cursorline
-
-" Mouse
+set hidden
+set confirm
+set virtualedit=block
+set expandtab shiftwidth=2 softtabstop=2 tabstop=2
+silent! set nofixendofline
+set backspace=indent,eol,start
+if has('clipboard') | set clipboard^=unnamedplus | endif
 set mouse=a
 
-" Text indentation
-filetype indent plugin on
-set expandtab
-set autoindent
-set shiftwidth=2
-set tabstop=2
-set softtabstop=2
+set number
+set scrolloff=10
+silent! set signcolumn=yes
+set cursorline
+silent! set breakindent
+set list listchars=tab:»\ ,trail:·,nbsp:␣
+set splitright splitbelow
+set laststatus=2 ruler
 
-" Text editing
-set backspace=indent,eol,start
-"inoremap <C-d> <Del> "this makes Del works if it maps to Ctrl-D
+" Folds: no parse tree here, so by indent; all open on entry.
+set foldmethod=indent foldlevel=99
 
-" Remove trailing space
-nnoremap <silent> <leader>dt :let _s=@/ <Bar> :%s/\s\+$//e <Bar> :let @/=_s <Bar> :nohl <Bar> :unlet _s <CR>
+" Completion is asked for, never volunteered: <C-n>/<C-p>, <C-x><C-o>.
+set completeopt=menu,menuone,noselect
+silent! set completeopt+=popup
+silent! set completeopt+=fuzzy
 
-" Misc
-set enc=utf-8
-set autoread
-set pastetoggle=<F1>
-"set textwidth=0
-"set history=1000 
-"set backspace=indent,eol,start
-"set sessionoptions=blank,buffers,curdir,folds,help,resize,tabpages,winsize
+" The command line, on <Tab>; a popup where Vim can draw one.
+set wildmenu wildmode=full
+silent! set wildoptions=pum,fuzzy
 
-" Finding files
-set wildmode=list:longest
-
-" FZF (https://github.com/junegunn/fzf.vim)
-nnoremap <leader><leader> :FZF<cr>
-nnoremap <leader>p :FZF<cr>
-
-" CtrlP (http://ctrlpvim.github.io/ctrlp.vim)
-" set runtimepath^=~/.vim/bundle/ctrlp.vim
-" let g:ctrlp_working_path_mode = 'ra'
-
-" Nerdtree (https://github.com/scrooloose/nerdtree)
-" nnoremap <C-n> :NERDTreeToggle<cr>
-" autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif " Close vim if the only window left open is a NERDTree
-
-" Vim Airline (https://github.com/vim-airline/vim-airline)
-set laststatus=2
-let g:airline#extensions#tabline#enabled = 1
-
-" VimPlug (https://github.com/junegunn/vim-plug)
-" Reload .vimrc and :PlugInstall to install plugins.
-if empty(glob('~/.vim/autoload/plug.vim'))
-  silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
-    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-  autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+" :find through the tree, and :grep with rg where it is.
+set path+=**
+if executable('rg')
+  set grepprg=rg\ --vimgrep\ --smart-case
+  set grepformat=%f:%l:%c:%m
 endif
-call plug#begin('~/.vim/plugged')
-"Plug 'scrooloose/nerdtree'
-"Plug 'Xuyuanp/nerdtree-git-plugin'
-Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
-Plug 'vim-airline/vim-airline'
-"Plug 'ervandew/supertab'
-"Plug 'elixir-lang/vim-elixir'
-call plug#end()
 
+" netrw is the browser here. Its history file was a code-execution path
+" (GHSA-crm5-rh6j-2c7c, fixed in 9.2.0495): a directory name with a quote in
+" it, written unescaped into .netrwhist and sourced at startup. No history.
+let g:netrw_dirhistmax = 0
+
+" Vim 9.1 ships gc/gcc as an optional package, the keys Neovim has built in.
+silent! packadd comment
+
+" ── Keys ────────────────────────────────────────────────────────────────────
+" Normal mode, noremap, unless said otherwise.
+
+" Find: <leader>f. The built-ins nvim falls back to where fzf is absent.
+nnoremap <leader><leader> :buffer<Space>
+nnoremap <leader>ff :find<Space>
+nnoremap <leader>fg :grep<Space>
+nnoremap <leader>/ :grep<Space>
+nnoremap <leader>fw :grep <C-r><C-w><CR>
+nnoremap <leader>fr :browse oldfiles<CR>
+nnoremap <leader>fh :help<Space>
+nnoremap <leader>fk :map<CR>
+
+" Files
+nnoremap <leader>e :Explore<CR>
+
+" Windows and buffers. <C-hjkl> here, M-hjkl for tmux's panes.
+nnoremap <C-h> <C-w><C-h>
+nnoremap <C-j> <C-w><C-j>
+nnoremap <C-k> <C-w><C-k>
+nnoremap <C-l> <C-w><C-l>
+nnoremap <leader>- :split<CR>
+nnoremap <leader>\| :vsplit<CR>
+nnoremap <leader>bd :bdelete<CR>
+
+" Lists: [ back, ] forward, capital = first or last. Neovim has these
+" built in; Vim does not.
+nnoremap ]b :bnext<CR>
+nnoremap [b :bprevious<CR>
+nnoremap ]q :cnext<CR>
+nnoremap [q :cprevious<CR>
+nnoremap ]Q :clast<CR>
+nnoremap [Q :cfirst<CR>
+nnoremap ]l :lnext<CR>
+nnoremap [l :lprevious<CR>
+nnoremap <leader>xq :copen<CR>
+nnoremap <leader>xl :lopen<CR>
+
+" Toggles: <leader>u
+nnoremap <leader>uw :set wrap!<CR>
+nnoremap <leader>us :set spell!<CR>
+nnoremap <leader>ul :set number!<CR>
+nnoremap <leader>ur :set relativenumber!<CR>
+nnoremap <leader>ub :let &background = &background ==# 'dark' ? 'light' : 'dark'<CR>
+nnoremap <leader>uz :let &foldcolumn = &foldcolumn ? 0 : 1<CR>
+
+" Own: <leader>o
+nnoremap <leader>ox :%s/\s\+$//e<CR>:nohlsearch<CR>:echo "Cleared trailing whitespace"<CR>
+
+" Neovim's own defaults that Vim lacks. Not <Esc> for :nohlsearch, as in
+" nvim: terminal Vim receives escape sequences at startup (the terminal's
+" replies to its queries), and a normal-mode <Esc> mapping fires on them.
+nnoremap Y y$
+if has('terminal')
+  tnoremap <Esc><Esc> <C-\><C-n>
+endif
+
+" Completion. Enter accepts only once something is selected, so it still
+" gives a newline until you pick. <C-Space> arrives as <Nul> in a terminal.
+if exists('*complete_info')
+  inoremap <expr> <CR> pumvisible() && complete_info(['selected']).selected != -1 ? "\<C-y>" : "\<CR>"
+endif
+inoremap <Nul> <C-n>

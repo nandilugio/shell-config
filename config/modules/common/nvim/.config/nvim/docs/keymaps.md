@@ -166,7 +166,7 @@ Tradeoff: faster to type, invisible to which-key. `<leader>u` optimizes discover
 | `<leader>-` | Split horizontal | 🟨 **matches tmux `bind -`**; `-` = horizontal divider |
 | `<leader>|` | Split vertical | 🟨 **matches tmux `bind |`**; `|` = vertical divider |
 | `<C-w>…` | Window namespace | ⬛ untouched — Helix copies it verbatim from vim |
-| `<S-h>`/`<S-l>` | Prev/next buffer | 🟦 LazyVim (`]b`/`[b` also core) |
+| ~~`<S-h>`/`<S-l>`~~ | — | Dropped 2026-11-06: LazyVim-only, and they are `H`/`L`, count-taking motions the cheatsheet teaches. `]b`/`[b` (core) and `<leader><leader>` cover it |
 | `<leader>bd` | **B**uffer **d**elete | 🟦 LazyVim |
 
 ## 8 · Edit & format
