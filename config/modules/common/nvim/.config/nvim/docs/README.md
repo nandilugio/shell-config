@@ -2,7 +2,8 @@
 
 Why the config is the way it is, kept because the reasoning is harder to
 reconstruct than the code. The config's own README is the summary; these are the
-evidence behind it.
+evidence behind it. How its own features behave is user documentation, so it
+lives in ../doc/config.txt as Vim help (:help config.txt).
 
 Live documents. A decision can be revisited at any time; when it is, the change
 and its reason are recorded here and referenced from then on. Some sections are

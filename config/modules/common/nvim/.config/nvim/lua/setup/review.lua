@@ -14,10 +14,14 @@
 --   hunk display  deleted lines, word diff, the cursor line's blame
 --   'write'       off, see PRESETS
 --
--- Nothing here knows about pull requests or any host: only local git. On a
--- branch it reviews the branch; on a detached HEAD, that one commit against
--- its parent. Staging is refused while the base is not the index
--- (setup/git.lua), so a review cannot touch the index either.
+-- Nothing here knows about pull requests or any host: only local git. Two
+-- kinds, shown as bR and cR in the statusline: on a branch, branch review --
+-- the branch against its base; on a detached HEAD, or a branch with nothing
+-- to compare against, commit review -- one commit against its parent. ]v and
+-- [v walk the commits, checking each out. Staging is refused while the base
+-- is not the index (setup/git.lua), so a review cannot touch the index either.
+--
+-- How it behaves, for the user: :help review-mode (doc/config.txt).
 
 local M = {}
 

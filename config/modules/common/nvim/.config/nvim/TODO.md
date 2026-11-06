@@ -4,7 +4,8 @@ Items 1-7 were found 2026-09-16 while investigating the `<leader>gb` blame
 popup; 8-16 on 2026-09-18/19 while working on the git setup; 17-22 on
 2026-09-28 in a read-through of the nvim and tmux configs; 23-24 on 2026-09-30
 while setting up a Python project; 25 the same day, while reworking folds; 26
-the same day, as a feature request. Paths are relative to this directory.
+the same day, as a feature request; 27-28 on 2026-11-05, while trying out
+review mode (26). Paths are relative to this directory.
 
 ---
 
@@ -1094,3 +1095,43 @@ and back off:
    base (`gitsigns/actions.lua:839`), so in review mode it shows the full file
    against the merge-base. Nothing needs building for that. Also update
    `docs/keymaps.md`.
+
+---
+
+## 27. Review mode's hunk display is noisy
+
+**Where:** `lua/setup/review.lua`, `PRESETS.review.hunk_details`.
+
+**Why:** Found 2026-11-05 trying review mode. Entering it switches on three of
+gitsigns' displays at once: deleted lines (as virtual lines), word diff and
+the cursor line's blame. Together they are a lot on screen, especially on a
+branch with many hunks.
+
+**Do:** Try review with each on its own and decide which earn a place in the
+preset. Each already has its own toggle (`<leader>ugd`, `ugw`, `ugb`), so
+whatever the preset leaves off is one key away. `hunk_details` is a single
+flag today; splitting it is a three-line change in `apply()`.
+
+---
+
+## 28. Undo emptied a buffer, during review mode (unexplained)
+
+**Where:** unknown.
+
+**Why:** 2026-11-05, while in review mode against `origin/master`, editing
+`lua/setup/statusline.lua` and pressing `u` repeatedly to clean up left the
+buffer **empty**: with deleted lines shown, every line of the file displayed
+as removed. Leaving review mode showed an empty buffer with a deletion sign.
+The file on disk was untouched (writes are refused in review). That session
+was closed before `:messages` could be read.
+
+Not reproduced: opening the file, entering review, editing and undoing in a
+clean session stops at the original text, as it should. Undo can only reach an
+empty state if the buffer's history holds one, which happens when Neovim
+reloads a file mid-session (`'undoreload'` keeps the reload undoable) or when
+something fills a buffer that was created empty.
+
+**Do:** If it happens again, read `:messages` before quitting (a W11 "file has
+changed" or similar), note how the file was opened (`<leader>gD`, quickfix,
+mini.files, `:e`), and whether `<leader>gd` or `<leader>gR` were used on it.
+`:undolist` would also show whether a reload sits in the history.
