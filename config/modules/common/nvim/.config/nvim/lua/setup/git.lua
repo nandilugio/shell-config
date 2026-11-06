@@ -272,7 +272,8 @@ function M.changed_files()
     return
   end
   local cmd = { "git", "-C", root, "diff", "--name-only", "--diff-filter=d" }
-  table.insert(cmd, M.base(0))
+  local base = M.base(0)
+  if base then table.insert(cmd, base) end
   local res = vim.system(cmd, { text = true }):wait()
   local files = vim.split(res.stdout or "", "\n", { trimempty = true })
   if res.code ~= 0 or #files == 0 then

@@ -314,11 +314,17 @@ end
 -- there is no place to give, so it names the comparison itself, in git's
 -- notation: master^..master, the parent of master to master.
 local function describe(s)
-  if s.kind == "branch" then return ("%s...%s"):format(s.name or s.conv.name, s.branch) end
+  if s.kind == "branch" then return ("%s...%s"):format(s.name, s.branch) end
   local at = not s.branch and G.short_rev(s.head)
     or s.back == 0 and s.branch
     or ("%s~%d"):format(s.branch, s.back)
   return s.list and ("%s %d/%d"):format(at, s.pos, #s.list) or ("%s^..%s"):format(at, at)
+end
+
+-- "Branch review: develop...feature-x", "Commit review: feature-x~3 4/7":
+-- the statusline's bR and cR, in words.
+local function headline(s)
+  return (s.kind == "branch" and "Branch review: " or "Commit review: ") .. describe(s)
 end
 
 -- A fetch on entry, so the base reflects the remote rather than whenever you
@@ -326,12 +332,6 @@ end
 -- terminal to ask for a password on (a prompt would draw over the editor);
 -- GIT_TERMINAL_PROMPT=0 for https. No network, no credentials: it fails
 -- quietly and the local answer stands. If it lands and the base moved, switch.
--- "Branch review: develop...feature-x", "Commit review: feature-x~3 4/7":
--- the statusline's bR and cR, in words.
-local function headline(s)
-  return (s.kind == "branch" and "Branch review: " or "Commit review: ") .. describe(s)
-end
-
 local function refresh_after_fetch(s)
   vim.system({ "git", "-C", s.root, "fetch", "--quiet" }, {
     detach = true,
@@ -339,8 +339,8 @@ local function refresh_after_fetch(s)
     env = { GIT_TERMINAL_PROMPT = "0" },
   }, function(res)
     vim.schedule(function()
-      -- Only while still on the branch as entered: a walk has moved HEAD.
-      if state ~= s or s.by_hand or res.code ~= 0 or s.kind ~= "branch" or s.at ~= s.head then return end
+      -- Not mid-walk: the kind is then "commit".
+      if state ~= s or s.by_hand or res.code ~= 0 or s.kind ~= "branch" then return end
       local conv = conventional_base(s.root, "HEAD", s.branch)
       if conv and conv.sha ~= s.base then
         s.base, s.name, s.conv = conv.sha, conv.name, { sha = conv.sha, name = conv.name }
@@ -559,9 +559,11 @@ function M.review_against(ref)
     vim.notify(err, vim.log.levels.WARN)
     return
   end
+  -- The walk follows the base: its list and its return point come along.
   state.base, state.name, state.by_hand = s.base, s.name, true
+  state.conv, state.list = s.conv, s.list
   set_base(state.base)
-  vim.notify("Reviewing " .. describe(state))
+  vim.notify(fit(headline(state)))
 end
 
 -- What <Tab> offers: the detected bases first -- the ones this review would

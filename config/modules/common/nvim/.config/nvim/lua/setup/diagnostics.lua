@@ -62,10 +62,6 @@ vim.diagnostic.config({
 })
 apply()
 
---- The current settings, as labels.
---- @return { scope: string, severity: string }
-function M.get() return vim.deepcopy(state) end
-
 --- Sets either or both, by label, without a message: callers that change
 --- several things at once (setup/review.lua) report them together.
 --- @param new { scope?: string, severity?: string }

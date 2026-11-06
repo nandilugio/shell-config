@@ -101,7 +101,9 @@ The walk also stops before a root commit, which has no parent to compare
 against.
 
 Leaving review mode checks out where it started: the branch, or the detached
-commit you entered on.
+commit you entered on. That checkout is refused on the same grounds as a
+step, and review stays on until they are cleared. A HEAD moved by hand
+meanwhile is left where it is.
 
 ------------------------------------------------------------------------------
 WHAT CHANGES						*review-presets*

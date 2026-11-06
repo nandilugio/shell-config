@@ -142,7 +142,7 @@ All letters below are LazyVim/AstroNvim-identical (the only 7 they agree on).
 | `<leader>ub` | **B**ackground |
 | `<leader>ul` | **L**ine numbers |
 
-Four more are ours, not shared conventions — there was no letter to borrow.
+Five more are ours, not shared conventions — there was no letter to borrow.
 The two markdown ones are display layers, on by default, so their toggles are
 the way out when one is in the way. The fold column is the reverse: off until
 a fold closes. Autosave is off until asked for.
