@@ -395,7 +395,10 @@ local function enter(ref)
   if #warnings > 0 then
     vim.notify(fit(table.concat(warnings, "; ")), vim.log.levels.WARN)
   else
-    vim.notify(fit(headline(s)))
+    -- The walk keys are the one thing review adds that no other key hints at.
+    -- Last, so a narrow window cuts the hint rather than the range.
+    local walk = s.branch and "]v [v walk the commits" or "[v walks back"
+    vim.notify(fit(headline(s) .. "; " .. walk))
   end
 
   if s.kind == "branch" and not s.by_hand then refresh_after_fetch(s) end
