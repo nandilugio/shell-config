@@ -152,6 +152,9 @@ local function refresh_repo()
   local d = vim.b.gitsigns_status_dict
   local root = d and d.root
   if not root then return end
+  -- Not root/.git: in a worktree that is a file, and the operation's marks
+  -- live where gitsigns says the git directory is.
+  local gitdir = d.gitdir or root .. "/.git"
 
   vim.system(
     {
@@ -171,7 +174,7 @@ local function refresh_repo()
           state.dirty = true
         end
       end
-      state.action = require("setup.git").operation(root .. "/.git")
+      state.action = require("setup.git").operation(gitdir)
 
       vim.schedule(function()
         repo_state[root] = state

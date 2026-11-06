@@ -1184,6 +1184,14 @@ Public API only, so it stays. Remove it when upstream fixes this.
 `self.revision` after the awaits in `refresh`, or take `Obj:lock` in both the
 watcher handler and `change_revision`.
 
+**Related, seen once in four suite runs (2026-11-06):** with deleted lines
+shown, a base change can race the preview's scheduled flush:
+`hunk_preview.lua:130: assertion failed!` from `prepare_removed_source`,
+which asserts `bcache.compare_text`, nil while `change_base` has invalidated
+the buffer and not yet refilled it. A scheduled-callback error only: nothing
+is left wrong. Same family -- gitsigns' async paths do not lock against each
+other. Worth a line in the report.
+
 ### Report, ready to paste
 
 > **Title:** gitdir watcher's refresh can revert a `change_base` made while it

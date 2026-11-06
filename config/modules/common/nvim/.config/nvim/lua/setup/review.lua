@@ -27,8 +27,8 @@
 -- A setup module, not a local plugin, though it is shaped to become one. The
 -- seam, should it ever be wanted elsewhere:
 --   generic   everything from "git" to "Walk", the :Review command, and the
---             three git helpers it borrows from setup/git.lua (root, base,
---             short_rev): they depend on git and gitsigns only. As a plugin
+--             git helpers it borrows from setup/git.lua (root, gitdir, base,
+--             short_rev, operation): git and gitsigns only. As a plugin
 --             they would move in here, and the statusline and the staging
 --             guard would call the plugin's kind(), label() and base()
 --             instead -- the dependency then points at the plugin, never back.
@@ -320,6 +320,9 @@ local function apply(preset, base)
   return require("setup.lsp").set_type_checking(preset.type_checking)
 end
 
+-- Every autocmd a review registers lives in this group, cleared on leaving.
+local group = vim.api.nvim_create_augroup("review", { clear = true })
+
 -- ── Keeping the base ────────────────────────────────────────────────────────
 -- gitsigns watches .git/HEAD and, after a checkout, refreshes every attached
 -- buffer with the revision it had when the refresh began, writing it back
@@ -333,9 +336,6 @@ end
 -- to look: a buffer whose base is not the review's gets it again. Once per
 -- buffer and base, so it cannot loop, and only for files in the working tree,
 -- since gitsigns leaves a file absent from it on the index by design.
--- Every autocmd a review registers lives in this group, cleared on leaving.
-local return_on_exit, leftover, write_record, reviewing_elsewhere -- below, with the walk
-local group = vim.api.nvim_create_augroup("review", { clear = true })
 
 local function keep_base(s)
   local applied = {}
@@ -407,67 +407,6 @@ local function refresh_after_fetch(s)
       end
     end)
   end)
-end
-
-local function enter(ref)
-  if not pcall(require, "gitsigns") then
-    vim.notify("Review mode needs gitsigns", vim.log.levels.WARN)
-    return
-  end
-  local root = G.root()
-  if not root then
-    vim.notify("Not in a git repository", vim.log.levels.WARN)
-    return
-  end
-  -- One review per repository: two would each see the other's checkouts as
-  -- HEAD moved by hand. A review left behind is offered its way back first.
-  local elsewhere = leftover(root)
-  if elsewhere then
-    vim.notify(reviewing_elsewhere(elsewhere), vim.log.levels.WARN)
-    return
-  end
-  local on_branch, branch = git(root, { "symbolic-ref", "--short", "-q", "HEAD" })
-  if ref and not on_branch then
-    vim.notify("A detached HEAD is reviewed against its parent; :Review <ref> needs a branch", vim.log.levels.WARN)
-    return
-  end
-  local s, err, fallback
-  if on_branch then s, err, fallback = detect_branch(root, branch, ref) end
-  if not on_branch or fallback then s, err = detect_commit(root, fallback and branch or nil) end
-  if not s then
-    vim.notify(err, vim.log.levels.WARN)
-    return
-  end
-
-  s.home = on_branch and { branch = branch } or { sha = s.head }
-  s.at = s.head
-  s.gitdir = select(2, git(root, { "rev-parse", "--absolute-git-dir" }))
-  state = s
-  write_record(s)
-  keep_base(s)
-  return_on_exit(s)
-  local tc, tc_level = apply(PRESETS.review, s.base)
-
-  -- The statusline already shows the range and the R, so when there is
-  -- something to act on, the message is only that, and whole (see fit); the
-  -- preset's own settings are in the cheatsheet.
-  local warnings = {}
-  if tc_level == vim.log.levels.WARN then table.insert(warnings, tc) end
-  if #s.nearer > 0 and not s.by_hand then
-    table.insert(warnings, table.concat(s.nearer, ", ") .. " fork nearer (:Review <Tab>)")
-  end
-  local _, dirty = git(root, { "status", "--porcelain", "--untracked-files=no" })
-  if dirty ~= "" then table.insert(warnings, "uncommitted changes included") end
-  if #warnings > 0 then
-    vim.notify(table.concat(warnings, "; "), vim.log.levels.WARN)
-  else
-    -- The walk keys are the one thing review adds that no other key hints at.
-    -- Last, so a narrow window cuts the hint rather than the range.
-    local walk = s.branch and "]v [v walk the commits" or "[v walks back"
-    vim.notify(fit(headline(s) .. "; " .. walk))
-  end
-
-  if s.kind == "branch" and not s.by_hand then refresh_after_fetch(s) end
 end
 
 -- ── Walk ────────────────────────────────────────────────────────────────────
@@ -573,7 +512,7 @@ local RECORDS = vim.fn.stdpath("state") .. "/review"
 
 local function record_path(root) return RECORDS .. "/" .. root:gsub("[/\\:]", "%%") .. ".json" end
 
-write_record = function(s)
+local function write_record(s)
   vim.fn.mkdir(RECORDS, "p")
   local record = { pid = vim.uv.os_getpid(), home = s.home, at = s.at, label = describe(s) }
   vim.fn.writefile({ vim.json.encode(record) }, record_path(s.root))
@@ -590,11 +529,13 @@ local function read_record(root)
   drop_record(root)
 end
 
--- Running, and a Neovim: a pid can be reused once its process is gone.
+-- Running, and a Neovim: a pid can be reused once its process is gone. The
+-- second half needs ps; without it, running is close enough.
 local function alive(pid)
   if type(pid) ~= "number" then return false end
   local ok, _, name = vim.uv.kill(pid, 0)
   if ok ~= 0 and name ~= "EPERM" then return false end
+  if vim.fn.executable("ps") == 0 then return true end
   local ps = vim.system({ "ps", "-p", tostring(pid), "-o", "comm=" }, { text = true }):wait()
   return ps.code == 0 and ps.stdout:find("nvim", 1, true) ~= nil
 end
@@ -641,7 +582,6 @@ local function checkout(s, target)
   local ok, _, err = git(s.root, args)
   if not ok then return false, err end
   s.at = target
-  write_record(s)
   -- Reload what changed; a file absent at this commit keeps its text, quietly.
   vim.cmd("silent! checktime")
   return true
@@ -666,7 +606,7 @@ end
 -- quietly. Otherwise, with a screen to show it on, say why and offer the way
 -- back before the screen goes; the record stays either way, for the next
 -- start, unless the offer was taken.
-return_on_exit = function(s)
+local function return_on_exit(s)
   vim.api.nvim_create_autocmd("VimLeavePre", {
     group = group,
     callback = function()
@@ -680,11 +620,11 @@ return_on_exit = function(s)
   })
 end
 
--- A record left in this repository, found on entering review: by a review in
--- another Neovim that is still running -- returned, so the caller can say so
--- -- or by one that is gone, whose HEAD is still where it left it: the way
--- back is offered. A record HEAD has since left is stale, and goes.
-leftover = function(root)
+-- A record left in this repository by another review: one still running in
+-- another Neovim, or one left behind -- a "no" at exit, a crash -- whose
+-- HEAD is still where it left it, marked `gone`. A record HEAD has since
+-- left is stale, and goes.
+local function other_review(root)
   local rec = read_record(root)
   if not rec then return nil end
   if rec.pid ~= vim.uv.os_getpid() and alive(rec.pid) then return rec end
@@ -693,17 +633,97 @@ leftover = function(root)
     drop_record(root)
     return nil
   end
-  if not has_ui() then return nil end
-  local gitdir = select(2, git(root, { "rev-parse", "--absolute-git-dir" }))
+  rec.gone = true
+  return rec
+end
+
+-- The way back for a review left behind, offered when there is a screen to
+-- ask on. Whether taken or declined, entering goes on from wherever HEAD is.
+local function offer_way_back(root, rec, gitdir)
+  if not has_ui() then return end
   local why = blocked({ root = root, at = rec.at, gitdir = gitdir }, true)
   local first = ("Review mode left HEAD at %s (%s)"):format(G.short_rev(rec.at), rec.label)
     .. (why and (": " .. why.cause .. ".") or ".")
   offer_back(root, rec.home, first, why, false)
 end
 
-reviewing_elsewhere = function(rec)
-  return ("Neovim %d is reviewing in this repository"):format(rec.pid)
+-- ── Entering ────────────────────────────────────────────────────────────────
+
+local function enter(ref)
+  if not pcall(require, "gitsigns") then
+    vim.notify("Review mode needs gitsigns", vim.log.levels.WARN)
+    return
+  end
+  local root = G.root()
+  if not root then
+    vim.notify("Not in a git repository", vim.log.levels.WARN)
+    return
+  end
+  -- Not in the middle of git's own business: the base and the signs would
+  -- mean little there, and the first step would refuse anyway.
+  local gitdir = G.gitdir()
+  local op = G.operation(gitdir)
+  if op then
+    vim.notify(("A %s is in progress: %s first"):format(op, quoted(FINISH[op])), vim.log.levels.WARN)
+    return
+  end
+  -- One review per repository: two would each see the other's checkouts as
+  -- HEAD moved by hand. A review left behind is offered its way back first.
+  local rec = other_review(root)
+  if rec and not rec.gone then
+    vim.notify(("Neovim %d is reviewing in this repository"):format(rec.pid), vim.log.levels.WARN)
+    return
+  end
+  if rec then offer_way_back(root, rec, gitdir) end
+  local on_branch, branch = git(root, { "symbolic-ref", "--short", "-q", "HEAD" })
+  if ref and not on_branch then
+    vim.notify("A detached HEAD is reviewed against its parent; :Review <ref> needs a branch", vim.log.levels.WARN)
+    return
+  end
+  local s, err, fallback
+  if on_branch then s, err, fallback = detect_branch(root, branch, ref) end
+  if not on_branch or fallback then s, err = detect_commit(root, fallback and branch or nil) end
+  if not s then
+    vim.notify(err, vim.log.levels.WARN)
+    return
+  end
+
+  -- Declining the way back must not lose it: a review started on the commit
+  -- the last one left HEAD at keeps that review's home, so leaving still
+  -- returns where the walk began.
+  local inherited = rec and rec.gone and sha(root, "HEAD") == rec.at and rec.home
+  s.home = on_branch and { branch = branch } or inherited or { sha = s.head }
+  s.at = s.head
+  s.gitdir = gitdir
+  state = s
+  write_record(s)
+  keep_base(s)
+  return_on_exit(s)
+  local tc, tc_level = apply(PRESETS.review, s.base)
+
+  -- The statusline already shows the range and the R, so when there is
+  -- something to act on, the message is only that, and whole (see fit); the
+  -- preset's own settings are in the cheatsheet.
+  local warnings = {}
+  if tc_level == vim.log.levels.WARN then table.insert(warnings, tc) end
+  if #s.nearer > 0 and not s.by_hand then
+    table.insert(warnings, table.concat(s.nearer, ", ") .. " fork nearer (:Review <Tab>)")
+  end
+  local _, dirty = git(root, { "status", "--porcelain", "--untracked-files=no" })
+  if dirty ~= "" then table.insert(warnings, "uncommitted changes included") end
+  if #warnings > 0 then
+    vim.notify(table.concat(warnings, "; "), vim.log.levels.WARN)
+  else
+    -- The walk keys are the one thing review adds that no other key hints at.
+    -- Last, so a narrow window cuts the hint rather than the range.
+    local walk = s.branch and "]v [v walk the commits" or "[v walks back"
+    vim.notify(fit(headline(s) .. "; " .. walk))
+  end
+
+  if s.kind == "branch" and not s.by_hand then refresh_after_fetch(s) end
 end
+
+-- ── Stepping and leaving ────────────────────────────────────────────────────
 
 --- Steps to the next (1) or previous (-1) commit under review.
 --- @param dir 1|-1

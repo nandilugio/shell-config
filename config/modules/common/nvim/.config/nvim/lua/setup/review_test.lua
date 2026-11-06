@@ -348,6 +348,14 @@ sh("rm .git/MERGE_HEAD && touch .git/BISECT_LOG")
 review.step(1)
 check_has("guard: a bisect, its command", last_msg(), "A bisect is in progress: `git bisect reset`")
 sh("rm .git/BISECT_LOG")
+-- Entering is refused during one too.
+toggle()
+sh("mkdir .git/rebase-merge")
+toggle()
+check_has("enter during a rebase: refused, both ways out", last_msg(), "A rebase is in progress: `git rebase --continue` or `git rebase --abort` first")
+check("enter during a rebase: nothing started", review.active(), false)
+sh("rmdir .git/rebase-merge")
+toggle()
 -- Mid-walk, so that leaving would otherwise go home: a hand move is left alone.
 step(1)
 sh("git checkout -q --detach feature-p~1")
@@ -502,9 +510,12 @@ keys = { "n" }
 toggle()
 check("left behind, dirty: offered stash and switch", asked[#asked], ("Review mode left HEAD at %s (feature-p~2 1/3): p1.txt has uncommitted changes.\nTo go back: `git stash; git switch feature-p`. Run?"):format(sh("git rev-parse --short HEAD")))
 check("left behind, dirty: declined, review starts here", { review.kind(), subject() }, { "commit", "p1" })
-toggle()
-sh("git checkout -- p1.txt && git switch -q feature-p")
+-- Declined, the new review keeps the old one's home: leaving still returns.
+sh("git checkout -- p1.txt")
 vim.cmd("silent! checktime")
+toggle()
+check("left behind, declined: leaving keeps the old promise", { on_branch(), has_marker() }, { "feature-p", false })
+check_has("left behind, declined: says so", last_msg(), "back on feature-p (`git switch feature-p`)")
 ui = false
 
 child("killed")

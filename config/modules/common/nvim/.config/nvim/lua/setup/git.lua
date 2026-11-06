@@ -305,6 +305,16 @@ function M.short_rev(rev)
   return rev
 end
 
+--- The git directory of the current buffer's repository: .git, or where a
+--- worktree's .git file points. Where git keeps MERGE_HEAD and the like.
+--- @return string?
+function M.gitdir()
+  local d = vim.b.gitsigns_status_dict
+  if d and d.gitdir then return d.gitdir end
+  local res = vim.system({ "git", "rev-parse", "--absolute-git-dir" }, { cwd = M.root() or vim.uv.cwd(), text = true }):wait()
+  return res.code == 0 and vim.trim(res.stdout) or nil
+end
+
 --- The repository holding the current buffer's file, or nil outside one.
 --- @return string?
 function M.root()
