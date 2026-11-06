@@ -13,6 +13,8 @@ The transcripts live in `~/.claude/projects/<encoded-project-path>/<session-uuid
 
 Be thorough here: the brevity the output calls for governs what you write, never what you read. A thread often changes direction late — a first diagnosis overturned, a conclusion reversed on pushback, an approach abandoned — and the prompts alone will not show it. Read far enough to see each thread's final state, and report that state rather than the path to it. Where you cannot tell which version stuck, say so.
 
+**Meetings.** Transcripts don't show meetings, so also list my Google Calendar events for the days in scope (the Google Calendar MCP tool). Keep only meetings of 30 minutes or more; the 15-minute standups don't count. Each one gets its own line in the time breakdown, named as the calendar names it, with its scheduled length. If a meeting overlaps a stretch of transcript work, take its hours out of that strand rather than double-billing.
+
 **Output.** An executive summary: what I'd want to know with thirty seconds and no memory of the work. Well under a page. Two parts, in this order.
 
 *First, a time breakdown.* One block per day in scope, no heading above it, each line a strand of work with estimated hours and a few comma-separated subjects:
