@@ -274,6 +274,10 @@ in the same place.
 - 2026-11-05, from the test suite: gitsigns' gitdir watcher can put an older
   base back after a checkout (TODO 29, upstream). keep_base re-applies the
   review's base on the buffer's GitSignsUpdate, once per buffer and base.
+- 2026-11-06, hunk colours: deleted lines and word diff are backgrounds only
+  (setup/git.lua), the editor's bg mixed with a red or green tint, so the
+  syntax colours gitsigns captures show through and <leader>ub keeps working.
+  gitsigns' defaults were DiffDelete fg+bold and reverse video, which hid them.
 - Tested by lua/setup/review_test.lua against a repository it builds: the
   branch shapes, the walk, the guards, :Review, the fetch. Kept a module, not
   a local plugin: the seam is documented in the header, see there.

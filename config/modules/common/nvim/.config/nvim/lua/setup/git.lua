@@ -34,6 +34,41 @@ if ok then
       changedelete = { text = "≃", show_count = true },
     },
   })
+
+  -- Deleted lines (show_deleted, on in review mode) and word diff, quieter
+  -- than gitsigns' defaults. Those borrow DiffDelete -- a bright foreground,
+  -- bold -- for the lines, and reverse video for the words, which inverts
+  -- every changed word into a block. Both override the syntax colours gitsigns
+  -- captures for the old text, so a deleted line read as one red smear.
+  --
+  -- Backgrounds only, then: the syntax colours show through, and a deleted
+  -- line reads as code on a dark red. Each is the editor's background mixed
+  -- with a tint, so they follow <leader>ub and the colourscheme; in the default
+  -- dark scheme these give #3e1216 for the lines, #6b1a24 and #1d4a2a for the
+  -- removed and added words. Word diff on the buffer's own lines and in the
+  -- <leader>gp popup share the green.
+  local function mix(from, to, t)
+    local out = 0
+    for shift = 16, 0, -8 do
+      local a, b = bit.band(bit.rshift(from, shift), 0xff), bit.band(bit.rshift(to, shift), 0xff)
+      out = out + bit.lshift(math.floor(a + (b - a) * t + 0.5), shift)
+    end
+    return out
+  end
+
+  local function set_highlights()
+    local bg = vim.api.nvim_get_hl(0, { name = "Normal", link = false }).bg
+      or (vim.o.background == "light" and 0xffffff or 0x000000) -- a transparent terminal
+    local added_word = { bg = mix(bg, 0x32c34d, 0.30) }
+    vim.api.nvim_set_hl(0, "GitSignsDeleteVirtLn", { bg = mix(bg, 0xff0000, 0.18) })
+    vim.api.nvim_set_hl(0, "GitSignsDeleteVirtLnInLine", { bg = mix(bg, 0xff2133, 0.37) })
+    vim.api.nvim_set_hl(0, "GitSignsAddInline", added_word)
+    vim.api.nvim_set_hl(0, "GitSignsChangeInline", added_word)
+  end
+
+  set_highlights()
+  -- A colourscheme change clears every group; gitsigns' own are only defaults.
+  vim.api.nvim_create_autocmd("ColorScheme", { callback = set_highlights })
 end
 
 -- RuboCop via :make, because on Ruby 2.x the server runs under a newer

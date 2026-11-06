@@ -1112,6 +1112,14 @@ preset. Each already has its own toggle (`<leader>ugd`, `ugw`, `ugb`), so
 whatever the preset leaves off is one key away. `hunk_details` is a single
 flag today; splitting it is a three-line change in `apply()`.
 
+**Partly done 2026-11-06:** most of the noise was styling, not the number of
+displays. Deleted lines used `DiffDelete` (bright foreground, bold) and word
+diff used reverse video, both overriding the syntax colours gitsigns already
+captures for the old text. Now backgrounds only, derived from the scheme in
+`setup/git.lua`: deleted lines on dark red, removed words on a stronger red,
+added words on green, syntax colours showing through. Still open: whether
+the cursor line's blame belongs in the preset.
+
 ---
 
 ## 28. Undo emptied a buffer, during review mode (unexplained)
