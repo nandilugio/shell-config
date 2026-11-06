@@ -277,6 +277,27 @@ function M.base(buf)
   return ok and rev or nil
 end
 
+-- The files git leaves in its directory while an operation is under way.
+local OPERATIONS = {
+  { "rebase-merge", "rebase" },
+  { "rebase-apply", "rebase" },
+  { "MERGE_HEAD", "merge" },
+  { "CHERRY_PICK_HEAD", "cherry-pick" },
+  { "REVERT_HEAD", "revert" },
+  { "BISECT_LOG", "bisect" },
+}
+
+--- The operation in progress in a git directory, as git names it -- "rebase",
+--- "merge" -- or nil. The statusline shows it; review mode refuses to check
+--- anything out during one.
+--- @param gitdir string
+--- @return string?
+function M.operation(gitdir)
+  for _, op in ipairs(OPERATIONS) do
+    if vim.uv.fs_stat(gitdir .. "/" .. op[1]) then return op[2] end
+  end
+end
+
 --- A revision as the eye wants it: a full sha cut to git's default 7.
 --- @param rev string
 function M.short_rev(rev)

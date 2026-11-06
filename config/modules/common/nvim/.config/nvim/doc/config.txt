@@ -75,7 +75,8 @@ Git records no "branched from", so the base is worked out from the graph:
 <   It is a hint, not a question: a parent branch and a child branch cut from
    this one later look alike from the graph. |:Review| {ref} switches.
 
-On entering a branch review, a fetch runs in the background. It never waits
+On entering a branch review, a fetch runs in the background. It only updates
+the remote-tracking branches, never yours or your files. It never waits
 and never asks for a password; without network or credentials it fails
 quietly. If it moves the base, the review switches and says so.
 
@@ -93,17 +94,26 @@ review, the oldest commit, ..., the tip, branch review again. On a trunk it
 goes back through history and forward to the tip. A commit no branch contains
 can only go back: git records parents, not children.
 
-A step is refused, with the reason, when it would lose or carry something:
-- a buffer with edits, which cannot be saved in review (:e! drops them);
-- uncommitted changes in the working tree;
-- HEAD moved outside review mode since the last step.
+Checking out is the one thing review mode does to the repository, so:
+
+- The first checkout of a review asks, and says where HEAD will return.
+- HEAD returns to where review started -- the branch, or the detached commit
+  you entered on -- when you leave review mode, and when you quit Neovim.
+  Quitting can be neither refused nor asked about, so that return is silent.
+- No checkout happens, and leaving is refused, while anything could be lost
+  or carried along. Each is checked afresh at every attempt, so clearing it
+  is enough:
+	- a buffer with edits, which cannot be saved in review (:e! drops them);
+	- uncommitted changes in the working tree;
+	- a rebase, merge, cherry-pick, revert or bisect in progress;
+	- HEAD moved outside review mode since the last step. Then leaving and
+	  quitting leave HEAD where you put it.
+- When quitting cannot bring HEAD back -- the tree is dirty, or Neovim
+  crashed -- the next Neovim opened in the repository says where HEAD was
+  left and how to go back. It never checks anything out by itself.
+
 The walk also stops before a root commit, which has no parent to compare
 against.
-
-Leaving review mode checks out where it started: the branch, or the detached
-commit you entered on. That checkout is refused on the same grounds as a
-step, and review stays on until they are cleared. A HEAD moved by hand
-meanwhile is left where it is.
 
 ------------------------------------------------------------------------------
 WHAT CHANGES						*review-presets*

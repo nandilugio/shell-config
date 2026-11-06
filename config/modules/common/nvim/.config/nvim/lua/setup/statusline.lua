@@ -148,21 +148,6 @@ end
 
 local repo_state = {}
 
-local function git_dir_action(root)
-  local checks = {
-    { "rebase-merge", "rebase" },
-    { "rebase-apply", "rebase" },
-    { "MERGE_HEAD", "merge" },
-    { "CHERRY_PICK_HEAD", "cherry-pick" },
-    { "REVERT_HEAD", "revert" },
-    { "BISECT_LOG", "bisect" },
-  }
-  for _, c in ipairs(checks) do
-    if vim.uv.fs_stat(root .. "/.git/" .. c[1]) then return c[2] end
-  end
-  return nil
-end
-
 local function refresh_repo()
   local d = vim.b.gitsigns_status_dict
   local root = d and d.root
@@ -186,7 +171,7 @@ local function refresh_repo()
           state.dirty = true
         end
       end
-      state.action = git_dir_action(root)
+      state.action = require("setup.git").operation(root .. "/.git")
 
       vim.schedule(function()
         repo_state[root] = state

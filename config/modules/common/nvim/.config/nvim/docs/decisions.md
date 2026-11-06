@@ -274,6 +274,15 @@ in the same place.
 - 2026-11-05, from the test suite: gitsigns' gitdir watcher can put an older
   base back after a checkout (TODO 29, upstream). keep_base re-applies the
   review's base on the buffer's GitSignsUpdate, once per buffer and base.
+- 2026-11-06, checkouts made safe, after a walk was left detached by quitting
+  Neovim mid-review: the first checkout of a review asks; HEAD returns home on
+  leaving AND on VimLeavePre; steps, leaving and the exit return are all
+  REFUSED (never worked around, no carrying changes over) on unsaved edits, a
+  dirty tree, an operation in progress (rebase, merge... -- now shared with the
+  statusline via setup/git.lua) or a HEAD moved by hand. Exit cannot refuse
+  or print (the UI is gone; tested), so a HEAD left away is recorded in
+  stdpath("state")/review/ -- outside the repo, no git change -- and reported
+  the next time Neovim opens there. Report only, never an automatic checkout.
 - 2026-11-06, hunk colours: deleted lines and word diff are backgrounds only
   (setup/git.lua), the editor's bg mixed with a red or green tint, so the
   syntax colours gitsigns captures show through and <leader>ub keeps working.

@@ -40,6 +40,19 @@ local function check_has(name, got, want)
   check(name, type(got) == "string" and got:find(want, 1, true) ~= nil and want or got, want)
 end
 
+-- Review mode records a marker in Neovim's state directory when it leaves
+-- HEAD away from home. Run again with a temporary one, so the suite -- and the
+-- Neovims it starts -- never touch the real one.
+if not vim.env.REVIEW_TEST_STATE then
+  local state = vim.fn.tempname()
+  local res = vim.system({ vim.v.progpath, "-l", debug.getinfo(1, "S").source:sub(2) }, {
+    env = { REVIEW_TEST_STATE = state, XDG_STATE_HOME = state },
+  }, function() end):wait()
+  io.write(res.stdout or "", res.stderr or "")
+  vim.fn.delete(state, "rf")
+  os.exit(res.code)
+end
+
 -- -l runs the script in place of the editor's startup, so the config is
 -- loaded here: the same init.lua, hence the same gitsigns and setup.review.
 if not package.loaded["setup.review"] then dofile(vim.fn.stdpath("config") .. "/init.lua") end
@@ -108,6 +121,21 @@ local G = require("setup.git")
 local msgs = {}
 vim.notify = function(m) msgs[#msgs + 1] = m end
 local function last_msg() return msgs[#msgs] end
+
+-- The first checkout of a review asks. Answered here, and counted.
+local confirms, answer = 0, 1
+vim.fn.confirm = function()
+  confirms = confirms + 1
+  return answer
+end
+
+-- Named after the repository as git resolves it: on macOS the temp dir is
+-- behind a symlink, /var -> /private/var.
+local function marker()
+  local root = sh("git rev-parse --show-toplevel")
+  return vim.fn.stdpath("state") .. "/review/" .. root:gsub("[/\\:]", "%%") .. ".json"
+end
+local function has_marker() return vim.uv.fs_stat(marker()) ~= nil end
 
 local function head() return sh("git rev-parse HEAD") end
 local function subject(rev) return sh("git log -1 --format=%s " .. (rev or "HEAD")) end
@@ -218,16 +246,27 @@ end
 
 -- ── The walk ────────────────────────────────────────────────────────────────
 
--- A cycle through the branch: 0 (the whole branch), 1, 2, 3, 0 again.
+-- The first checkout asks; Cancel leaves everything as it was.
 toggle()
+answer = 2
+review.step(1)
+check("confirm: asked before the first checkout", confirms, 1)
+check("confirm: Cancel checks nothing out", { subject(), on_branch() }, { "p3", "feature-p" })
+answer = 1
+
+-- A cycle through the branch: 0 (the whole branch), 1, 2, 3, 0 again.
 step(1)
+check("confirm: asked again, answered, then never", confirms, 2)
+check("marker: written once HEAD is away", has_marker(), true)
 check("walk 1/3: at p1, detached", { subject(), on_branch() }, { "p1", "" })
 statusline_is("walk 1/3: statusline", "cR feature-p~2 1/3")
 check_has("walk 1/3: message names the commit", last_msg(), "Commit review: feature-p~2 1/3  p1")
 check("walk 1/3: base is the parent", G.base(0), sh("git rev-parse HEAD^"))
 step(1)
 step(1)
+check("confirm: the walk asks only once", confirms, 2)
 check("walk 3/3: the tip, back on the branch", { subject(), on_branch() }, { "p3", "feature-p" })
+check("marker: gone once HEAD is home", has_marker(), false)
 statusline_is("walk 3/3: statusline", "cR feature-p 3/3")
 step(1)
 check_has("walk past the tip: branch review again", last_msg(), "Branch review: develop...feature-p")
@@ -240,6 +279,30 @@ check("walk back: 2/3", subject(), "p2")
 toggle()
 check("leave mid-walk: back on the branch", { on_branch(), review.active() }, { "feature-p", false })
 check_has("leave mid-walk: says so", last_msg(), "back on feature-p")
+check("leave mid-walk: marker gone", has_marker(), false)
+
+-- Leaving is refused on a step's grounds, and works once they are cleared.
+toggle()
+step(1)
+sh("echo dirt >> p1.txt")
+toggle()
+check_has("leave refused: a dirty tree", last_msg(), "Still reviewing: Uncommitted changes")
+check("leave refused: still reviewing, still away", { review.active(), subject() }, { true, "p1" })
+sh("git checkout -- p1.txt")
+vim.cmd("silent! checktime")
+toggle()
+check("leave after cleaning: home", { review.active(), on_branch() }, { false, "feature-p" })
+
+-- A home branch deleted mid-walk must not keep you in review.
+sh("git branch -q gone feature-p && git switch -q gone")
+vim.cmd("silent! checktime")
+toggle()
+step(1)
+sh("git branch -q -D gone")
+toggle()
+check_has("home deleted: leaving still works", last_msg(), "gone no longer exists, so HEAD stays")
+check("home deleted: out of review, no marker", { review.active(), has_marker() }, { false, false })
+git_checkout("feature-p")
 
 -- Guards: each refuses with its reason, and nothing moves.
 toggle()
@@ -249,8 +312,12 @@ check_has("guard: a buffer with edits", last_msg(), "p1.txt has edits: :e! to dr
 vim.cmd("e!")
 sh("echo dirt >> p2.txt")
 review.step(1)
-check_has("guard: a dirty tree", last_msg(), "Uncommitted changes would travel along")
+check_has("guard: a dirty tree", last_msg(), "Uncommitted changes: commit, stash or discard them first")
 sh("git checkout -- p2.txt")
+sh("touch .git/MERGE_HEAD")
+review.step(1)
+check_has("guard: an operation in progress", last_msg(), "A merge is in progress")
+sh("rm .git/MERGE_HEAD")
 -- Mid-walk, so that leaving would otherwise go home: a hand move is left alone.
 step(1)
 sh("git checkout -q --detach feature-p~1")
@@ -324,6 +391,52 @@ wait_for(function() return review.active() end)
 check_has("review @{u}: resolved name", last_msg(), "Branch review: origin/master...master")
 vim.cmd("Review")
 sh("git update-ref refs/remotes/origin/master master")
+
+-- ── Quitting ────────────────────────────────────────────────────────────────
+-- Exit can only be tested by exiting, so these run in Neovims of their own,
+-- started in the fixture repository with the same config.
+
+local child_script = top .. "/child.lua"
+vim.fn.writefile({
+  'local C = require("gitsigns.cache").cache',
+  'vim.cmd.edit("p1.txt")',
+  'local b = vim.api.nvim_get_current_buf()',
+  'vim.wait(5000, function() return C[b] ~= nil end)',
+  'vim.fn.confirm = function() return 1 end',
+  'local r = require("setup.review")',
+  'r.toggle()',
+  'r.step(1)',
+  'vim.wait(500)',
+  'if vim.env.DIRTY then vim.fn.system("echo dirt >> p1.txt") end',
+  'vim.cmd("qa!")',
+}, child_script)
+
+local function child(args, env)
+  local cmd = vim.list_extend({ vim.v.progpath, "--headless", "-n" }, args)
+  return vim.system(cmd, { cwd = repo, env = env, text = true }):wait()
+end
+
+-- Opening Neovim in the repository: the report, if any, as it is notified.
+local function report_on_start()
+  local res = child({
+    "--cmd", "lua vim.notify = function(m) io.stdout:write(m .. '\\n') end",
+    "-c", "lua vim.defer_fn(function() vim.cmd('qa!') end, 1500)",
+  })
+  return vim.trim(res.stdout or "")
+end
+
+git_checkout("feature-p")
+child({ "-c", "luafile " .. child_script })
+check("quit mid-walk, clean: HEAD back home", { on_branch(), has_marker() }, { "feature-p", false })
+
+child({ "-c", "luafile " .. child_script }, { DIRTY = "1" })
+check("quit mid-walk, dirty: HEAD stays", { subject(), on_branch() }, { "p1", "" })
+check("quit mid-walk, dirty: marker kept", has_marker(), true)
+check_has("next start: reports where HEAD was left", report_on_start(), "Review mode left HEAD at " .. sh("git rev-parse --short HEAD") .. ": git switch feature-p to go back")
+sh("git checkout -- p1.txt && git switch -q feature-p")
+vim.cmd("silent! checktime")
+check("next start, HEAD moved on: nothing to report", report_on_start(), "")
+check("next start, HEAD moved on: stale marker gone", has_marker(), false)
 
 -- ── The fetch ───────────────────────────────────────────────────────────────
 -- feature-q forks from the remote's develop, so a stale origin/develop gives

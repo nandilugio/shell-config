@@ -333,7 +333,9 @@ end
 -- to look: a buffer whose base is not the review's gets it again. Once per
 -- buffer and base, so it cannot loop, and only for files in the working tree,
 -- since gitsigns leaves a file absent from it on the index by design.
-local group = vim.api.nvim_create_augroup("review_base", { clear = true })
+-- Every autocmd a review registers lives in this group, cleared on leaving.
+local return_on_exit -- below, with the walk
+local group = vim.api.nvim_create_augroup("review", { clear = true })
 
 local function keep_base(s)
   local applied = {}
@@ -427,8 +429,10 @@ local function enter(ref)
 
   s.home = on_branch and { branch = branch } or { sha = s.head }
   s.at = s.head
+  s.gitdir = select(2, git(root, { "rev-parse", "--absolute-git-dir" }))
   state = s
   keep_base(s)
+  return_on_exit(s)
   local tc, tc_level = apply(PRESETS.review, s.base)
 
   -- The message must fit beside the ruler (v:echospace): anything longer, or a
@@ -460,13 +464,19 @@ end
 -- read in a real working tree: the language server, tests, everything sees
 -- that commit. Along a branch's own commits it is a cycle through the whole
 -- branch: branch review, its oldest commit, ..., its tip, branch review again.
--- On a trunk, back through history and forward to the tip. Leaving review
--- checks out where it started.
+-- On a trunk, back through history and forward to the tip.
 --
--- Checkouts move every file under the editor, so a step is refused when
--- anything would be lost or carried along with it: edits in a buffer (they
--- cannot be saved in review, and a reload would clash with them), uncommitted
--- changes in the tree, or a HEAD moved by hand since the last step.
+-- Checkouts are the one thing review mode does to the repository, so they
+-- are guarded against surprises:
+--   - the first one of a review asks, and says HEAD will come back;
+--   - HEAD comes back to where review started on leaving, and on quitting
+--     Neovim, which can be neither asked nor refused, so it does it silently;
+--   - none happens while anything could be lost or carried along: unsaved
+--     edits in a buffer, uncommitted changes, an operation in progress, or a
+--     HEAD moved by hand. Refused, not worked around: whoever made the tree
+--     dirty cleans it up, and every guard is checked afresh at each attempt.
+--   - a HEAD left away from home -- a dirty tree at exit, a crash -- is
+--     recorded, and reported the next time Neovim opens in the repository.
 
 local function unsaved_buffer()
   for _, b in ipairs(vim.api.nvim_list_bufs()) do
@@ -477,14 +487,37 @@ local function unsaved_buffer()
   end
 end
 
-local function blocked(s)
+-- Why a checkout cannot happen now, or nil. At exit, unsaved buffers do not
+-- count: quitting has already discarded them.
+local function blocked(s, exiting)
   if sha(s.root, "HEAD") ~= s.at then
     return "HEAD was moved outside review mode: :Review twice to start again from here"
   end
-  local name = unsaved_buffer()
+  local op = G.operation(s.gitdir)
+  if op then return ("A %s is in progress: finish or abort it first"):format(op) end
+  local name = not exiting and unsaved_buffer()
   if name then return name .. " has edits: :e! to drop them first" end
   local _, dirty = git(s.root, { "status", "--porcelain", "--untracked-files=no" })
-  if dirty ~= "" then return "Uncommitted changes would travel along: commit or stash them first" end
+  if dirty ~= "" then return "Uncommitted changes: commit, stash or discard them first" end
+end
+
+local function home_sha(s) return s.home.branch and sha(s.root, s.home.branch) or s.home.sha end
+
+-- The marker: where review left HEAD, in Neovim's state directory -- outside
+-- the repository, so recording it is not itself a git change. One file per
+-- repository, present only while HEAD is away from home.
+local function marker_path(root)
+  return vim.fn.stdpath("state") .. "/review/" .. root:gsub("[/\\:]", "%%") .. ".json"
+end
+
+local function sync_marker(s)
+  local path = marker_path(s.root)
+  if s.at == home_sha(s) then
+    os.remove(path)
+    return
+  end
+  vim.fn.mkdir(vim.fs.dirname(path), "p")
+  vim.fn.writefile({ vim.json.encode({ home = s.home, at = s.at }) }, path)
 end
 
 -- Attached when the target is the tip of the branch review started on, so
@@ -493,14 +526,43 @@ local function checkout(s, target)
   local b = s.home.branch
   local args = (b and sha(s.root, b) == target) and { "checkout", "-q", b } or { "checkout", "-q", "--detach", target }
   local ok, _, err = git(s.root, args)
-  if not ok then
-    vim.notify(fit(err), vim.log.levels.WARN)
-    return false
-  end
+  if not ok then return false, err end
   s.at = target
+  sync_marker(s)
   -- Reload what changed; a file absent at this commit keeps its text, quietly.
   vim.cmd("silent! checktime")
   return true
+end
+
+-- Back to where review started. Returns nil when HEAD is home, else why not.
+local function go_home(s, exiting)
+  local home = home_sha(s)
+  if s.at == home then return nil end
+  -- Neither is review's doing, so HEAD stays, nothing is reported later, and
+  -- leaving still works: a refusal here would keep you in review for good.
+  if not home then
+    os.remove(marker_path(s.root))
+    return nil, s.home.branch .. " no longer exists, so HEAD stays"
+  end
+  if sha(s.root, "HEAD") ~= s.at then
+    os.remove(marker_path(s.root))
+    return nil, "HEAD was moved by hand, so it stays"
+  end
+  local why = blocked(s, exiting)
+  if why then return why end
+  local ok, err = checkout(s, home)
+  if not ok then return err end
+end
+
+-- Quitting cannot be refused, nor asked about, so a clean tree goes home
+-- quietly and anything else leaves HEAD -- and the marker -- where they are.
+return_on_exit = function(s)
+  vim.api.nvim_create_autocmd("VimLeavePre", {
+    group = group,
+    callback = function()
+      if state == s then go_home(s, true) end
+    end,
+  })
 end
 
 --- Steps to the next (1) or previous (-1) commit under review.
@@ -536,7 +598,15 @@ function M.step(dir)
 
   local why = blocked(s)
   if why then return vim.notify(fit(why), vim.log.levels.WARN) end
-  if not checkout(s, target) then return end
+  if not s.confirmed then
+    local home = s.home.branch or G.short_rev(s.home.sha)
+    local question = ("]v and [v check out commits in %s.\nHEAD returns to %s when you leave review mode or quit Neovim.")
+      :format(vim.fs.basename(s.root), home)
+    if vim.fn.confirm(question, "&Check out\n&Cancel", 2) ~= 1 then return end
+    s.confirmed = true
+  end
+  local ok, err = checkout(s, target)
+  if not ok then return vim.notify(fit(err), vim.log.levels.WARN) end
 
   s.head = target
   if whole_branch then
@@ -555,26 +625,37 @@ end
 
 local function leave()
   local s = state
-  local home = s.home.branch and sha(s.root, s.home.branch) or s.home.sha
-  local note = ""
-  if s.at ~= home then
-    if sha(s.root, "HEAD") ~= s.at then
-      note = "; HEAD was moved by hand, so it stays"
-    else
-      local why = blocked(s)
-      if why then return vim.notify(fit("Still reviewing: " .. why), vim.log.levels.WARN) end
-      local ok, _, err = git(s.root, s.home.branch and { "checkout", "-q", s.home.branch } or { "checkout", "-q", "--detach", home })
-      if not ok then return vim.notify(fit("Still reviewing: " .. err), vim.log.levels.WARN) end
-      vim.cmd("silent! checktime")
-      note = "; back on " .. (s.home.branch or G.short_rev(home))
-    end
-  end
+  local moved = s.at ~= home_sha(s)
+  local why, note = go_home(s)
+  if why then return vim.notify(fit("Still reviewing: " .. why), vim.log.levels.WARN) end
+  note = note and "; " .. note or moved and "; back on " .. (s.home.branch or G.short_rev(s.home.sha)) or ""
   state = nil
   vim.api.nvim_clear_autocmds({ group = group })
   local tc, tc_level = apply(PRESETS.edit, nil)
   local warn = tc_level == vim.log.levels.WARN
   vim.notify(fit("Edit mode" .. note .. (warn and "; " .. tc or "")), warn and tc_level or nil)
 end
+
+-- The report for a HEAD review left away from home, the next time Neovim
+-- opens in that repository. Only says so: checking out is for you to decide.
+-- A marker HEAD has since left is stale, and goes.
+vim.api.nvim_create_autocmd("VimEnter", {
+  once = true,
+  callback = function()
+    local root = G.root()
+    local path = root and marker_path(root)
+    local f = path and io.open(path)
+    if not f then return end
+    local ok, m = pcall(vim.json.decode, f:read("a"))
+    f:close()
+    if not ok or type(m) ~= "table" or type(m.home) ~= "table" or sha(root, "HEAD") ~= m.at then
+      os.remove(path)
+      return
+    end
+    local back = m.home.branch and ("git switch " .. m.home.branch) or ("git switch --detach " .. G.short_rev(m.home.sha))
+    vim.notify(fit(("Review mode left HEAD at %s: %s to go back"):format(G.short_rev(m.at), back)), vim.log.levels.WARN)
+  end,
+})
 
 -- ── Public ──────────────────────────────────────────────────────────────────
 
