@@ -217,7 +217,11 @@ local function check_contract()
         if vim.fn.hlexists(hl) ~= 1 then table.insert(gone, "highlight " .. hl) end
       end
       if c.status_fields then
-        local d = vim.b.gitsigns_status_dict
+        -- Any attached buffer: :checkhealth runs in a window of its own.
+        local d
+        for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+          d = d or vim.b[buf].gitsigns_status_dict
+        end
         if d then
           for _, f in ipairs(c.status_fields) do
             if d[f] == nil then table.insert(gone, "b:gitsigns_status_dict." .. f) end
