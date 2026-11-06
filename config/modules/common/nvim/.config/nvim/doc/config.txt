@@ -96,21 +96,32 @@ can only go back: git records parents, not children.
 
 Checking out is the one thing review mode does to the repository, so:
 
-- The first checkout of a review asks, and says where HEAD will return.
-- HEAD returns to where review started -- the branch, or the detached commit
+- The first checkout of a review asks, showing the git command it runs: >
+	Now: `git switch --detach 989c5af`. Run? [Y/n]
+<- HEAD returns to where review started -- the branch, or the detached commit
   you entered on -- when you leave review mode, and when you quit Neovim.
-  Quitting can be neither refused nor asked about, so that return is silent.
+  Quitting can't be refused, so a clean tree goes back silently.
 - No checkout happens, and leaving is refused, while anything could be lost
   or carried along. Each is checked afresh at every attempt, so clearing it
-  is enough:
+  is enough, and each message names the git commands that clear it:
 	- a buffer with edits, which cannot be saved in review (:e! drops them);
 	- uncommitted changes in the working tree;
 	- a rebase, merge, cherry-pick, revert or bisect in progress;
 	- HEAD moved outside review mode since the last step. Then leaving and
 	  quitting leave HEAD where you put it.
-- When quitting cannot bring HEAD back -- the tree is dirty, or Neovim
-  crashed -- the next Neovim opened in the repository says where HEAD was
-  left and how to go back. It never checks anything out by itself.
+- When quitting can't take HEAD back, it says why before the screen goes,
+  and offers the way back when one command is the clear one: >
+	Review mode can't take HEAD back to feature-x: p1.txt has
+	uncommitted changes.
+	To go back: `git stash; git switch feature-x`. Run? [y/N]
+<  The default is no wherever more than HEAD would change.
+- A HEAD left away -- after a "no", or a crash -- is offered its way back
+  the next time Neovim opens in the repository, or review mode is entered
+  there. Never when git itself opened Neovim, on a commit message or a
+  rebase todo.
+- One review per repository: a second Neovim is told which one is
+  reviewing, and can't start its own. Each Neovim's review is recorded in
+  ~/.local/state/nvim/review/, outside the repository.
 
 The walk also stops before a root commit, which has no parent to compare
 against.

@@ -283,6 +283,19 @@ in the same place.
   or print (the UI is gone; tested), so a HEAD left away is recorded in
   stdpath("state")/review/ -- outside the repo, no git change -- and reported
   the next time Neovim opens there. Report only, never an automatic checkout.
+- 2026-11-06, the same day, refined: messages quote the git commands that
+  clear what is in the way (`git stash`, `git rebase --abort`...), and OFFER
+  to run them inline, "Run? [y/N]", when one command or chain is the clear
+  choice; default yes only when nothing but HEAD changes. Quitting CAN prompt
+  (tested: VimLeavePre waits for a key), so a dirty quit says why and offers
+  `git stash; git switch <home>`. The record is written on entering, with the
+  owner's pid (checked alive AND nvim, against pid reuse): one review per
+  repository, and another Neovim is told which one. The startup check does no
+  git work unless a record exists, and skips git's own files (commit message,
+  rebase todo). Prompts grow 'cmdheight' while waiting: a two-line message
+  otherwise raises "Press ENTER", which ate the answer (found on a real
+  screen; the test stubs could not see it). Checkouts use `git switch`, so
+  the command shown is the command run.
 - 2026-11-06, hunk colours: deleted lines and word diff are backgrounds only
   (setup/git.lua), the editor's bg mixed with a red or green tint, so the
   syntax colours gitsigns captures show through and <leader>ub keeps working.
