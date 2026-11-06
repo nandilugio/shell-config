@@ -100,6 +100,7 @@ list in. Each has its own `README.md` and `DESIGN.md`.
 
     nvim -l lua/mdtable/test.lua      # their tests, no framework needed
     nvim -l lua/mdheading/test.lua
+    nvim -l lua/setup/review_test.lua # review mode's, against a repository it builds
 
 ### Not installed, and why
 
