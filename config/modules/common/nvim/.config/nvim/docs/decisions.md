@@ -271,6 +271,12 @@ in the same place.
   NOT to the upstream: that would hide commit review whenever you are ahead,
   and :Review @{u} says it explicitly.
 - Messages fit v:echospace: longer raises hit-enter, which ate the next keys.
+- 2026-11-05, from the test suite: gitsigns' gitdir watcher can put an older
+  base back after a checkout (TODO 29, upstream). keep_base re-applies the
+  review's base on the buffer's GitSignsUpdate, once per buffer and base.
+- Tested by lua/setup/review_test.lua against a repository it builds: the
+  branch shapes, the walk, the guards, :Review, the fetch. Kept a module, not
+  a local plugin: the seam is documented in the header, see there.
 
 ### :help for the config's own features (2026-11-05) — doc/config.txt
 The cheatsheet says what to press; doc/config.txt says how things behave, as

@@ -22,6 +22,24 @@
 -- is not the index (setup/git.lua), so a review cannot touch the index either.
 --
 -- How it behaves, for the user: :help review-mode (doc/config.txt).
+-- Tested by review_test.lua, next to this file: nvim -l lua/setup/review_test.lua
+--
+-- A setup module, not a local plugin, though it is shaped to become one. The
+-- seam, should it ever be wanted elsewhere:
+--   generic   everything from "git" to "Walk", the :Review command, and the
+--             three git helpers it borrows from setup/git.lua (root, base,
+--             short_rev): they depend on git and gitsigns only. As a plugin
+--             they would move in here, and the statusline and the staging
+--             guard would call the plugin's kind(), label() and base()
+--             instead -- the dependency then points at the plugin, never back.
+--   ours      PRESETS: the diagnostics scope and the type-checking mode are
+--             this config's setters. A plugin would take them as on_enter /
+--             on_leave hooks in setup(), keeping only what must stay
+--             consistent -- the base, HEAD's position and 'write'.
+--   health    the base read from gitsigns' cache (config/health.lua) would be
+--             the plugin's own :checkhealth.
+-- Kept a module because the split costs an API and hooks and buys nothing
+-- until there is a second home.
 
 local M = {}
 
@@ -302,6 +320,38 @@ local function apply(preset, base)
   return require("setup.lsp").set_type_checking(preset.type_checking)
 end
 
+-- ── Keeping the base ────────────────────────────────────────────────────────
+-- gitsigns watches .git/HEAD and, after a checkout, refreshes every attached
+-- buffer with the revision it had when the refresh began, writing it back
+-- when its git calls return. Nothing locks that against change_base, so a
+-- refresh still in flight from the previous step lands after the next step's
+-- base change and puts the old base back: wrong hunks, and the statusline
+-- falls to the two-dot form. Two quick steps, or slow git, is all it takes
+-- (TODO 29, an upstream bug).
+--
+-- The refresh ends by raising GitSignsUpdate for the buffer, so that is where
+-- to look: a buffer whose base is not the review's gets it again. Once per
+-- buffer and base, so it cannot loop, and only for files in the working tree,
+-- since gitsigns leaves a file absent from it on the index by design.
+local group = vim.api.nvim_create_augroup("review_base", { clear = true })
+
+local function keep_base(s)
+  local applied = {}
+  vim.api.nvim_create_autocmd("User", {
+    group = group,
+    pattern = "GitSignsUpdate",
+    callback = function(ev)
+      local buf = ev.data and ev.data.buffer
+      if not buf or state ~= s or G.base(buf) == s.base then return end
+      local key = buf .. ":" .. s.base
+      local name = vim.api.nvim_buf_get_name(buf)
+      if applied[key] or name == "" or not vim.uv.fs_stat(name) then return end
+      applied[key] = true
+      require("gitsigns").change_base(s.base, true)
+    end,
+  })
+end
+
 -- Cut to the width a message can take without the hit-enter prompt.
 local function fit(msg)
   local room = math.max(20, vim.v.echospace - 1)
@@ -378,6 +428,7 @@ local function enter(ref)
   s.home = on_branch and { branch = branch } or { sha = s.head }
   s.at = s.head
   state = s
+  keep_base(s)
   local tc, tc_level = apply(PRESETS.review, s.base)
 
   -- The message must fit beside the ruler (v:echospace): anything longer, or a
@@ -519,6 +570,7 @@ local function leave()
     end
   end
   state = nil
+  vim.api.nvim_clear_autocmds({ group = group })
   local tc, tc_level = apply(PRESETS.edit, nil)
   local warn = tc_level == vim.log.levels.WARN
   vim.notify(fit("Edit mode" .. note .. (warn and "; " .. tc or "")), warn and tc_level or nil)

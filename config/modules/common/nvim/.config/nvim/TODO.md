@@ -4,8 +4,8 @@ Items 1-7 were found 2026-09-16 while investigating the `<leader>gb` blame
 popup; 8-16 on 2026-09-18/19 while working on the git setup; 17-22 on
 2026-09-28 in a read-through of the nvim and tmux configs; 23-24 on 2026-09-30
 while setting up a Python project; 25 the same day, while reworking folds; 26
-the same day, as a feature request; 27-28 on 2026-11-05, while trying out
-review mode (26). Paths are relative to this directory.
+the same day, as a feature request; 27-29 on 2026-11-05, while trying out and
+then testing review mode (26). Paths are relative to this directory.
 
 ---
 
@@ -1135,3 +1135,65 @@ something fills a buffer that was created empty.
 changed" or similar), note how the file was opened (`<leader>gD`, quickfix,
 mini.files, `:e`), and whether `<leader>gd` or `<leader>gR` were used on it.
 `:undolist` would also show whether a reload sits in the history.
+
+---
+
+## 29. UPSTREAM BUG — a checkout's refresh puts an older base back
+
+**Where:** gitsigns, not this config. `lua/gitsigns/git.lua`, the local
+`refresh(self, revision)` that `Obj:refresh()` calls with `self.revision`, and
+the gitdir watcher in `lua/gitsigns/attach.lua` that calls it.
+
+**Symptom:** found 2026-11-05 by `lua/setup/review_test.lua`. Walking commits
+in review mode (`]v`, a checkout then `change_base`), two steps in quick
+succession leave a buffer on the *previous* step's base: wrong hunks, and
+the statusline falls back to `sha..branch` because the base no longer matches
+the review's. Deterministic in the suite with eight buffers attached; never
+seen with one buffer and slow steps. Slow git (a big repository) widens the
+window.
+
+**Cause:** a checkout changes `.git/HEAD`; the watcher's handler runs
+`git_obj:refresh()` for each attached buffer. That reads `self.revision` when
+it starts, awaits git, and assigns it back when done (`git.lua:58`). Nothing
+locks it against `change_base`, whose `change_revision` writes the same field.
+A refresh in flight across a base change restores the old value. Logged in the
+failing run, for one buffer (`d4`, `p1`, `p2` are the fixture's commits):
+
+```
+change_revision  index -> d4          enter review
+change_revision  d4 -> p1             step: base p1   now=p1
+refresh          started at d4 ...    now=d4          the watcher, late
+change_revision  d4 -> p2             step: base p2   now=p2
+refresh          started at d4 ...    now=d4          and again
+```
+
+**Worked around** in `setup/review.lua` (`keep_base`): the refresh ends by
+raising `GitSignsUpdate` for the buffer, so on that event a buffer whose base
+is not the review's gets `change_base` again, once per buffer and base.
+Public API only, so it stays. Remove it when upstream fixes this.
+
+**Do:** file at lewis6991/gitsigns.nvim. Fix candidates upstream: re-read
+`self.revision` after the awaits in `refresh`, or take `Obj:lock` in both the
+watcher handler and `change_revision`.
+
+### Report, ready to paste
+
+> **Title:** gitdir watcher's refresh can revert a `change_base` made while it
+> was running
+>
+> `Obj:refresh()` passes `self.revision` into the local `refresh(self,
+> revision)`, which awaits git and then assigns `self.revision = revision`
+> (`git.lua:58`). The gitdir watcher calls it for every attached buffer after
+> a checkout. If `change_base` runs while such a refresh is in flight, the
+> refresh completes afterwards and writes the earlier revision back, so the
+> buffer silently returns to the previous base.
+>
+> **Repro** (gitsigns 4bcd991, Neovim 0.12.6): with several buffers attached,
+> `git checkout --detach <commit>` then `require("gitsigns").change_base(<sha>,
+> true)`, twice within ~200ms with different shas. Some buffers end on the
+> first sha. Wrapping `Obj.change_revision` and `Obj.refresh` to log their
+> writes shows the refresh's late assignment.
+>
+> **Expected:** the base set last wins. Re-reading `self.revision` after the
+> awaits in `refresh`, or holding `Obj:lock` in both the watcher handler and
+> `change_revision`, would do it.
