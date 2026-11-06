@@ -97,7 +97,8 @@ can only go back: git records parents, not children.
 Checking out is the one thing review mode does to the repository, so:
 
 - The first checkout of a review asks, showing the git command it runs: >
-	Now: `git switch --detach 989c5af`. Run? [Y/n]
+	Now: `git switch --detach 989c5af`. Run?
+	[Y]es, (N)o:
 <- HEAD returns to where review started -- the branch, or the detached commit
   you entered on -- when you leave review mode, and when you quit Neovim.
   Quitting can't be refused, so a clean tree goes back silently.
@@ -113,14 +114,14 @@ Checking out is the one thing review mode does to the repository, so:
   and offers the way back when one command is the clear one: >
 	Review mode can't take HEAD back to feature-x: p1.txt has
 	uncommitted changes.
-	To go back: `git stash; git switch feature-x`. Run? [y/N]
+	To go back: `git stash; git switch feature-x`. Run?
+	(Y)es, [N]o:
 <  The default is no wherever more than HEAD would change.
 - A HEAD left away -- after a "no", or a crash -- is offered its way back
-  the next time Neovim opens in the repository, or review mode is entered
-  there. Never when git itself opened Neovim, on a commit message or a
-  rebase todo.
-- One review per repository: a second Neovim is told which one is
-  reviewing, and can't start its own. Each Neovim's review is recorded in
+  the next time review mode is entered in that repository. Until then the
+  shell prompt shows it: a sha where the branch name would be.
+- One review per repository: a second Neovim entering review is told which
+  one is reviewing, and can't start its own. Each Neovim's review is recorded in
   ~/.local/state/nvim/review/, outside the repository.
 
 The walk also stops before a root commit, which has no parent to compare

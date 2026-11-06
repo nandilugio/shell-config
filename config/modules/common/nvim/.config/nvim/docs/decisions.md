@@ -296,6 +296,13 @@ in the same place.
   otherwise raises "Press ENTER", which ate the answer (found on a real
   screen; the test stubs could not see it). Checkouts use `git switch`, so
   the command shown is the command run.
+- 2026-11-06, simplified after review against the principles: NO startup
+  check (a "no" at quit was just read, a crash shows in the shell prompt,
+  entering review still offers the way back); questions are plain confirm()
+  (its own "[Y]es, (N)o:" line) instead of growing 'cmdheight' for an inline
+  "[y/N]"; and only routine messages (entry, steps, leaving) are cut to fit --
+  refusals and warnings carry commands and are meant to be read, so Neovim
+  shows them whole with its standard "Press ENTER", and :messages keeps them.
 - 2026-11-06, hunk colours: deleted lines and word diff are backgrounds only
   (setup/git.lua), the editor's bg mixed with a red or green tint, so the
   syntax colours gitsigns captures show through and <leader>ub keeps working.

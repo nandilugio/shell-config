@@ -122,21 +122,18 @@ local msgs = {}
 vim.notify = function(m) msgs[#msgs + 1] = m end
 local function last_msg() return msgs[#msgs] end
 
--- Review mode's questions are a line in the message area, answered with one
--- key. Here the keys come from a queue -- Enter, the default, when it is
--- empty -- and every question asked is kept, as shown.
-local keys, asked, last_echo = {}, {}, nil
-vim.api.nvim_echo = function(chunks)
-  local text = table.concat(vim.tbl_map(function(c) return c[1] end, chunks))
-  if text ~= "" then last_echo = text end
-end
-
--- Messages are cut to the room beside the ruler; -l's is 80 columns. These
--- checks are about what the messages say, so give them a wide screen.
-vim.o.columns = 240
-vim.fn.getcharstr = function()
-  table.insert(asked, last_echo)
-  return table.remove(keys, 1) or "\r"
+-- Review mode's questions are Neovim's confirm(). Answered here from a queue
+-- of keys -- "y", "n", or Enter, the default, when it is empty -- and every
+-- question asked is kept, as its text.
+local keys, asked = {}, {}
+vim.fn.confirm = function(text, choices, default)
+  table.insert(asked, text)
+  local key = table.remove(keys, 1) or "\r"
+  if key == "\r" then return default end
+  for i, choice in ipairs(vim.split(choices, "\n")) do
+    if choice:gsub("&", ""):sub(1, 1):lower() == key then return i end
+  end
+  return 0
 end
 
 -- The questions at quitting and at the next start need a screen to be asked
@@ -268,7 +265,7 @@ check("record: written on entering", has_marker(), true)
 keys = { "n" }
 review.step(1)
 check("first checkout: asks", #asked, 1)
-check_has("first checkout: names the command", asked[1], "Now: `git switch --detach " .. sh("git rev-parse --short feature-p~2") .. "`. Run? [Y/n]")
+check_has("first checkout: names the command", asked[1], "Now: `git switch --detach " .. sh("git rev-parse --short feature-p~2") .. "`. Run?")
 check("first checkout: n checks nothing out", { subject(), on_branch() }, { "p3", "feature-p" })
 
 -- A cycle through the branch: 0 (the whole branch), 1, 2, 3, 0 again.
@@ -440,7 +437,7 @@ step(1)
 sh("echo dirt >> p1.txt")
 keys = { "\r" }
 quit_hook()
-check("quit, dirty: the question", asked[#asked], "Review mode can't take HEAD back to feature-p: p1.txt has uncommitted changes.\nTo go back: `git stash; git switch feature-p`. Run? [y/N] ")
+check("quit, dirty: the question", asked[#asked], "Review mode can't take HEAD back to feature-p: p1.txt has uncommitted changes.\nTo go back: `git stash; git switch feature-p`. Run?")
 check("quit, dirty: Enter is no, so nothing moves", { subject(), has_marker(), sh("git stash list") }, { "p1", true, "" })
 keys = { "y" }
 quit_hook()
@@ -452,7 +449,7 @@ toggle()
 step(1)
 sh("mkdir .git/rebase-merge")
 quit_hook()
-check("quit, rebase: says why, both ways out, no offer", last_echo, "Review mode can't take HEAD back to feature-p: A rebase is in progress.\nTo go back: `git rebase --continue` or `git rebase --abort`, then `git switch feature-p`.  Press a key to quit")
+check("quit, rebase: says why, both ways out, no offer", asked[#asked], "Review mode can't take HEAD back to feature-p: A rebase is in progress.\nTo go back: `git rebase --continue` or `git rebase --abort`, then `git switch feature-p`.")
 check("quit, rebase: HEAD stays", subject(), "p1")
 sh("rmdir .git/rebase-merge")
 toggle()
@@ -467,7 +464,7 @@ vim.fn.writefile({
   'vim.cmd.edit("p1.txt")',
   'local b = vim.api.nvim_get_current_buf()',
   'vim.wait(5000, function() return C[b] ~= nil end)',
-  'vim.fn.getcharstr = function() return "y" end',
+  'vim.fn.confirm = function() return 1 end',
   'local r = require("setup.review")',
   'r.toggle()',
   'local v = vim.env.VARIANT or ""',
@@ -503,7 +500,7 @@ check("quit mid-walk, dirty: HEAD stays, record kept", { subject(), on_branch(),
 ui = true
 keys = { "n" }
 toggle()
-check("left behind, dirty: offered stash and switch, default no", asked[#asked], ("Review mode left HEAD at %s (feature-p~2 1/3): p1.txt has uncommitted changes.\nTo go back: `git stash; git switch feature-p`. Run? [y/N] "):format(sh("git rev-parse --short HEAD")))
+check("left behind, dirty: offered stash and switch", asked[#asked], ("Review mode left HEAD at %s (feature-p~2 1/3): p1.txt has uncommitted changes.\nTo go back: `git stash; git switch feature-p`. Run?"):format(sh("git rev-parse --short HEAD")))
 check("left behind, dirty: declined, review starts here", { review.kind(), subject() }, { "commit", "p1" })
 toggle()
 sh("git checkout -- p1.txt && git switch -q feature-p")
@@ -512,17 +509,10 @@ ui = false
 
 child("killed")
 check("killed mid-walk: HEAD stays, record kept", { subject(), has_marker() }, { "p1", true })
--- At the next start, nothing when git opened Neovim on one of its own files.
 ui = true
-local n_asked = #asked
-vim.cmd.edit(repo .. "/.git/COMMIT_EDITMSG")
-vim.bo.filetype = "gitcommit"
-vim.api.nvim_exec_autocmds("VimEnter", { group = "review_startup" })
-check("next start in a commit message: asks nothing, record kept", { #asked, has_marker() }, { n_asked, true })
-open("p1.txt")
 keys = { "y" }
 toggle()
-check("left behind, clean: offered the switch, default yes", asked[#asked], ("Review mode left HEAD at %s (feature-p~2 1/3).\nTo go back: `git switch feature-p`. Run? [Y/n] "):format(sh("git rev-parse --short feature-p~2")))
+check("left behind, clean: offered the switch", asked[#asked], ("Review mode left HEAD at %s (feature-p~2 1/3).\nTo go back: `git switch feature-p`. Run?"):format(sh("git rev-parse --short feature-p~2")))
 check("left behind, clean: y goes back, then review starts", { on_branch(), review.kind() }, { "feature-p", "branch" })
 toggle()
 ui = false
@@ -544,8 +534,11 @@ check("another Neovim reviewing: it went home on quitting", { on_branch(), has_m
 git_checkout("feature-q")
 sh("git update-ref refs/remotes/origin/develop develop")
 open("q1.txt")
+-- The fetch talks to a local remote, so it can land before this looks:
+-- the entry's message is the first after entering, not necessarily the last.
+local n_msgs = #msgs
 toggle()
-check_has("fetch: stale base first", last_msg(), "Branch review: develop...feature-q")
+check_has("fetch: stale base first", msgs[n_msgs + 1], "Branch review: develop...feature-q")
 check("fetch: moves the base", wait_for(function() return (last_msg() or ""):find("Fetched: Branch review: origin/develop...feature-q", 1, true) ~= nil end), true)
 do
   local want = sh("git rev-parse origin/develop")

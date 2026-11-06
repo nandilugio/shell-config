@@ -354,7 +354,12 @@ local function keep_base(s)
   })
 end
 
--- Cut to the width a message can take without the hit-enter prompt.
+-- Cut to the width a message can take without the hit-enter prompt, which
+-- would swallow the key typed next. Only for the routine messages -- entering,
+-- each step, leaving -- which come in quick succession and say little the
+-- statusline does not. Refusals and warnings are meant to be read, and carry
+-- the git commands: those Neovim shows whole, "Press ENTER" and all, and
+-- :messages keeps them whole.
 local function fit(msg)
   local room = math.max(20, vim.v.echospace - 1)
   if vim.fn.strdisplaywidth(msg) <= room then return msg end
@@ -443,11 +448,9 @@ local function enter(ref)
   return_on_exit(s)
   local tc, tc_level = apply(PRESETS.review, s.base)
 
-  -- The message must fit beside the ruler (v:echospace): anything longer, or a
-  -- second line, raises the hit-enter prompt, which swallows the keys typed
-  -- next. The statusline already shows the range and the R, so when there is
-  -- something to act on, the message is only that; the preset's own settings
-  -- are in the cheatsheet.
+  -- The statusline already shows the range and the R, so when there is
+  -- something to act on, the message is only that, and whole (see fit); the
+  -- preset's own settings are in the cheatsheet.
   local warnings = {}
   if tc_level == vim.log.levels.WARN then table.insert(warnings, tc) end
   if #s.nearer > 0 and not s.by_hand then
@@ -456,7 +459,7 @@ local function enter(ref)
   local _, dirty = git(root, { "status", "--porcelain", "--untracked-files=no" })
   if dirty ~= "" then table.insert(warnings, "uncommitted changes included") end
   if #warnings > 0 then
-    vim.notify(fit(table.concat(warnings, "; ")), vim.log.levels.WARN)
+    vim.notify(table.concat(warnings, "; "), vim.log.levels.WARN)
   else
     -- The walk keys are the one thing review adds that no other key hints at.
     -- Last, so a narrow window cuts the hint rather than the range.
@@ -483,8 +486,8 @@ end
 --     edits, uncommitted changes, an operation in progress, a HEAD moved by
 --     hand. Refused, not worked around: whoever made the tree dirty cleans
 --     it up. Every guard is checked afresh at each attempt.
---   - a HEAD left away -- a dirty tree at exit, a crash -- is recorded, and
---     the way back offered the next time Neovim opens in the repository.
+--   - a HEAD left away -- a "no" at exit, a crash -- is recorded, and the
+--     way back offered the next time review mode is entered there.
 --
 -- Messages name the git commands that fix what is in the way, so the git is
 -- learnt along the way, and offer to run them when one is the clear choice.
@@ -598,43 +601,22 @@ end
 
 local function has_ui() return #vim.api.nvim_list_uis() > 0 end
 
--- Shows `text` in the message area and waits for one key, which it returns.
--- A message taller than the area raises "Press ENTER", which would eat that
--- key, so the area grows to fit while it waits, then shrinks back.
-local function show_and_wait(text, hl)
-  local height = 0
-  for _, line in ipairs(vim.split(text, "\n")) do
-    height = height + math.max(1, math.ceil(vim.fn.strdisplaywidth(line) / vim.o.columns))
-  end
-  local saved = vim.o.cmdheight
-  vim.o.cmdheight = math.max(saved, height)
-  vim.cmd.redraw()
-  vim.api.nvim_echo({ { text, hl } }, false, {})
-  local ok, key = pcall(vim.fn.getcharstr)
-  vim.o.cmdheight = saved
-  vim.api.nvim_echo({ { "" } }, false, {})
-  return ok and key or nil
-end
-
--- A question answered with one key: y, n, or Enter for the default. Inline,
--- "Run? [y/N]", so it reads as the command it offers.
+-- A yes-or-no question, Neovim's own: confirm() shows a message of any
+-- length and its choices, and waits. `yes` is the default.
 local function ask(text, yes)
-  local key = show_and_wait(text .. (yes and " [Y/n] " or " [y/N] "), "Question")
-  if not key or key == "\27" then return false end
-  if key == "\r" or key == "\n" then return yes end
-  return key:lower() == "y"
+  return vim.fn.confirm(text, "&Yes\n&No", yes and 1 or 2, "Question") == 1
 end
 
 -- The way back to `home` for a HEAD review could not return, after `first`,
 -- the line saying so. Offered to run when there is one clear command, or
 -- chain -- by default only when nothing would be touched but HEAD; otherwise
--- said, and at exit held until a key, since the screen goes next.
+-- said, and at exit held until read, since the screen goes next.
 local function offer_back(root, home, first, why, exiting)
   local args, switch = back_home(root, home)
   if why and not why.fix then
     local text = ("%s\nTo go back: %s, then `%s`."):format(first, why.hint, switch)
     if exiting then
-      show_and_wait(text .. "  Press a key to quit", "WarningMsg")
+      vim.fn.confirm(text, "&Quit", 1, "Warning") -- held until read: the screen goes next
     else
       vim.notify(text, vim.log.levels.WARN)
     end
@@ -698,10 +680,10 @@ return_on_exit = function(s)
   })
 end
 
--- A record left in this repository: by a review in another Neovim that is
--- still running -- returned, so the caller can say so -- or by one that is
--- gone, whose HEAD is still where it left it: the way back is offered. A
--- record HEAD has since left is stale, and goes.
+-- A record left in this repository, found on entering review: by a review in
+-- another Neovim that is still running -- returned, so the caller can say so
+-- -- or by one that is gone, whose HEAD is still where it left it: the way
+-- back is offered. A record HEAD has since left is stale, and goes.
 leftover = function(root)
   local rec = read_record(root)
   if not rec then return nil end
@@ -755,7 +737,7 @@ function M.step(dir)
   end
 
   local why = blocked(s)
-  if why then return vim.notify(fit(refusal(why)), vim.log.levels.WARN) end
+  if why then return vim.notify(refusal(why), vim.log.levels.WARN) end
   if not s.confirmed then
     local _, cmd = switch_to(s, target)
     local text = ("]v and [v check out each commit; HEAD returns to %s when you leave review mode or quit Neovim.\nNow: `%s`. Run?")
@@ -764,7 +746,7 @@ function M.step(dir)
     s.confirmed = true
   end
   local ok, err = checkout(s, target)
-  if not ok then return vim.notify(fit(err), vim.log.levels.WARN) end
+  if not ok then return vim.notify(err, vim.log.levels.WARN) end
 
   s.head = target
   if whole_branch then
@@ -786,7 +768,7 @@ local function leave()
   local s = state
   local moved = s.at ~= home_sha(s.root, s.home)
   local why, note = go_home(s)
-  if why then return vim.notify(fit("Still reviewing. " .. refusal(why)), vim.log.levels.WARN) end
+  if why then return vim.notify("Still reviewing. " .. refusal(why), vim.log.levels.WARN) end
   local _, back = back_home(s.root, s.home)
   note = note and "; " .. note or moved and ("; back on %s (`%s`)"):format(home_name(s.home), back) or ""
   drop_record(s.root)
@@ -796,22 +778,6 @@ local function leave()
   local warn = tc_level == vim.log.levels.WARN
   vim.notify(fit("Edit mode" .. note .. (warn and "; " .. tc or "")), warn and tc_level or nil)
 end
-
--- At startup, nothing at all unless some review left a record: an ordinary
--- start does no git work. Not when git itself opened Neovim -- a commit
--- message or a rebase todo is no moment to move HEAD.
-vim.api.nvim_create_autocmd("VimEnter", {
-  group = vim.api.nvim_create_augroup("review_startup", { clear = true }),
-  once = true,
-  callback = function()
-    if vim.fn.glob(RECORDS .. "/*.json") == "" then return end
-    local ft = vim.bo.filetype
-    if ft:match("^git") or vim.api.nvim_buf_get_name(0):find("/.git/", 1, true) then return end
-    local root = G.root()
-    local rec = root and leftover(root)
-    if rec then vim.notify(reviewing_elsewhere(rec), vim.log.levels.WARN) end
-  end,
-})
 
 -- ── Public ──────────────────────────────────────────────────────────────────
 
