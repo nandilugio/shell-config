@@ -318,3 +318,16 @@ why. Neovim reads doc/ from every runtimepath entry, the config dir included.
 init.lua runs :helptags only when config.txt is newer than doc/tags, which is
 gitignored. Index tag is config.txt, not config: :help config is Neovim's own
 (starting.txt).
+
+### The plugin contract (2026-11-06) — config/health.lua
+What the config touches in each plugin -- functions, commands, highlight
+groups, lspconfig's server definitions, the one gitsigns internal -- listed as
+DATA in health.lua, checked by :checkhealth config and by
+lua/config/health_test.lua. Not a wrapper layer: nearly all of it is public
+API, and indirection over a stable API is cost without cover; the one internal
+already goes through setup/git.lua's base(). The point is naming a break the
+moment a plugin is updated ("gitsigns.toggle_word_diff is gone") rather than
+at a keypress days later. The update hook (plugins.lua) says to run it.
+Found on the first run: a typo of mine, which is the class of error it is for.
+init.lua refuses to load below 0.12 with a message, instead of failing at
+vim.pack with one that names nothing.

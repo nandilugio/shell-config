@@ -257,6 +257,37 @@ do
   check("edit: hunk details off", { gc.show_deleted, gc.word_diff, gc.current_line_blame }, { false, false, false })
 end
 
+-- ── The base, kept ──────────────────────────────────────────────────────────
+-- gitsigns can put an older base back after a checkout (TODO 29). The race
+-- itself cannot be staged on demand; the corrector can: a buffer whose base
+-- went wrong gets the review's back on gitsigns' update event. (It does so
+-- once per buffer and base; gitsigns' own updates land too, so that bound is
+-- not observable here.)
+toggle()
+local entry = require("gitsigns.cache").cache[vim.api.nvim_get_current_buf()]
+local base = G.base(0)
+entry.git_obj.revision = sh("git rev-parse develop~1")
+vim.api.nvim_exec_autocmds("User", { pattern = "GitSignsUpdate", data = { buffer = vim.api.nvim_get_current_buf() } })
+wait_for(function() return G.base(0) == base end)
+check("kept base: put back on the update event", G.base(0), base)
+toggle()
+wait_for(function() return G.base(0) == nil end)
+
+-- A base set by hand reads with two dots: what `git diff HEAD~2` compares.
+require("gitsigns").change_base("HEAD~2", true)
+statusline_is("hand-set base: two dots", "HEAD~2..feature-p")
+G.stage_hunk()
+check_has("hand-set base: staging refused, naming it", last_msg(), "Signs compare against HEAD~2, not the index")
+-- <leader>gD's fallback lists what the signs mark, against that base.
+G.changed_files()
+check("hand-set base: changed files against it", vim.tbl_map(function(f) return vim.fs.basename(f) end, vim.fn.argv()), { "p2.txt", "p3.txt" })
+-- :args edits its first file; back to the one the rest of the suite expects.
+vim.cmd("%argdelete")
+open("p1.txt")
+require("gitsigns").reset_base(true)
+wait_for(function() return G.base(0) == nil end)
+statusline_is("index again: plain", "feature-p")
+
 -- ── The walk ────────────────────────────────────────────────────────────────
 
 -- The first checkout asks, naming the command; n leaves everything as it was.

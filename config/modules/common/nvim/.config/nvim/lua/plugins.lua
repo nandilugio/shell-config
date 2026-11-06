@@ -49,4 +49,17 @@ if have("git") then
   table.insert(specs, gh("lewis6991/gitsigns.nvim"))
 end
 
+-- An update can move what this config touches in a plugin; :checkhealth
+-- config lists that surface and says what is gone. Once per update run.
+local reminded = false
+vim.api.nvim_create_autocmd("PackChanged", {
+  callback = function(ev)
+    if ev.data.kind ~= "update" or reminded then return end
+    reminded = true
+    vim.schedule(function()
+      vim.notify("Plugins updated: :checkhealth config says whether they still fit; the tests are in the README")
+    end)
+  end,
+})
+
 vim.pack.add(specs)

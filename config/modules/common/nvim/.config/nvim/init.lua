@@ -11,6 +11,14 @@
 -- Order matters: vim.pack has no lazy-loading, so plugins must be on the
 -- runtimepath before anything configures them; keymaps come last.
 
+-- Built on 0.12: vim.pack, vim.lsp.config, 'winborder', 'autocomplete'. An
+-- older Neovim would fail at the first of those with an error naming none of
+-- this, so say it, and leave a bare editor rather than a broken one.
+if vim.fn.has("nvim-0.12") == 0 then
+  vim.notify(("This config needs Neovim 0.12 or later; this is %s. Nothing loaded."):format(vim.version()), vim.log.levels.ERROR)
+  return
+end
+
 require("options")
 require("plugins")
 

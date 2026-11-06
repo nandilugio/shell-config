@@ -156,6 +156,97 @@ local function check_keymaps()
   end
 end
 
+-- ── The contract ────────────────────────────────────────────────────────────
+-- What this config touches in each plugin: the functions it calls, the
+-- commands, highlight groups and server definitions it names, the one
+-- internal it reads. An update can move any of it, and would otherwise show
+-- up as an error at a keypress days later. Listed as data, checked here and
+-- by lua/config/health_test.lua, so the breakage is named at once:
+-- "gitsigns.toggle_word_diff is gone". Not a wrapper: the calls stay where
+-- they are, this only says what they are.
+local CONTRACT = {
+  {
+    "gitsigns",
+    functions = {
+      "setup", "change_base", "reset_base", "toggle_deleted", "toggle_word_diff",
+      "toggle_current_line_blame", "stage_hunk", "reset_hunk", "stage_buffer",
+      "reset_buffer", "setqflist", "nav_hunk", "preview_hunk", "blame_line",
+      "diffthis", "select_hunk",
+    },
+    commands = { "Gitsigns" },
+    highlights = { "GitSignsDeleteVirtLn", "GitSignsDeleteVirtLnInLine", "GitSignsAddInline", "GitSignsChangeInline" },
+    -- b:gitsigns_status_dict, read by the statusline and setup/git.lua.
+    status_fields = { "head", "root", "gitdir" },
+  },
+  {
+    "fzf-lua",
+    functions = {
+      "setup", "register_ui_select", "files", "live_grep", "grep_cword", "oldfiles",
+      "helptags", "keymaps", "diagnostics_document", "lsp_document_symbols",
+      "lsp_live_workspace_symbols", "lsp_references", "builtin", "resume", "buffers",
+      "git_bcommits", "git_diff",
+    },
+    commands = { "FzfLua" },
+  },
+  -- The main branch: its README calls it a rewrite to set up from scratch.
+  { "nvim-treesitter", functions = { "setup", "install", "get_installed", "update", "indentexpr" } },
+  { "mini.files", functions = { "setup", "open" }, highlights = { "MiniFilesDirectory", "MiniFilesFile" } },
+  { "which-key", functions = { "setup", "add" } },
+}
+
+-- Server definitions nvim-lspconfig ships, enabled by name in setup/lsp.lua.
+local SERVER_DEFINITIONS = { "basedpyright", "pyright", "ruff", "ruby_lsp", "lua_ls" }
+
+local function check_contract()
+  H.start("Plugin surface this config uses")
+  for _, c in ipairs(CONTRACT) do
+    local ok, mod = pcall(require, c[1])
+    if not ok then
+      -- Absent by design where its tool is (fzf-lua without fzf): the
+      -- keymaps fall back, and the tools section above says what is missing.
+      H.info(c[1] .. " is not installed")
+    else
+      local gone = {}
+      for _, f in ipairs(c.functions) do
+        if type(mod[f]) ~= "function" then table.insert(gone, c[1] .. "." .. f) end
+      end
+      for _, cmd in ipairs(c.commands or {}) do
+        if vim.fn.exists(":" .. cmd) ~= 2 then table.insert(gone, ":" .. cmd) end
+      end
+      for _, hl in ipairs(c.highlights or {}) do
+        if vim.fn.hlexists(hl) ~= 1 then table.insert(gone, "highlight " .. hl) end
+      end
+      if c.status_fields then
+        local d = vim.b.gitsigns_status_dict
+        if d then
+          for _, f in ipairs(c.status_fields) do
+            if d[f] == nil then table.insert(gone, "b:gitsigns_status_dict." .. f) end
+          end
+        else
+          H.info(c[1] .. ": b:gitsigns_status_dict unchecked, no buffer attached here (open a tracked file first)")
+        end
+      end
+      if #gone == 0 then
+        H.ok(("%s: %d functions%s"):format(c[1], #c.functions, c.highlights and ", commands and highlights" or ""))
+      else
+        H.error(c[1] .. " no longer has: " .. table.concat(gone, ", "), {
+          "A plugin update moved it. See where the config uses it: grep the name.",
+        })
+      end
+    end
+  end
+
+  local missing = {}
+  for _, s in ipairs(SERVER_DEFINITIONS) do
+    if #vim.api.nvim_get_runtime_file("lsp/" .. s .. ".lua", false) == 0 then table.insert(missing, s) end
+  end
+  if #missing == 0 then
+    H.ok(("nvim-lspconfig defines the %d servers setup/lsp.lua enables"):format(#SERVER_DEFINITIONS))
+  else
+    H.error("nvim-lspconfig has no definition for: " .. table.concat(missing, ", "))
+  end
+end
+
 -- setup/git.lua reads each buffer's gitsigns base from gitsigns' cache, an
 -- internal table with no public getter. If gitsigns reshapes it, the read
 -- quietly returns nil -- as if every buffer compared against the index --
@@ -168,7 +259,7 @@ local function check_gitsigns_internals()
   end
   local ok, cache = pcall(require, "gitsigns.cache")
   if not ok or type(cache.cache) ~= "table" then
-    H.warn("gitsigns.cache.cache is gone: the statusline no longer shows a changed base", {
+    H.error("gitsigns.cache.cache is gone: the statusline no longer shows a changed base", {
       "Update M.base in lua/setup/git.lua for this gitsigns revision.",
     })
     return
@@ -179,7 +270,7 @@ local function check_gitsigns_internals()
   elseif type(entry.git_obj) == "table" and type(entry.git_obj.change_revision) == "function" then
     H.ok("the base of each buffer is readable (cache[buf].git_obj.revision)")
   else
-    H.warn("gitsigns' cache entries changed shape: the statusline no longer shows a changed base", {
+    H.error("gitsigns' cache entries changed shape: the statusline no longer shows a changed base", {
       "Update M.base in lua/setup/git.lua for this gitsigns revision.",
     })
   end
@@ -190,6 +281,7 @@ function M.check()
   check_servers()
   check_parsers()
   check_keymaps()
+  check_contract()
   check_gitsigns_internals()
 end
 
