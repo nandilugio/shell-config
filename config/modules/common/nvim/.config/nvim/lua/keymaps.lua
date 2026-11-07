@@ -445,22 +445,26 @@ M.maps = {
   { "<leader>?", function() require("setup.help").cheatsheet() end, desc = "Cheatsheet" },
 
   -- ── Odds and ends ─────────────────────────────────────────────────────────
-  -- One key for "dismiss whatever is in the way": a float if one is open, the
-  -- search highlight otherwise. Neovim closes floats when the cursor moves but
-  -- not on a keypress, so Esc has to reach across to them.
+  -- One key for "dismiss whatever is in the way": the search highlight if
+  -- one is on, the floats otherwise. The highlight first, so a / inside the
+  -- cheatsheet float clears without taking the float with it; the search is
+  -- global, so it would show in the buffer underneath too. Neovim closes
+  -- floats when the cursor moves but not on a keypress, so Esc has to reach
+  -- across to them.
   {
     "<Esc>",
     function()
-      local closed = false
+      if vim.v.hlsearch == 1 then
+        vim.cmd("nohlsearch")
+        return
+      end
       for _, win in ipairs(vim.api.nvim_list_wins()) do
         if vim.api.nvim_win_get_config(win).relative ~= "" then
           pcall(vim.api.nvim_win_close, win, false)
-          closed = true
         end
       end
-      if not closed then vim.cmd("nohlsearch") end
     end,
-    desc = "Close float, else clear search highlight",
+    desc = "Clear search highlight, else close floats",
   },
   { "<Esc><Esc>", "<C-\\><C-n>", desc = "Leave terminal mode", mode = "t" },
 }

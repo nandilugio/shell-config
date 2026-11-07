@@ -235,7 +235,7 @@ again, <leader>uz toggles it.
 ------------------------------------------------------------------------------
 GETTING OUT                                                  *cheatsheet-out*
 
-<Esc>           close a float or picker, else clear the search highlight
+<Esc>           clear the search highlight, else close a float or picker
 <Esc><Esc>      leave terminal mode
 q               close the file browser, the cheatsheet, any help, a hover
                 you entered, the git windows

@@ -42,7 +42,8 @@ end
 
 -- q closes a help window, as it closes the cheatsheet, the file browser and
 -- the git windows here. Buffer-local, so it travels with the buffer into the
--- float and back. <Esc> closes the float as it closes every float.
+-- float and back. <Esc> closes the float as it closes every float, once no
+-- search highlight is left to clear.
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "help",
   callback = function(args)
