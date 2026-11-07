@@ -64,6 +64,35 @@ local function setting_foldcolumn(keys, width)
   end
 end
 
+-- zS. The native keys act on the folds containing the cursor line, and the
+-- cursor is never inside a closed fold (it lands on the first line), so zC
+-- closes outward, to the top level, and leaves the folds nested inside as
+-- they were: zo afterwards shows the state you left. This closes the fold at
+-- the cursor and everything nested in it, parents and siblings untouched, so
+-- zo then opens one level at a time. The mirror of zO, which Vim lacks.
+--
+-- Done with Vim's own keys: a closed fold selected in Visual mode covers all
+-- its lines, and a visual zC closes every fold touching them, nested ones
+-- and ancestors alike (fold.c, opFoldRange). The ancestors are then reopened
+-- from the outermost down to this fold, since zo opens the topmost closed one.
+local function shut_fold()
+  local line = vim.fn.line(".")
+  if vim.fn.foldlevel(line) == 0 then
+    vim.notify("No fold here", vim.log.levels.WARN)
+    return
+  end
+  -- zc on an already closed fold would close its parent instead.
+  if vim.fn.foldclosed(line) == -1 then vim.cmd("normal! zc") end
+  local start = vim.fn.foldclosed(line)
+  vim.cmd("normal! VzC")
+  while vim.fn.foldclosed(start) ~= start do
+    vim.fn.cursor(vim.fn.foldclosed(start), 1)
+    vim.cmd("normal! zo")
+  end
+  vim.fn.cursor(start, 1)
+  vim.wo.foldcolumn = "1"
+end
+
 -- For ]e [e ]w [w: a diagnostic step that shows the message in a float
 -- afterwards, as core's ]d does. `float` was the pre-0.12 spelling of this
 -- option and is deprecated for `on_jump`.
@@ -413,6 +442,8 @@ M.maps = {
   { "zn", setting_foldcolumn("zn", 0), desc = "No folding (zN restores)", expr = true },
   -- Mapped to itself only for the label; the column stays as it is.
   { "zr", "zr", desc = "Reveal one more level (fold less)" },
+  -- Ours, beside the native keys rather than over one: zs is sideways scroll.
+  { "zS", shut_fold, desc = "Shut fold: close it and everything inside" },
 
   -- ── Own namespace: <leader>o ──────────────────────────────────────────────
   -- Reserved. Nothing from any plugin or convention may claim these.

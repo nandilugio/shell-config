@@ -417,63 +417,13 @@ since the conceal regex would still hide the start of a heading containing two
 
 ---
 
-## 22. A mapping to close a fold *and everything inside it*
+## 22. ~~A mapping to close a fold *and everything inside it*~~ DONE 2026-11-06
 
-**Where:** new, in `lua/keymaps.lua`. `<leader>o` is the obvious home: no
-convention exists to follow, and no built-in does it.
-
-**Why:** Came up 2026-09-28. `zC` reads as "close everything below" but closes
-the folds that *contain* the cursor line — the fold and its ancestors — and
-leaves the folds nested inside it untouched (`src/nvim/fold.c:1221-1224`). So
-on a `##` heading it collapses the whole file above you, and the subsections
-come back exactly as open as they were. `zA` on an open fold does the same.
-`zO` is *not* its mirror: it opens every fold nested in the outermost one
-containing the cursor (`foldOpenNested`, `fold.c:1232`) — contrary to
-`:h zO`, which says folds not containing the cursor line are unchanged.
-
-Wanted: close this section and everything nested in it, leave its parents and
-siblings as they are, so that reopening it goes one level at a time.
-
-**By hand** (works for a fold whose parent is the outermost one):
-
-```
-zc V zC zo
-```
-
-`zc` closes the fold, `V` on a closed fold selects all its lines, visual `zC`
-closes every fold in the selection — nested ones included, and the ancestors
-too, as partly selected — and `zo` reopens the outermost ancestor.
-
-**Two traps, both verified,** which is why this wants to be a mapping rather
-than a habit:
-
-- **Deeper than two levels, `zo` is not enough.** It opens only the topmost
-  closed fold. On a `###` under `##` under `#`, the `##` stays closed and hides
-  the section you were on.
-- **`zc` on an already-closed fold closes its parent** (`fold.c:1246`: it
-  closes the innermost *open* fold), so starting on a closed section selects
-  the wrong one.
-
-**Tested version** (headless, on a `#` > `##` > `###` file): only the `###`
-closed, its sibling list and the next `##` untouched.
-
-```lua
-local l = vim.fn.line(".")
-if vim.fn.foldclosed(l) == -1 then vim.cmd("normal! zc") end
-local s = vim.fn.foldclosed(l) -- start of the fold we mean
-vim.cmd("normal! VzC")
--- reopen the ancestors that VzC closed, one at a time, down to ours
-while vim.fn.foldclosed(l) ~= s do
-  vim.fn.cursor(vim.fn.foldclosed(l), 1)
-  vim.cmd("normal! zo")
-end
-vim.fn.cursor(l, 1)
-```
-
-**Do:** Pick the key, then check the cases the test did not cover: a fold
-with no parent (the loop should not run), a line in no fold at all (`zc`
-errors with E490), and nested folds closing at depth three — the `###` in the
-test file had none.
+`zS`, beside the native keys rather than under `<leader>o`, so that `zc`
+`zo` `zC` `zO` stay what they are in any Vim. The three untested cases from
+the draft pass: no parent, no fold, nested folds at depth three. If it turns
+out to be always followed by `zo`, reconsider an outline key instead: open
+the fold one level, insides reset.
 
 ---
 

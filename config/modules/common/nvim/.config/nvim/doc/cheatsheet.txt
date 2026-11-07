@@ -74,7 +74,8 @@ Capital = wider scope       gb blames the line, gB the file; gs stages the
                             hunk, gS the buffer; fs symbols here, fS anywhere;
                             gq this file's hunks to quickfix, gQ every file's
 Capital because the         uH heading colours (uh is hints), uR review mode
-lowercase was taken         (ur is relative numbers), f. and f? have no letter
+lowercase was taken         (ur is relative numbers), zS shuts a fold (zs
+                            scrolls sideways); f. and f? have no letter
 Doubled = the current one   grr references, gcc comment, dd yy cc on the line
 mask / reveal               zm zr fold one more level away, bring one back;
                             zM zR all of them. Not Vim's "fold more/less"
@@ -213,20 +214,23 @@ The location list is the same, per window: ]l,[l and <leader>xl.
 FOLDS                                                      *cheatsheet-folds*
 
 A closed fold still shows its first line, colours and all: close everything
-and the file reads as an outline. Folds nest, and the keys are not symmetric:
-zc closes the innermost open fold at the cursor, zo opens the outermost
-closed one. |fold-commands| has the rest.
+and the file reads as an outline. The cursor is never on a hidden line: a
+fold closing around it puts it on the fold's first line, and every key acts
+on the folds containing that line. |fold-commands| has the rest.
 
-zc zo za        close, open, toggle the fold here
-zC              close it and every fold containing it (not the ones inside)
-zO              open the outermost closed fold here, and everything inside it
+zc zo za        close, open, toggle the fold here; zc again, the one around it
+zC              close it and every fold around it, out to the top level
+zO              open it and everything inside it
+zS              shut it: closed, and everything inside closed too (ours)
 zm zr           mask, reveal one more level        zM zR  mask, reveal all
 zn              no folding at all                  zN     bring it back
 
-zm and zr set 'foldlevel' for the whole window, undoing any zc or zo by hand.
-It starts at 99, so zm seems to do nothing at first: zM first, then zr.
-Closing a fold shows the fold column (+ closed); zR and zn hide it again,
-<leader>uz toggles it.
+A fold reopens as it was when it closed: zC leaves the insides alone, zS
+resets them, so zo after zS shows one level at a time. zm and zr set
+'foldlevel' for the whole window, discarding every fold opened or closed by
+hand. It starts at 99, so zm seems to do nothing at first: zM first, then
+zr. Closing a fold shows the fold column (+ closed); zR and zn hide it
+again, <leader>uz toggles it.
 
 ------------------------------------------------------------------------------
 GETTING OUT                                                  *cheatsheet-out*
