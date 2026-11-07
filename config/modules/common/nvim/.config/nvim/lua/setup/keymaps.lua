@@ -257,9 +257,11 @@ vim.api.nvim_create_user_command("KeymapAudit", function()
 end, { desc = "Report keymap conflicts with plugins" })
 
 --- which-key's preset labels, bracketed. Empty when the presets module is
---- not as expected.
+--- not as expected. Read once, now: which-key's own load, scheduled after
+--- VimEnter, moves the entries out of the module as it parses them, so a
+--- later read finds it empty though nothing changed shape.
 --- @return table[]
-function M.presets()
+local function read_presets()
   local ok, presets = pcall(require, "which-key.plugins.presets")
   if not ok or type(presets) ~= "table" then return {} end
   local out = {}
@@ -274,6 +276,11 @@ function M.presets()
   end
   return out
 end
+
+local preset_labels = read_presets()
+
+-- A copy: which-key empties what it is given to add, as it does the module.
+function M.presets() return vim.deepcopy(preset_labels) end
 
 -- ── which-key ───────────────────────────────────────────────────────────────
 -- Only labels prefixes; the mappings themselves come from the table above.
