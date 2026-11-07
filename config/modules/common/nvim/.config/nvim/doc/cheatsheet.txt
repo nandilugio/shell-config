@@ -202,7 +202,7 @@ The pickers and the browser open files (|cheatsheet-pickers|,
 ------------------------------------------------------------------------------
 QUICKFIX                                                *cheatsheet-quickfix*
 
-Vim's list of places. Filled by :make (rubocop, for ruby), :grep, <C-q> in a
+Vim's list of places. Filled by :make (rubocop, for ruby), :grep, M-q in a
 picker, <leader>xd and the git keys gq gQ.
 
 ]q,[q           next, previous                  <leader>xq  open    :cclose
@@ -213,11 +213,13 @@ The location list is the same, per window: ]l,[l and <leader>xl.
 FOLDS                                                      *cheatsheet-folds*
 
 A closed fold still shows its first line, colours and all: close everything
-and the file reads as an outline. |fold-commands| has the rest.
+and the file reads as an outline. Folds nest, and the keys are not symmetric:
+zc closes the innermost open fold at the cursor, zo opens the outermost
+closed one. |fold-commands| has the rest.
 
 zc zo za        close, open, toggle the fold here
 zC              close it and every fold containing it (not the ones inside)
-zO              open everything in the outermost fold here
+zO              open the outermost closed fold here, and everything inside it
 zm zr           mask, reveal one more level        zM zR  mask, reveal all
 zn              no folding at all                  zN     bring it back
 
@@ -254,8 +256,9 @@ fzf's own keys, so they are the same ones the shell's fzf uses.
 Tab             tick one, M-a M-a ticks all     M-q    ticked to quickfix
 F1 help · F4 hide the preview · M-i include ignored · M-f follow symlinks
 
-Tab does nothing in the file history, where a pick must be single. In the
-buffers picker Enter opens every ticked buffer, and <C-x> closes them.
+Tab does nothing in the file history, where a pick must be single.
+Elsewhere Enter with several ticked sends them to quickfix, as M-q does; in
+the buffers picker <C-x> closes the ticked ones.
 M-a is the tmux prefix, so it has to be pressed twice to get through. M-h
 (include hidden) is tmux's pane-left and never arrives; M-i is the one you
 want anyway, since .gitignore hides more here than dotfiles do.
@@ -356,7 +359,7 @@ uH markdown heading colours (on by default for markdown)
 uz fold column (see |cheatsheet-folds|)
 uR review mode (see |cheatsheet-review|)
 ua autosave: writes on leaving insert or the buffer, off by default
-ug* git: ugd deleted lines · ugw word diff · ugb blame every line
+ug* git: ugd deleted lines · ugw word diff · ugb cursor-line blame
 
 ------------------------------------------------------------------------------
 FILETYPE                                                *cheatsheet-filetype*
