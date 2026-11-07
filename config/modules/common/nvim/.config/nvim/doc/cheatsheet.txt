@@ -17,7 +17,7 @@
     Code ................................. |cheatsheet-code|
     Completion and the command line ...... |cheatsheet-completion|
     Between things ....................... |cheatsheet-between|
-    Windows and buffers .................. |cheatsheet-windows|
+    Files, buffers and windows ........... |cheatsheet-buffers|
     Quickfix ............................. |cheatsheet-quickfix|
     Folds ................................ |cheatsheet-folds|
     Getting out .......................... |cheatsheet-out|
@@ -172,13 +172,32 @@ BETWEEN THINGS                                           *cheatsheet-between*
 ]v,[v           commit under review             ]a,[a  argument list
 
 ------------------------------------------------------------------------------
-WINDOWS AND BUFFERS                                      *cheatsheet-windows*
+FILES, BUFFERS AND WINDOWS                               *cheatsheet-buffers*
+
+A file is read into a buffer, and a window shows a buffer. Leaving a buffer
+keeps it loaded, edits and all. There is no closing a file, only its buffer:
+after :bd it is just on disk again. :q closes a window, and the last window
+takes Neovim with it, since buffers alone keep nothing on screen. Unsaved
+edits ask before they are lost, hidden buffers included.
+The pickers and the browser open files (|cheatsheet-pickers|,
+|cheatsheet-files|); this is what happens to them afterwards.
+
+<leader>ff,fr   find a file, a recent one       <leader>e  browse from here
+:e {path}       by name, Tab completes it       gf  the path under the cursor
+<leader><leader> switch buffer, recent first    <C-x> there closes one
+]b,[b           next, previous buffer           <C-^>  the one you came from
+:b cfg<Tab>     by name, fuzzy, recent first    :ls  list them
+
+:enew  :new     an empty buffer here, in a split; :w ++p {path} names it
+:w  :wa         write this one, all of them     <leader>ua  autosave
+:e!             drop the edits, reload          :w {name}  a copy; stay here
+:bd             close the buffer; the file is just on disk again
+:q              close the window; the last one leaves Neovim
+:qa  :wqa       leave, leave writing everything ZZ  write, close this window
 
 <C-h,j,k,l>     move between windows            tmux uses M-h,j,k,l for panes
 <leader>-  |    split below, right              as in tmux
 <C-w>           c close · o only · = equalise · _ | maximise
-]b,[b           next, previous buffer           <leader><leader>  pick one
-:bd             close a buffer                  :ls  list them
 
 ------------------------------------------------------------------------------
 QUICKFIX                                                *cheatsheet-quickfix*
@@ -235,7 +254,8 @@ fzf's own keys, so they are the same ones the shell's fzf uses.
 Tab             tick one, M-a M-a ticks all     M-q    ticked to quickfix
 F1 help · F4 hide the preview · M-i include ignored · M-f follow symlinks
 
-Tab does nothing where a pick must be single: buffers and file history.
+Tab does nothing in the file history, where a pick must be single. In the
+buffers picker Enter opens every ticked buffer, and <C-x> closes them.
 M-a is the tmux prefix, so it has to be pressed twice to get through. M-h
 (include hidden) is tmux's pane-left and never arrives; M-i is the one you
 want anyway, since .gitignore hides more here than dotfiles do.
