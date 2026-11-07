@@ -17,8 +17,14 @@
 --             mappings are applied noremap, so a mapped key would not fire.
 --   expr      rhs is a function returning the keys to run (:h map-expression).
 --
+--   desc      shown by which-key, <leader>fk and :map. setup/keymaps.lua
+--             brackets the mnemonic, the letter of the key that starts a
+--             word ("[F]iles", "Hunks to [q]uickfix"); a label with none stays
+--             plain, which is honest. Write the brackets by hand where the
+--             letter is inside a word ("T[y]pe definition").
+--
 -- Design rule:  g jumps · gr acts on symbols · <leader> opens tools
---               [ ] iterate lists · <C-w> windows · F-keys bridge other editors
+--               [ ] iterate lists · <C-w> windows
 -- Nvim 0.12 defaults we deliberately do NOT redefine (they are already right):
 --   grn gra grr grx gO   K   ]d [d ]D [D   ]q [q ]Q [Q   ]b [b   ]<Space> [<Space>
 --   gc gcc   <C-]> <C-t>   an in (x/o)   ]n [n (x)
@@ -35,7 +41,6 @@ M.groups = {
   { "<leader>g", "git", mode = { "n", "x" } },
   { "<leader>u", "toggle (ui)" },
   { "<leader>ug", "git" }, -- the only nested group: git has three of its own
-  { "<leader>b", "buffer" },
   { "<leader>o", "own" }, -- reserved: no plugin or convention may claim it
   { "<leader>x", "lists" },
   { "<LocalLeader>", "filetype" },
@@ -83,7 +88,7 @@ M.maps = {
   -- No `needs`: with no LSP these error politely, as core's gr* do.
   { "gd", vim.lsp.buf.definition, desc = "Definition" },
   { "gD", vim.lsp.buf.declaration, desc = "Declaration" },
-  { "gy", vim.lsp.buf.type_definition, desc = "Type definition" },
+  { "gy", vim.lsp.buf.type_definition, desc = "T[y]pe definition" },
   { "gI", vim.lsp.buf.implementation, desc = "Implementation" },
 
   -- ── Iterate: [ and ] ──────────────────────────────────────────────────────
@@ -96,8 +101,8 @@ M.maps = {
   -- The commits under review (setup/review.lua): each is checked out in turn.
   -- v for revision: ]r is Neovim's "next rare word", and the other free
   -- letters mean hunk or something else in Helix, LazyVim or unimpaired.
-  { "]v", function() require("setup.review").step(1) end, desc = "Next commit under review", needs = "mod:gitsigns" },
-  { "[v", function() require("setup.review").step(-1) end, desc = "Previous commit under review", needs = "mod:gitsigns" },
+  { "]v", function() require("setup.review").step(1) end, desc = "Next commit under re[v]iew", needs = "mod:gitsigns" },
+  { "[v", function() require("setup.review").step(-1) end, desc = "Previous commit under re[v]iew", needs = "mod:gitsigns" },
 
   -- ── Find: <leader>f ───────────────────────────────────────────────────────
   -- Falls back to :find / :grep, which fill the quickfix list. Same keys,
@@ -172,13 +177,6 @@ M.maps = {
     needs = "fzf",
     fallback = vim.lsp.buf.workspace_symbol,
   },
-  {
-    "<leader>/",
-    function() require("setup.fzf").live_grep() end,
-    desc = "Grep project",
-    needs = "fzf",
-    fallback = ":grep ",
-  },
   -- References through the picker when available; what grr runs otherwise.
   {
     "<leader>fR",
@@ -207,8 +205,8 @@ M.maps = {
   -- ── Git: <leader>g ────────────────────────────────────────────────────────
   -- Hunk-level only; commits and rebases are a tmux pane's job. Without
   -- gitsigns these keep Vim's own meaning: next/previous change in diff mode.
-  { "]c", function() require("gitsigns").nav_hunk("next") end, desc = "Next hunk", needs = "mod:gitsigns", fallback = "]c" },
-  { "[c", function() require("gitsigns").nav_hunk("prev") end, desc = "Previous hunk", needs = "mod:gitsigns", fallback = "[c" },
+  { "]c", function() require("gitsigns").nav_hunk("next") end, desc = "Next change (hunk)", needs = "mod:gitsigns", fallback = "]c" },
+  { "[c", function() require("gitsigns").nav_hunk("prev") end, desc = "Previous change (hunk)", needs = "mod:gitsigns", fallback = "[c" },
   -- Through setup/git.lua, which refuses while the signs compare against
   -- anything but the index (review mode, a :Gitsigns change_base).
   { "<leader>gs", function() require("setup.git").stage_hunk() end, desc = "Stage hunk", needs = "mod:gitsigns" },
@@ -254,7 +252,7 @@ M.maps = {
       local git = require("setup.git")
       require("setup.fzf").git_diff({ ref = git.base(0) or "", cwd = git.root() })
     end,
-    desc = "Changed files",
+    desc = "Diff: every changed file",
     needs = "fzf",
     fallback = function() require("setup.git").changed_files() end,
   },
@@ -332,7 +330,7 @@ M.maps = {
   {
     "<leader>uz",
     function() vim.o.foldcolumn = vim.o.foldcolumn == "0" and "1" or "0" end,
-    desc = "Fold column",
+    desc = "Fold column (z keys)",
   },
   -- A setting like the rest, so a toggle here rather than an action under
   -- <leader>o. Off by default (setup/autosave.lua says why).
@@ -363,8 +361,9 @@ M.maps = {
     needs = "mod:gitsigns",
   },
 
-  -- ── Buffers and windows ───────────────────────────────────────────────────
-  -- Mirrors tmux's M-hjkl for panes: two levels, two modifiers.
+  -- ── Windows ───────────────────────────────────────────────────────────────
+  -- Mirrors tmux's M-hjkl for panes: two levels, two modifiers. Buffers are
+  -- core's ]b [b and the <leader><leader> picker; :bd is :bd.
   { "<C-h>", "<C-w><C-h>", desc = "Window left" },
   { "<C-j>", "<C-w><C-j>", desc = "Window down" },
   { "<C-k>", "<C-w><C-k>", desc = "Window up" },
@@ -372,7 +371,6 @@ M.maps = {
   -- tmux's mnemonic: | is a vertical divider, - a horizontal one.
   { "<leader>-", "<Cmd>split<CR>", desc = "Split below" },
   { "<leader>|", "<Cmd>vsplit<CR>", desc = "Split right" },
-  { "<leader>bd", "<Cmd>bdelete<CR>", desc = "Delete buffer" },
 
   -- ── Lists: <leader>x ──────────────────────────────────────────────────────
   -- Vim's list of places: :make, :grep and the pickers all fill it, ]q / [q
@@ -387,7 +385,7 @@ M.maps = {
   {
     "<leader>e",
     function() require("mini.files").open(vim.api.nvim_buf_get_name(0)) end,
-    desc = "File browser",
+    desc = "Explore files",
     needs = "mod:mini.files",
     fallback = ":edit ",
   },
@@ -416,12 +414,6 @@ M.maps = {
   -- Mapped to itself only for the label; the column stays as it is.
   { "zr", "zr", desc = "Reveal one more level (fold less)" },
 
-  -- ── F-keys: the only layer that transfers unchanged to other editors ──────
-  -- Only <F1> is bound, so F2-F12 are free. These match VS Code and Zed.
-  { "<F2>", vim.lsp.buf.rename, desc = "Rename symbol" },
-  { "<F12>", vim.lsp.buf.definition, desc = "Definition" },
-  { "<S-F12>", vim.lsp.buf.references, desc = "References" },
-
   -- ── Own namespace: <leader>o ──────────────────────────────────────────────
   -- Reserved. Nothing from any plugin or convention may claim these.
   {
@@ -430,11 +422,11 @@ M.maps = {
     desc = "Clear trailing whitespace",
   },
   -- vimwiki's <leader>w* are disabled in setup/wiki.lua (they collide with the
-  -- window namespace); these are the ones worth keeping.
+  -- window namespace); these are the ones worth keeping. The cheatsheet is
+  -- <leader>?: help, not something of ours to reserve.
   { "<leader>ow", "<Cmd>VimwikiIndex<CR>", desc = "Wiki index", needs = "cmd:VimwikiIndex" },
   { "<leader>od", "<Cmd>VimwikiMakeDiaryNote<CR>", desc = "Wiki diary today", needs = "cmd:VimwikiMakeDiaryNote" },
   { "<leader>oD", "<Cmd>VimwikiDiaryIndex<CR>", desc = "Wiki diary index", needs = "cmd:VimwikiDiaryIndex" },
-  { "<leader>oh", function() require("setup.cheatsheet").open() end, desc = "Cheatsheet" },
 
   -- ── Filetype actions: <LocalLeader> ───────────────────────────────────────
   -- Global rather than per-filetype, since setup/keymaps has no ft field. The
@@ -443,6 +435,10 @@ M.maps = {
   { "<LocalLeader>t", function() require("mdtable").align() end, desc = "Align markdown table" },
   -- Global state, like <leader>ud, so it also works before a Python file is open.
   { "<LocalLeader>pt", function() require("setup.lsp").pick_type_checking() end, desc = "Type checking mode" },
+
+  -- ── Help ──────────────────────────────────────────────────────────────────
+  -- The cheatsheet, which starts with how to get help. ? as in every pager.
+  { "<leader>?", function() require("setup.help").cheatsheet() end, desc = "Cheatsheet" },
 
   -- ── Odds and ends ─────────────────────────────────────────────────────────
   -- One key for "dismiss whatever is in the way": a float if one is open, the

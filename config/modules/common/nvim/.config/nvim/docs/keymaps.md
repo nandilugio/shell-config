@@ -7,7 +7,7 @@ Companion research: `research-keybindings.md`.
 
 ## The rule
 > `g` jumps · `gr` acts on symbols · `<leader>` opens tools · `[`/`]` iterate lists
-> · `<C-w>` windows · F-keys bridge editors
+> · `<C-w>` windows
 
 Legend: ⬛ core (nvim default, never break) · 🟦 portable (≥3 other envs) · 🟨 mnemonic · ⚠️ shadows a builtin
 
@@ -99,7 +99,7 @@ credits tpope in the source.
 | `<leader>fk` | **K**eymaps | 🟨 discovery hatch |
 | `<leader>fd` | **D**iagnostics | 🟨 |
 | `<leader>fs` | **S**ymbols | 🟨 |
-| `<leader>/` | Grep project | 🟦 LazyVim; matches `/`=search intuition |
+| ~~`<leader>/`~~ | — | Dropped 2026-11-06: a second key for `<leader>fg`, against decision 3 |
 | `<leader>f?` | Every picker fzf-lua has | 🟨 discovery: 124 ship, a dozen are bound |
 | `<leader>f.` | Resume the last picker | 🟨 `.` as "again"; no cross-distro convention |
 
@@ -167,7 +167,7 @@ Tradeoff: faster to type, invisible to which-key. `<leader>u` optimizes discover
 | `<leader>|` | Split vertical | 🟨 **matches tmux `bind |`**; `|` = vertical divider |
 | `<C-w>…` | Window namespace | ⬛ untouched — Helix copies it verbatim from vim |
 | ~~`<S-h>`/`<S-l>`~~ | — | Dropped 2026-11-06: LazyVim-only, and they are `H`/`L`, count-taking motions the cheatsheet teaches. `]b`/`[b` (core) and `<leader><leader>` cover it |
-| `<leader>bd` | **B**uffer **d**elete | 🟦 LazyVim |
+| ~~`<leader>bd`~~ | — | Dropped 2026-11-06: a namespace holding one key, for `:bd`; `]b`/`[b` and `<leader><leader>` do the buffer work |
 
 ## 8 · Edit & format
 | Key | Action | Why |
@@ -178,7 +178,9 @@ Tradeoff: faster to type, invisible to which-key. `<leader>u` optimizes discover
 | `gc`/`gcc` | Comment | ⬛ core. IdeaVim via `set commentary`; VS Code native |
 | `<C-w>d` | Line diagnostic float | ⬛ core |
 
-## 9 · F-key bridge
+## 9 · F-key bridge — DROPPED 2026-11-06
+No muscle memory for them existed to transfer, so the three mappings went. The research
+stays for the record:
 nvim binds ONLY `<F1>` — F2–F12 verified free on 0.12.5. `:h map-which-keys` recommends
 them first. **The only layer surviving the macOS-Cmd / Windows-Ctrl split unchanged.**
 
@@ -195,6 +197,7 @@ Caveat: JetBrains is the systematic outlier (`F2`=next error, `F7`/`F8`=step).
 | Key | Purpose | Why |
 |---|---|---|
 | `<leader>o` | **Yours alone** | 🟨 Spacemacs' best convention: guaranteed never to collide |
+| `<leader>?` | The cheatsheet | 🟨 `?` is help in every pager. Was `<leader>oh`; help is not something of mine to reserve |
 | `<LocalLeader>`=`,` | Filetype-specific | 🟨 Spacemacs `SPC m`. Home for Ruby/markdown/vimwiki keys. First occupant: `,t` align markdown table |
 | `-` | **leave free** | 🟨 nvim 0.13's builtin explorer claims it (guards politely) |
 | `g`+new letters | **don't extend** | ⚠️ crowded with real vim commands |

@@ -12,14 +12,25 @@
 local H = vim.health
 local M = {}
 
--- What each external tool buys, and what happens without it.
+-- What each external tool buys, and what happens without it. `min` is the
+-- oldest version the plugin using it states it wants (fzf-lua for fzf,
+-- nvim-treesitter's main branch for the CLI); older is a warning, since the
+-- tool still mostly works.
 local tools = {
-  { "fzf", "fuzzy finding", "<leader>f* fall back to :find and :grep" },
+  { "fzf", "fuzzy finding", "<leader>f* fall back to :find and :grep", min = "0.53" },
   { "rg", "fast :grep", "falls back to the built-in grep" },
   { "fd", "fast file listing", "fzf-lua uses its own walker" },
   { "git", "hunk signs and navigation", "gitsigns does nothing outside a repo" },
-  { "tree-sitter", "parser compilation", "regex syntax highlighting only" },
+  { "tree-sitter", "parser compilation", "regex syntax highlighting only", min = "0.26.1" },
 }
+
+-- The first version-looking thing `exe --version` prints, or nil.
+local function version_of(exe)
+  local res = vim.system({ exe, "--version" }, { text = true }):wait()
+  if res.code ~= 0 then return nil end
+  local v = (res.stdout or ""):match("%d+%.%d+%.?%d*")
+  return v and vim.version.parse(v) or nil
+end
 
 -- A row with several names is satisfied by any of them: setup/lsp.lua runs
 -- one type checker, basedpyright first.
@@ -33,10 +44,15 @@ local function check_tools()
   H.start("External tools")
   for _, t in ipairs(tools) do
     local exe, buys, without = t[1], t[2], t[3]
-    if vim.fn.executable(exe) == 1 then
-      H.ok(("%s — %s"):format(exe, buys))
-    else
+    if vim.fn.executable(exe) == 0 then
       H.warn(("%s not found — %s"):format(exe, without))
+    else
+      local v = t.min and version_of(exe)
+      if t.min and v and vim.version.lt(v, t.min) then
+        H.warn(("%s %s — %s wants %s or newer"):format(exe, tostring(v), exe == "fzf" and "fzf-lua" or "nvim-treesitter", t.min))
+      else
+        H.ok(("%s%s — %s"):format(exe, v and (" " .. tostring(v)) or "", buys))
+      end
     end
   end
 end
@@ -269,6 +285,25 @@ local function check_gitsigns_internals()
   end
 end
 
+-- setup/keymaps.lua brackets the mnemonic in which-key's own labels for
+-- Vim's keys, read from its presets module, which is not API. Guarded there,
+-- so a reshaped module costs only the brackets; this is where that shows.
+local function check_whichkey_presets()
+  H.start("which-key internals")
+  if not pcall(require, "which-key") then
+    H.info("which-key is not installed")
+    return
+  end
+  local n = #require("setup.keymaps").presets()
+  if n > 0 then
+    H.ok(("%d of which-key's preset labels relabelled with their mnemonic"):format(n))
+  else
+    H.warn("which-key's presets module changed shape: Vim's own keys show without brackets", {
+      "Update M.presets in lua/setup/keymaps.lua for this which-key revision, or drop it.",
+    })
+  end
+end
+
 function M.check()
   check_tools()
   check_servers()
@@ -276,6 +311,7 @@ function M.check()
   check_keymaps()
   check_contract()
   check_gitsigns_internals()
+  check_whichkey_presets()
 end
 
 return M

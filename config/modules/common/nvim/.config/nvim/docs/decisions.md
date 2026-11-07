@@ -176,7 +176,8 @@ Lua (tertiary): lua_ls + lazydev. No stylua.
 ## Done during implementation
 1. save.nvim removed; replaced by a built-in toggle on <leader>oa. <F4> freed.
    MOVED 2026-11-04 to <leader>ua: it is a setting, and <leader>u is where settings
-   toggle; <leader>o keeps the actions (cheatsheet, whitespace, wiki).
+   toggle; <leader>o keeps the actions (whitespace, wiki; the cheatsheet
+   moved to <leader>? on 2026-11-06).
 2. The dead mason-lspconfig `handlers` block replaced by vim.lsp.config/enable.
    (It had been silently discarding the lua_ls settings.)
 3. `rbenv global` left alone — NOT needed. For Ruby < 3 projects the config finds
@@ -366,3 +367,52 @@ vim.pack with one that names nothing.
   worth knowing). tmux's copy mode, local to the host, is the bridge.
 - The vim module rewritten as the scheme's built-in subset for a box with only
   Vim: offline, no plugins, mirrors keymaps.lua by hand. See its header.
+
+### Help in layers (2026-11-06) — which-key, the cheatsheet as help, q
+Muscle memory for the scheme is still forming, so the ways to get help were
+made to build on one another:
+- which-key is TEXT ONLY. Its icons are Nerd Font glyphs and were ON: the
+  earlier note that dropping vim.g.have_nerd_font left "a which-key option
+  already set to its default" was wrong about the default. Keys are shown as
+  Vim writes them.
+- Labels carry their mnemonic in brackets, GENERATED in setup/keymaps.lua
+  from the key's last letter where it starts a word of the label ("[F]iles",
+  "Hunks to [q]uickfix"), so they cannot drift. A label with no such letter
+  stays plain; a few were reworded so one exists (]c "Next change (hunk)",
+  grx "Execute codelens", <leader>e "Explore files"), and a few bracket by
+  hand where the letter is inside a word ("T[y]pe definition").
+- The cheatsheet is a HELP FILE, doc/cheatsheet.txt, opened in the float by
+  <leader>? (was <leader>oh: help is not mine to reserve). Everything help
+  does then works in it: K on a key opens its page, <C-]> follows a link,
+  <leader>fh finds its sections, :help cheatsheet-git jumps to one, gO
+  outlines it. It opens with the help ladder and how the keys are organised.
+  Tested that tag jumps work inside a float; the float sets conceallevel
+  itself, which :help's own window would have.
+- q closes any help window, as it closes the other windows here.
+- DROPPED, against "no duplicate paths": <leader>/ (a second key for
+  <leader>fg) and <leader>bd (a namespace holding one key, for :bd).
+- Refined the same day, from a first walk through it: the bracket takes the
+  key's own case ("[f]iles"; "[b]lame line", "[B]lame file"); which-key sorts
+  by key ({ "local", "alphanum" }: groups among the rest, letters before
+  symbols) and keeps its default 200ms delay, so a sequence typed without
+  hesitating never shows it. Its Nerd Font key glyphs STAY: the terminal's
+  font draws them, so they survive SSH, each is one cell wide for Neovim, and
+  a plain font costs a box in that cell, not the layout; the per-label
+  pictures are off. F2/F12/S-F12 DROPPED, no muscle memory for them to bridge.
+  The cheatsheet gained the *cheatsheet* tag (:help cheatsheet had been
+  landing on the nearest section) and an index of its sections.
+- The four remote-plugin providers (python3, ruby, node, perl) are disabled:
+  nothing here is a remote plugin, and :checkhealth had warned about each.
+- :checkhealth config warns when fzf or tree-sitter-cli is older than the
+  minimum its plugin states (0.53, 0.26.1). The fzf that was here came from
+  the old vimrc's vim-plug install into ~/.fzf (0.46, 2024); brew's replaces
+  it, and .shell-start.zsh sources `fzf --zsh` instead of ~/.fzf.zsh.
+- Later the same day: which-key's own labels for Vim's keys (its presets:
+  "gi Go to last insert") get the same brackets, read from its presets module
+  and handed back as label-only entries. Not API, so guarded: a reshaped
+  module costs the brackets only, and :checkhealth config warns. A learning
+  aid, to drop once the keys are familiar. which-key waits a full second.
+- And Neovim's own default mappings relabelled where their descriptions were
+  written for :map rather than a popup: the bracket family (":cnext"), the
+  ":help Y-default" shape, the long diagnostic and gx sentences. The policy
+  for the label set is at the top of the block in setup/keymaps.lua.

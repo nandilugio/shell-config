@@ -7,8 +7,9 @@
 # libpq (psql, etc.) from Homebrew
 [ -d /opt/homebrew/opt/libpq/bin ] && export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 
-# FZF
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh  # NOTE: Vim plug may have already installed FZF, adding this command to .zprofile or .zshrc already
+# FZF (brew): its own completion and key bindings. The ~/.fzf checkout the old
+# vimrc's vim-plug used to install is gone.
+command -v fzf >/dev/null && source <(fzf --zsh)
 export FZF_DEFAULT_COMMAND="find . -type f -not -path '*/\.git/*'"
 
 # Perl (and therefore pgtap, etc.)

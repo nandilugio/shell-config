@@ -11,6 +11,15 @@ vim.g.maplocalleader = ","
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 
+-- Neovim can host plugins written in these languages through "providers",
+-- and looks for their host packages (pynvim, the neovim gem...) when asked.
+-- Everything here is Lua, so it is told not to look: no :python3, no
+-- :checkhealth warnings for packages nothing uses.
+vim.g.loaded_python3_provider = 0
+vim.g.loaded_ruby_provider = 0
+vim.g.loaded_node_provider = 0
+vim.g.loaded_perl_provider = 0
+
 -- Timing
 vim.o.updatetime = 250
 vim.o.timeoutlen = 300

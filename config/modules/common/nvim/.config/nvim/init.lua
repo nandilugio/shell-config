@@ -23,7 +23,6 @@ require("options")
 require("plugins")
 
 require("setup.autosave")
-require("setup.cheatsheet")
 require("setup.diagnostics")
 require("setup.statusline")
 require("setup.winbar")
@@ -32,6 +31,7 @@ require("setup.treesitter")
 require("setup.files")
 require("setup.fzf") -- defines the loader only; the plugin is set up on first use
 require("setup.git")
+require("setup.help") -- the cheatsheet, and q in help windows
 require("setup.review") -- for :Review; does nothing until asked
 require("setup.wiki")
 
@@ -45,9 +45,14 @@ require("mdheading").setup({ filetypes = { "markdown" } })
 
 require("setup.keymaps")
 
--- :help for this config's own features, from doc/config.txt. The tags file
--- is generated, so not in git; rebuilt only when the help is newer.
+-- :help for this config's own features (doc/config.txt) and the cheatsheet
+-- (doc/cheatsheet.txt). The tags file is generated, so not in git; rebuilt
+-- only when a help file is newer.
 local doc = vim.fn.stdpath("config") .. "/doc"
-if vim.fn.getftime(doc .. "/config.txt") > vim.fn.getftime(doc .. "/tags") then
-  vim.cmd.helptags(vim.fn.fnameescape(doc))
+local tags = vim.fn.getftime(doc .. "/tags")
+for _, f in ipairs(vim.fn.glob(doc .. "/*.txt", true, true)) do
+  if vim.fn.getftime(f) > tags then
+    vim.cmd.helptags(vim.fn.fnameescape(doc))
+    break
+  end
 end

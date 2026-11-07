@@ -1,7 +1,7 @@
 *config.txt*	This configuration's own features
 
 How the features this config adds behave, for when the cheatsheet
-(<leader>oh) is not enough. Why they are built this way is in
+(<leader>?, |cheatsheet|) is not enough. Why they are built this way is in
 docs/decisions.md, next to this file's directory.
 
 1. Review mode				|review-mode|

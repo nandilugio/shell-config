@@ -34,7 +34,7 @@ that only work here.
 The whole scheme is one sentence:
 
 > `g` jumps · `gr` acts on symbols · `<leader>` opens tools · `[`/`]` iterate
-> lists · `<C-w>` windows · function keys bridge other editors
+> lists · `<C-w>` windows
 
 ### Why these keys
 
@@ -59,17 +59,17 @@ or last. `]d` diagnostics, `]q` quickfix, `]c` changes.
 whether gitsigns or something else provides it. Plugin-keyed namespaces break
 when the plugin is replaced.
 
-**Function keys, because Vim leaves them free.** Only `<F1>` is taken, and
-`F2` rename / `F12` definition / `Shift-F12` references are the one layer that
-survives the macOS-vs-Windows modifier split unchanged.
-
 **`<leader>o` is reserved.** Nothing from any convention may claim it, so
 personal bindings never collide with a future default. Borrowed from Spacemacs,
 which is also where `<Space>` as leader comes from — chosen there for the
 thumb, to avoid modifier strain.
 
-`<leader>oh` shows the cheatsheet in a float. `:checkhealth config` reports
-conflicts and missing tools; `:KeymapAudit` explains a conflict in detail.
+Help comes in layers. which-key lists what can follow a prefix, with the
+mnemonic letter bracketed. `<leader>?` shows the cheatsheet in a float: a real
+help file, so `K` on any key in it opens that key's help page, `<C-]>` follows
+a link, and `<leader>fh` finds its sections next to every other help file.
+`:checkhealth config` reports conflicts and missing tools; `:KeymapAudit`
+explains a conflict in detail.
 
 ## Plugins
 
@@ -142,7 +142,7 @@ lua/config/health.lua :checkhealth config, and the plugin surface the config use
 lua/**/*test.lua      tests, each run with nvim -l (see Plugins, below)
 lua/mdtable/          local plugin: markdown tables, with its own README + DESIGN
 lua/mdheading/        local plugin: markdown heading depth, likewise
-cheatsheet.md         key reference, shown by <leader>oh
+doc/cheatsheet.txt    key reference, as help: <leader>? or :help cheatsheet
 doc/config.txt        :help for what the config adds (:help config.txt)
 TODO.md               known gaps and decisions not yet taken
 docs/                 why it is built this way
