@@ -196,6 +196,19 @@ RBENV_VERSION=3.x gem install ruby-lsp   # any Ruby >= 3; the newest is used
 
 `:checkhealth config` reports what is present and what each gap costs.
 
+After pulling, start Neovim: it installs plugins new to the lockfile, and adds
+back to it any the config dropped that are still on disk. Then, as
+`:help vim.pack` describes:
+
+```vim
+:lua vim.pack.update(nil, { target = 'lockfile' })   " :w applies, :q cancels
+:lua vim.pack.del({ 'name' })   " each plugin `git diff nvim-pack-lock.json` adds back
+:restart
+```
+
+The lockfile then matches the repo again. Moving nvim-treesitter rebuilds the
+parsers.
+
 ## Plain Vim
 
 `../vim/.vimrc` (the `vim` module) is this scheme's built-in subset for a box

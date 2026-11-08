@@ -32,7 +32,7 @@ $EDITOR ~/.gitconfig_host                     # name; git refuses to commit with
 echo 'source ~/.shell-start.zsh' >> ~/.zprofile
 ```
 
-Not in the repo, installed per machine: zsh with [prezto](https://github.com/sorin-ionescu/prezto) (`~/.zshrc`), Homebrew, nvim, tmux, lazygit. `.shell-start.zsh` puts every tool that may be missing behind a check, so it also works where those aren't installed.
+Not in the repo, installed per machine: zsh with [prezto](https://github.com/sorin-ionescu/prezto) (`~/.zshrc`), Homebrew, nvim, tmux, lazygit, bat (tmux's `prefix h`). nvim's tools and language servers are in [its README](config/modules/common/nvim/.config/nvim/README.md#setting-up-elsewhere). `.shell-start.zsh` puts every tool that may be missing behind a check, so it also works where those aren't installed.
 
 Host-local files, never committed: `~/.gitconfig_host` (identity; `g profile-pers` and `g profile-work` set a repo's email), `~/.zshrc`, `~/.zprofile`.
 
@@ -43,6 +43,15 @@ git clone https://github.com/tmux-plugins/tmux-resurrect ~/Projects/thirds/tmux-
 git clone https://github.com/Morantron/tmux-fingers ~/Projects/thirds/tmux-fingers
 # docker-vackup, for bin-host's vackup wrapper
 ```
+
+## Updating
+
+After `git pull`:
+
+- **Links.** Most modules are linked as whole directories (`~/.config/nvim`, `~/.config/tmux`), so a pull is live at once. Re-run `install <target>` when a target gains a module, or a module gains a path outside such a directory, like a new script in `bin`. A removed one leaves a broken link to delete.
+- **nvim plugins** follow the committed lockfile: see [its README](config/modules/common/nvim/.config/nvim/README.md#setting-up-elsewhere).
+- **tmux** keeps the binary and config it started with. `prefix r` reloads the config; after a version bump, restart it: save (`prefix C-s`), `tmux kill-server`, reopen the terminal, restore (`prefix C-r`). Homebrew is shared by a Mac's users, so another user's `brew upgrade` is a version bump too.
+- **Per user, not shared:** language servers (`uv tool`, `gem`), prezto, `~/.zshrc`. A second user on the same machine installs its own.
 
 ## Notes
 
