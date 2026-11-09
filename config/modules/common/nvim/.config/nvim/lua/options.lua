@@ -46,6 +46,8 @@ vim.o.scrolloff = 10
 vim.o.signcolumn = "yes"
 vim.o.cursorline = true
 vim.o.breakindent = true
+vim.o.linebreak = true -- wrap at word boundaries ('breakat'), not mid-word
+vim.o.showbreak = "↪ "
 vim.o.showmode = false -- the statusline has a mode block
 vim.o.list = true
 vim.opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
