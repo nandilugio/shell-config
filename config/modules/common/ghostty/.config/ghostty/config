@@ -27,6 +27,8 @@ theme = Builtin Tango Dark
 # on the precision path can't be disabled from config.
 mouse-scroll-multiplier = precision:1,discrete:1
 
+mouse-hide-while-typing = true
+
 #### Remove ghostty defaults that shadow tmux bindings ####
 
 # Default: ESC b / ESC f, the readline word-backward/word-forward sequences
