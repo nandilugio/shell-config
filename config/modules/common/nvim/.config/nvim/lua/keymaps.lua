@@ -458,8 +458,10 @@ M.maps = {
         vim.cmd("nohlsearch")
         return
       end
+      -- Closing one float can close others (fzf-lua's picker takes its own
+      -- windows with it), so a window listed here may be gone by its turn.
       for _, win in ipairs(vim.api.nvim_list_wins()) do
-        if vim.api.nvim_win_get_config(win).relative ~= "" then
+        if vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_config(win).relative ~= "" then
           pcall(vim.api.nvim_win_close, win, false)
         end
       end
