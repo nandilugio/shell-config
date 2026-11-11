@@ -313,6 +313,19 @@ in the same place.
   (setup/git.lua), the editor's bg mixed with a red or green tint, so the
   syntax colours gitsigns captures show through and <leader>ub keeps working.
   gitsigns' defaults were DiffDelete fg+bold and reverse video, which hid them.
+- 2026-11-10, INLINE DIFF: removed lines, word diff and line backgrounds
+  (new) switch as one, setup/git.lua's inline_diff(), from review mode
+  and <leader>ugd (ugw dropped): apart they only made half a diff -- word diff
+  alone has no red, removed lines alone no red words. One palette for it and
+  the <leader>gp popup: a line and a word tint per side, red #3e1216/#6b1a24,
+  green #193524/#226432 (dark default), backgrounds only, global; review mode
+  only switches displays. Removed lines can't wrap: Neovim truncates virtual
+  lines (virt_lines_overflow), so a long prose line is cut at the window edge.
+  Line backgrounds are our own, a decoration provider reading
+  gitsigns.get_hunks() at each redraw, not gitsigns' linehl: a sign's line
+  highlight covers every decoration on the line in Neovim (drawline.c TODO),
+  hiding the added words. Not repainted on GitSignsUpdate: that fires only
+  when the counts change, and a toggle recomputes the hunks without it.
 - Tested by lua/setup/review_test.lua against a repository it builds: the
   branch shapes, the walk, the guards, :Review, the fetch. Kept a module, not
   a local plugin: the seam is documented in the header, see there.

@@ -35,18 +35,17 @@ if ok then
     },
   })
 
-  -- Deleted lines (show_deleted, on in review mode) and word diff, quieter
-  -- than gitsigns' defaults. Those borrow DiffDelete -- a bright foreground,
-  -- bold -- for the lines, and reverse video for the words, which inverts
-  -- every changed word into a block. Both override the syntax colours gitsigns
-  -- captures for the old text, so a deleted line read as one red smear.
+  -- One palette for every diff display: the inline diff (M.inline_diff, on in
+  -- review mode) and the <leader>gp popup. Four tints, a line and a word one
+  -- per side: removed lines and words red, added and changed ones green. A
+  -- changed line is the new text, so it is green too; its old text shows as
+  -- removed lines. In the default dark scheme: lines #3e1216 and #193524,
+  -- words #6b1a24 and #226432, each word tint a clear step above its line.
   --
-  -- Backgrounds only, then: the syntax colours show through, and a deleted
-  -- line reads as code on a dark red. Each is the editor's background mixed
-  -- with a tint, so they follow <leader>ub and the colourscheme; in the default
-  -- dark scheme these give #3e1216 for the lines, #6b1a24 and #1d4a2a for the
-  -- removed and added words. Word diff on the buffer's own lines and in the
-  -- <leader>gp popup share the green.
+  -- Backgrounds only. gitsigns' defaults borrow DiffAdd, DiffChange and
+  -- DiffDelete, whose foregrounds hide the syntax colours it captures for the
+  -- old text, and reverse video for removed words. Each tint is the editor's
+  -- background mixed with a colour, so it follows <leader>ub and the scheme.
   local function mix(from, to, t)
     local out = 0
     for shift = 16, 0, -8 do
@@ -59,9 +58,30 @@ if ok then
   local function set_highlights()
     local bg = vim.api.nvim_get_hl(0, { name = "Normal", link = false }).bg
       or (vim.o.background == "light" and 0xffffff or 0x000000) -- a transparent terminal
-    local added_word = { bg = mix(bg, 0x32c34d, 0.30) }
-    vim.api.nvim_set_hl(0, "GitSignsDeleteVirtLn", { bg = mix(bg, 0xff0000, 0.18) })
-    vim.api.nvim_set_hl(0, "GitSignsDeleteVirtLnInLine", { bg = mix(bg, 0xff2133, 0.37) })
+    local removed_line = { bg = mix(bg, 0xff0000, 0.18) }
+    local removed_word = { bg = mix(bg, 0xff2133, 0.37) }
+    local added_line = { bg = mix(bg, 0x32c34d, 0.18) }
+    local added_word = { bg = mix(bg, 0x32c34d, 0.45) }
+    -- Removed: the inline diff's virtual lines and the popup's old side.
+    vim.api.nvim_set_hl(0, "GitSignsDeleteVirtLn", removed_line)
+    vim.api.nvim_set_hl(0, "GitSignsDeletePreview", removed_line)
+    vim.api.nvim_set_hl(0, "GitSignsDeleteVirtLnInLine", removed_word)
+    vim.api.nvim_set_hl(0, "GitSignsDeleteInline", removed_word)
+    -- The removed lines' gutter (their old line numbers) as any other line's:
+    -- gitsigns tints it red, while the added lines' gutter is gitsigns' signs
+    -- on the plain column, so the two sides differed at the left edge.
+    vim.api.nvim_set_hl(0, "GitSignsVirtLnum", { link = "LineNr" })
+    -- Word diff also marks, on a new line, the character after a cut, for when
+    -- the old text is not on screen. Ours always is (the removed lines), and a
+    -- red character reads as a changed one, so the mark takes the line's green,
+    -- as other diff views show nothing there. A link, which gitsigns counts as
+    -- defined: an empty group it would define again on :Gitsigns refresh.
+    vim.api.nvim_set_hl(0, "GitSignsDeleteLnInline", { link = "InlineDiffLine" })
+    -- Added and changed: the buffer's own lines (ours, see M.inline_diff) and
+    -- the popup's new side; the buffer's word diff links
+    -- GitSigns{Add,Change}LnInline to the word groups.
+    vim.api.nvim_set_hl(0, "InlineDiffLine", added_line)
+    vim.api.nvim_set_hl(0, "GitSignsAddPreview", added_line)
     vim.api.nvim_set_hl(0, "GitSignsAddInline", added_word)
     vim.api.nvim_set_hl(0, "GitSignsChangeInline", added_word)
   end
@@ -386,6 +406,58 @@ end
 
 function M.reset_buffer()
   if against_index("resetting") then require("gitsigns").reset_buffer() end
+end
+
+-- ── Inline diff ─────────────────────────────────────────────────────────────
+-- The inline diff: each change's old text shown under the new, as a pull
+-- request's unified view does. Removed lines, word diff and line backgrounds
+-- only read together -- word diff marks the removed words inside the removed
+-- lines, and green lines without them hide what they replaced -- so they
+-- switch as one. nil toggles; returns whether it is now on.
+--
+-- The line backgrounds are drawn here, not with gitsigns' linehl: Neovim lets a
+-- sign's line highlight cover every decoration on its line (drawline.c: "TODO:
+-- line_attr should not take priority over decoration!"), so linehl hid the
+-- added words. An ordinary highlight sits under word diff (priority 1000) and
+-- over syntax (100). mdheading's tints are line highlights too, so an added
+-- heading keeps its tint rather than the green.
+--
+-- Drawn at each redraw from gitsigns' current hunks, as gitsigns draws word
+-- diff, so they always match what it shows: a toggle or a change of base
+-- (review mode) recomputes the hunks without any event to repaint on.
+local inline_ns = vim.api.nvim_create_namespace("inline_diff")
+local inline_on = false
+local added_rows = {} -- {first, last} 0-based, for the window being drawn
+
+vim.api.nvim_set_decoration_provider(inline_ns, {
+  on_win = function(_, _, buf)
+    if not inline_on then return false end
+    local hunks = require("gitsigns").get_hunks(buf)
+    if not hunks then return false end
+    added_rows = {}
+    for _, hunk in ipairs(hunks) do
+      if hunk.added.count > 0 then
+        added_rows[#added_rows + 1] = { hunk.added.start - 1, hunk.added.start + hunk.added.count - 2 }
+      end
+    end
+  end,
+  on_line = function(_, _, buf, row)
+    for _, rows in ipairs(added_rows) do
+      if row >= rows[1] and row <= rows[2] then
+        vim.api.nvim_buf_set_extmark(buf, inline_ns, row, 0, {
+          end_row = row + 1, hl_group = "InlineDiffLine", hl_eol = true, priority = 500, ephemeral = true,
+        })
+        return
+      end
+    end
+  end,
+})
+
+function M.inline_diff(value)
+  local gs = require("gitsigns")
+  inline_on = gs.toggle_deleted(value)
+  gs.toggle_word_diff(inline_on)
+  return inline_on
 end
 
 return M

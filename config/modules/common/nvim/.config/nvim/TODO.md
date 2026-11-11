@@ -500,6 +500,12 @@ captures for the old text. Now backgrounds only, derived from the scheme in
 added words on green, syntax colours showing through. Still open: whether
 the cursor line's blame belongs in the preset.
 
+**Changed 2026-11-10:** deleted lines and word diff are no longer separate:
+with the new line backgrounds they make one display, the inline diff
+(`setup/git.lua`, `<leader>ugd`; `ugw` is gone), since apart they only made
+half a diff. So the question above is now inline diff and blame, each with its
+own toggle.
+
 ---
 
 ## 28. Undo emptied a buffer, during review mode (unexplained)

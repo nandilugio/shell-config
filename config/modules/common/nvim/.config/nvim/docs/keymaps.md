@@ -119,7 +119,7 @@ credits tpope in the source.
 | `<leader>gS`/`gR` | **S**tage / **R**eset buffer | 🟨 capitals of `gs`/`gr`, as gitsigns names them |
 | `<leader>gq` | Hunks to **q**uickfix | 🟨 `q` as in `<leader>xq` |
 | `<leader>gQ` | Every changed file's hunks to **q**uickfix | 🟨 capital = all files, as `gS`/`gR`. In review mode, the whole branch |
-| `<leader>ug*` | Git toggles: `ugd` deleted, `ugw` word diff, `ugb` line blame | 🟨 the one nested group |
+| `<leader>ug*` | Git toggles: `ugd` inline **d**iff (removed lines, word diff, line backgrounds as one), `ugb` line blame | 🟨 the one nested group. `ugd`/`ugw` were deleted lines and word diff until 2026-11-10: apart, they only made half a diff |
 | `]c`/`[c` | Navigate hunks | 🟦 see §3 |
 
 `undo_stage_hunk` is deliberately unbound: gitsigns deprecated it in favour of

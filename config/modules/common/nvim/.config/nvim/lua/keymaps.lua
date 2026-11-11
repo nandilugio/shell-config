@@ -338,18 +338,14 @@ M.maps = {
   -- Many settings at once, as two presets (setup/review.lua). Capital R:
   -- <leader>ur is relative numbers.
   { "<leader>uR", function() require("setup.review").toggle() end, desc = "Review mode", needs = "mod:gitsigns" },
-  -- Git's own toggles, nested because there are three of them and <leader>u's
-  -- single letters are spoken for (ud diagnostics, uw wrap, ub background).
+  -- Git's own toggles, nested because <leader>u's single letters are spoken
+  -- for (ud diagnostics, uw wrap, ub background).
+  -- The inline diff: removed lines, word diff and line backgrounds as one, as
+  -- review mode turns them on (setup/git.lua says why they go together).
   {
     "<leader>ugd",
-    function() require("gitsigns").toggle_deleted() end,
-    desc = "Deleted lines",
-    needs = "mod:gitsigns",
-  },
-  {
-    "<leader>ugw",
-    function() require("gitsigns").toggle_word_diff() end,
-    desc = "Word diff",
+    function() require("setup.git").inline_diff() end,
+    desc = "Inline diff",
     needs = "mod:gitsigns",
   },
   -- The ambient layer: blame for the cursor line, as virtual text, following

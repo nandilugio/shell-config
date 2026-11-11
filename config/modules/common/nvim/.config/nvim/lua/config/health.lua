@@ -173,13 +173,17 @@ local CONTRACT = {
   {
     "gitsigns",
     functions = {
-      "setup", "change_base", "reset_base", "toggle_deleted", "toggle_word_diff",
+      "setup", "change_base", "reset_base", "toggle_deleted", "toggle_word_diff", "get_hunks",
       "toggle_current_line_blame", "stage_hunk", "reset_hunk", "stage_buffer",
       "reset_buffer", "setqflist", "nav_hunk", "preview_hunk", "blame_line",
       "diffthis", "select_hunk",
     },
     commands = { "Gitsigns" },
-    highlights = { "GitSignsDeleteVirtLn", "GitSignsDeleteVirtLnInLine", "GitSignsAddInline", "GitSignsChangeInline" },
+    highlights = {
+      "GitSignsDeleteVirtLn", "GitSignsDeleteVirtLnInLine", "GitSignsDeletePreview", "GitSignsDeleteInline",
+      "GitSignsDeleteLnInline", "GitSignsVirtLnum",
+      "GitSignsAddPreview", "GitSignsAddInline", "GitSignsChangeInline",
+    },
     -- b:gitsigns_status_dict, read by the statusline and setup/git.lua.
     status_fields = { "head", "root", "gitdir" },
   },

@@ -141,7 +141,8 @@ place, so a setting changed by hand while reviewing is reset on leaving.
 	base		the index		see |review-base|
 	diagnostics	cursor line, all	every line, errors only
 	type checking	the checker's default	standard (basedpyright)
-	hunk display	off			deleted lines, word diff, blame
+	hunk display	off			inline diff, blame (see
+						|cheatsheet-toggles|)
 	'write'		on			off
 
 Writes are refused, edits are not. Change something and the language server

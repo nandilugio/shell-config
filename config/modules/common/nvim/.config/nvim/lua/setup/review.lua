@@ -11,7 +11,7 @@
 --                 branch's changes, as the PR does
 --   diagnostics   written out on every line, errors only
 --   type checking basedpyright's "standard", not its stricter default
---   hunk display  deleted lines, word diff, the cursor line's blame
+--   hunk display  the inline diff (setup/git.lua), the cursor line's blame
 --   'write'       off, see PRESETS
 --
 -- Nothing here knows about pull requests or any host: only local git. Two
@@ -312,8 +312,7 @@ end
 local function apply(preset, base)
   local gs = require("gitsigns")
   set_base(base)
-  gs.toggle_deleted(preset.hunk_details)
-  gs.toggle_word_diff(preset.hunk_details)
+  G.inline_diff(preset.hunk_details)
   gs.toggle_current_line_blame(preset.hunk_details)
   require("setup.diagnostics").set(preset.diagnostics)
   vim.o.write = preset.write
