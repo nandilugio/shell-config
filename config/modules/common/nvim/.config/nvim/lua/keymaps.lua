@@ -291,6 +291,13 @@ M.maps = {
     -- needs only git, so the key keeps working on a bare server.
     fallback = function() require("setup.git").file_history() end,
   },
+  -- The commits, fzf-lua's picker. <CR> goes to the one picked: in review
+  -- mode it moves the review there, as ]v does, among the commits ]v walks;
+  -- elsewhere fzf-lua checks it out, asking first.
+  { "<leader>gc", function() require("setup.git").commits() end, desc = "Commits", needs = "fzf" },
+  -- The commit at HEAD -- the one under review while walking -- in a float:
+  -- message, changed files, patch.
+  { "<leader>gi", function() require("setup.git").commit_info() end, desc = "Commit info", needs = "git" },
   -- A hunk as a text object, so dih and yih read like diw and yiw.
   {
     "ih",

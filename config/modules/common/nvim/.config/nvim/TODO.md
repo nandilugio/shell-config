@@ -6,7 +6,8 @@ popup; 8-16 on 2026-09-18/19 while working on the git setup; 17-22 on
 while setting up a Python project; 25 the same day, while reworking folds; 26
 the same day, as a feature request; 27-29 on 2026-11-05, while trying out and
 then testing review mode (26); 30 on 2026-11-06, from a review of the whole
-config. Paths are relative to this directory.
+config; 31-33 on 2026-11-10, while brainstorming review mode. Paths are
+relative to this directory.
 
 Done items are cut to their outcome, with the commit where known; the full
 notes are in this file's history before 2026-11-06.
@@ -634,3 +635,69 @@ they happen mid-walk is the question.
 worktree in a pane" need. If the latter, prototype: `worktree add`, `:cd`,
 `gitsigns` base as today, `worktree remove` on leaving, and measure what the
 guards section shrinks to.
+
+---
+
+## 31. See and copy the current file's path
+
+**Where:** nothing yet; a key or two, probably under `<leader>`.
+
+**Why:** Asked for 2026-11-10. The statusline shows the path relative to the
+cwd, which is not always the one wanted, and there is no quick way to copy
+any form of it. The IntelliJ family offers a "Copy Path/Reference" menu: the
+absolute path, the path from the content (repository) root, the file name,
+and a reference with the line number (`path:line`). Neovim has the pieces
+built in: `<C-g>` and `1<C-g>` show the name and the full path, and
+`:let @+ = expand('%:p')` (`:~:.` relative, `:t` the name) copies one form,
+with `line('.')` for the `path:line` reference; the repository-relative form
+needs `setup/git.lua`'s `root()`.
+
+**Do:** Decide which forms are worth a key (or one key opening a small menu
+through `vim.ui.select`, which the picker already serves), and where they go:
+`<leader>o` is ours, `<leader>f` is find. Copy to `+`, as `'clipboard'` is
+`unnamedplus` anyway, and say what was copied.
+
+---
+
+## 32. A red sign on the inline diff's removed lines
+
+**Where:** `lua/setup/git.lua`, the inline diff; gitsigns' `deleted_preview.lua`
+(`build_prefix`).
+
+**Why:** Asked for 2026-11-10. Added and changed lines carry their `+` / `~`
+sign; the removed lines shown above a change carry none, so the red lines read
+as text rather than as the old side of the change. They are gitsigns' virtual
+lines, which have no sign column: gitsigns fills the gutter itself, blanks
+where the signs go and the old line numbers after them (`build_prefix`), and
+offers no option for a sign there. With a custom `'statuscolumn'` it evaluates
+that per virtual line instead, which could draw one, but this config has none.
+
+**Do:** Find the smallest way in: a gitsigns option or upstream request, a
+`'statuscolumn'` (a large change for one sign), or our own virtual lines
+replacing `show_deleted` (the most code). Then pick the character: `~` as the
+change's own sign in red, or `-` as diffs print a removed line.
+
+---
+
+## 33. Review mode: find a merged branch's fork point by itself
+
+**Where:** `lua/setup/review.lua`, `conventional_base` and `detect_branch`.
+
+**Why:** Found 2026-11-10, reviewing BI-21372-guarantee-ui in the monorepo
+after #12508 and then the branch itself were merged into develop. Every base
+candidate's merge-base with a merged branch is the branch's tip, so there is
+"nothing to compare", and review falls back to the last commit (it now says
+so). The fork point is still in the graph
+when the branch was merged with a merge commit: walking the tip's
+first-parent chain, the first commit also on the base's first-parent line is
+where it forked (8bd16b6 there, leaving the branch's one commit). The same
+idea as mhagger's git-when-merged, and as `nearer_forks` here. It cannot work
+after a fast-forward, which leaves nothing to tell the branch's commits from
+the base's; squash and rebase merges already work, as their originals never
+enter the base.
+
+**Do:** Only if reviewing merged branches turns out to be common. When a
+candidate already holds the tip, use that fork point instead of giving up,
+and label the review in two-dot notation (`8bd16b6..feature`), since the
+merge-base is no longer what it is reviewed against. Tests: a merge-commit
+merge, a fast-forward, a trunk inside another trunk (master in develop).

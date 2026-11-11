@@ -245,13 +245,18 @@ local function detect_branch(root, branch, ref)
     s.by_hand = true
   else
     -- Nothing to compare the branch with: the third return asks the caller to
-    -- review its last commit instead.
+    -- review its last commit instead (true, or below, the base it is in).
     if not conv then return nil, nil, true end
     s.base, s.name = conv.sha, conv.name
   end
   s.head = sha(root, "HEAD")
   if s.base == s.head then
-    if not ref then return nil, nil, true end
+    -- Nothing of its own against the base: its last commit is reviewed
+    -- instead, and the caller says why, as that need not be what was meant.
+    -- Merged since, or new with nothing committed yet, the graph alone does
+    -- not always tell (TODO 33), so it is not guessed at. A trunk in another
+    -- trunk (master in develop) just commits there: not news.
+    if not ref then return nil, nil, not vim.tbl_contains(trunk_names(root), branch) and s.name or true end
     return nil, ("%s is already in %s: nothing to review"):format(branch, s.name)
   end
   s.conv = { sha = s.base, name = s.name }
@@ -763,6 +768,9 @@ local function enter(ref)
   if #s.nearer > 0 and not s.by_hand then
     table.insert(warnings, table.concat(s.nearer, ", ") .. " fork nearer (:Review <Tab>)")
   end
+  if type(fallback) == "string" then
+    table.insert(warnings, ("%s has no commits of its own against %s: its last commit only"):format(branch, fallback))
+  end
   local _, dirty = git(root, { "status", "--porcelain", "--untracked-files=no" })
   if dirty ~= "" then table.insert(warnings, "uncommitted changes included") end
   if #warnings > 0 then
@@ -778,6 +786,40 @@ local function enter(ref)
 end
 
 -- ── Stepping and leaving ────────────────────────────────────────────────────
+
+-- Moves the review onto target, as every step and pick does: the guards, the
+-- first checkout's question, the checkout, then the review's new state.
+-- Says nothing itself: it returns the routine line on a move, or nil and why
+-- not, and each caller shows that its own way. A pick, from the commit
+-- picker, has to: what it says as the picker closes is wiped.
+local function move(s, target, whole_branch)
+  local why = blocked(s)
+  if why then return nil, refusal(why) end
+  if not s.confirmed then
+    local _, cmd = switch_to(s, target)
+    local text = ("Review mode checks out each commit it goes to; HEAD returns to %s when you leave it or quit Neovim.\nNow: `%s`. Run?")
+      :format(home_name(s.home), cmd)
+    if not ask(text, true) then return nil end -- declined: nothing to say
+    s.confirmed = true
+  end
+  local ok, err = checkout(s, target)
+  if not ok then return nil, err end
+
+  s.head = target
+  if whole_branch then
+    s.kind, s.base, s.name = "branch", s.conv.sha, s.conv.name
+  else
+    s.kind, s.base = "commit", sha(s.root, target .. "^")
+    if s.list then s.pos = vim.fn.index(s.list, target) + 1 end
+    if s.branch then
+      s.back = tonumber((select(2, git(s.root, { "rev-list", "--count", "--first-parent", target .. ".." .. s.branch }))))
+    end
+  end
+  write_record(s) -- again: the label moved with the step
+  set_base(s.base)
+  local subject = s.kind == "commit" and select(2, git(s.root, { "log", "-1", "--format=%s", target })) or ""
+  return fit(headline(s) .. (subject ~= "" and "  " .. subject or ""))
+end
 
 --- Steps to the next (1) or previous (-1) commit under review.
 --- @param dir 1|-1
@@ -810,32 +852,54 @@ function M.step(dir)
     return vim.notify("No branch has this commit, and git records no children: only [v goes on")
   end
 
-  local why = blocked(s)
-  if why then return vim.notify(refusal(why), vim.log.levels.WARN) end
-  if not s.confirmed then
-    local _, cmd = switch_to(s, target)
-    local text = ("]v and [v check out each commit; HEAD returns to %s when you leave review mode or quit Neovim.\nNow: `%s`. Run?")
-      :format(home_name(s.home), cmd)
-    if not ask(text, true) then return end
-    s.confirmed = true
-  end
-  local ok, err = checkout(s, target)
-  if not ok then return vim.notify(err, vim.log.levels.WARN) end
+  local done, err = move(s, target, whole_branch)
+  if done then vim.notify(done) elseif err then vim.notify(err, vim.log.levels.WARN) end
+end
 
-  s.head = target
-  if whole_branch then
-    s.kind, s.base, s.name = "branch", s.conv.sha, s.conv.name
-  else
-    s.kind, s.base = "commit", sha(s.root, target .. "^")
-    if s.list then s.pos = vim.fn.index(s.list, target) + 1 end
-    if s.branch then
-      s.back = tonumber((select(2, git(s.root, { "rev-list", "--count", "--first-parent", target .. ".." .. s.branch }))))
-    end
+--- Where ]v and [v can take this review, for the commit picker: on a feature
+--- branch, its own commits (newest first) and the whole branch; elsewhere the
+--- first-parent history the walk goes back through, from the branch's tip or,
+--- with no branch, from where the review started. Nil outside review mode.
+--- `root` is the repository under review, which need not be the current buffer's.
+--- @return { root: string, list: string[], whole: { base: string, tip: string, label: string } }|{ root: string, from: string, label: string }|nil
+function M.reachable()
+  local s = state
+  if not s then return nil end
+  if s.list then
+    local newest = {}
+    for i = #s.list, 1, -1 do newest[#newest + 1] = s.list[i] end
+    return {
+      root = s.root,
+      list = newest,
+      whole = { base = s.conv.sha, tip = sha(s.root, s.branch), label = s.conv.name .. "..." .. s.branch },
+    }
   end
-  write_record(s) -- again: the label moved with the step
-  set_base(s.base)
-  local subject = s.kind == "commit" and select(2, git(s.root, { "log", "-1", "--format=%s", target })) or ""
-  vim.notify(fit(headline(s) .. (subject ~= "" and "  " .. subject or "")))
+  local from = s.branch and sha(s.root, s.branch) or home_sha(s.root, s.home)
+  return { root = s.root, from = from, label = s.branch or G.short_rev(from) }
+end
+
+--- Moves the review to a commit from M.reachable, or with whole, back to the
+--- whole branch: what a pick in the commit picker does, with ]v's checks.
+--- Returns the routine line on a move, or nil and why not (nil alone when
+--- the first checkout's question was declined).
+--- @param rev? string
+--- @param whole? boolean
+--- @return string? done
+--- @return string? why_not
+function M.go_to(rev, whole)
+  local s = state
+  if not s then return nil, "Not in review mode" end
+  if whole then
+    if not s.list then return nil, "Only a feature branch has a whole branch to go back to" end
+    if s.kind == "branch" then return nil, "Already reviewing the whole branch" end
+    return move(s, sha(s.root, s.branch), true)
+  end
+  local target = rev and sha(s.root, rev)
+  if not target then return nil, "Not a commit: " .. tostring(rev) end
+  if s.kind == "commit" and target == s.head then return nil, "Already reviewing this commit" end
+  if s.list and vim.fn.index(s.list, target) < 0 then return nil, "Not one of the commits under review" end
+  if not sha(s.root, target .. "^") then return nil, "A root commit: there is no parent to compare it against" end
+  return move(s, target)
 end
 
 local function leave()

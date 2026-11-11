@@ -312,6 +312,8 @@ lines went, 1-9 then > for more, since the lines are not there to count.
 <leader>gl      line history: every commit that touched it (visual: the range)
 <leader>gt      function history: the whole function, as it moved and changed
 <leader>gf      file history: every commit touching the file, as a picker
+<leader>gc      commits, as a picker; Enter checks one out, asking first
+<leader>gi      this commit (HEAD): message, files, patch, in a float
 
 gt needs the repository to have enabled git's funcname pattern for the
 language (`*.py diff=python` in .gitattributes); it says so when it has not.
@@ -346,6 +348,8 @@ All of it: |review-mode|.
 <leader>uR      on or off                   :Review {ref}  against that ref
 :Review @{u}    what is not pushed yet      <Tab>  the detected bases first
 ]v,[v           next, previous commit under review, checked out in turn
+<leader>gc      the same commits and the whole branch; Enter goes there
+<leader>gi      the commit under review: message, files, patch
 ]c,[c           the hunks under review      <leader>gD  the changed files
 <leader>gQ      every hunk, to quickfix     <leader>gd  this file vs the base
 

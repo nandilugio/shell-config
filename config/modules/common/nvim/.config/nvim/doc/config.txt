@@ -31,6 +31,8 @@ Inside review mode the usual keys read the review:
 	<leader>gd	this file against the base, in a split
 	gd grr K	as ever: the code under review is the real working tree
 	]v [v		the next and previous commit under review |review-walk|
+	<leader>gc	any of them, or the whole branch, from a picker
+	<leader>gi	the commit under review: message, files, patch
 
 ------------------------------------------------------------------------------
 KINDS							*review-kinds*
@@ -56,6 +58,10 @@ Which one you get:
 - On a branch with nothing to compare against, such as master in a repository
   that only commits there: commit review of its last commit. The unpushed
   commits are a branch review away: |:Review| @{u}.
+- On a branch with no commits of its own against its base, merged since or
+  new with nothing committed yet: commit review of its last commit, and the
+  entry message says so. To review a merged branch's commits, leave review
+  mode, then |:Review| {ref} with the commit it forked from.
 
 ------------------------------------------------------------------------------
 THE BASE						*review-base*
@@ -93,6 +99,13 @@ Along a feature branch the walk is a cycle through the whole branch: branch
 review, the oldest commit, ..., the tip, branch review again. On a trunk it
 goes back through history and forward to the tip. A commit no branch contains
 can only go back: git records parents, not children.
+
+<leader>gc lists the same commits in a picker, newest first, each previewed.
+On a feature branch the first entry is the whole branch, previewed with every
+commit. <CR> goes to the one picked, exactly as a step would, with the same
+question; a refusal (below) waits for a key. Outside review mode the picker is
+fzf-lua's own: the log from HEAD, and <CR> checks the commit out, asking
+first.
 
 Checking out is the one thing review mode does to the repository, so:
 

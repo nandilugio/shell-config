@@ -205,6 +205,17 @@ local function step(dir)
   vim.wait(200) -- the base and gitsigns' head follow
 end
 
+-- A pick in the commit picker, as its <CR> makes it.
+-- What go_to returns: the routine line, or nil and why not. It shows
+-- nothing itself; the picker does.
+local function go(rev, whole)
+  local before = head()
+  local done, why_not = review.go_to(rev, whole)
+  wait_for(function() return head() ~= before end)
+  vim.wait(200) -- the base and gitsigns' head follow
+  return done, why_not
+end
+
 local function git_checkout(ref)
   sh("git checkout -q " .. ref)
   vim.cmd("silent! checktime")
@@ -428,6 +439,37 @@ base_is("steps at once: the last base asked for is kept", sh("git rev-parse HEAD
 statusline_is("steps at once: statusline", "cR feature-p 3/3")
 toggle()
 
+-- The commit picker lists where ]v goes, and a pick moves the review there
+-- the way ]v would.
+check("reachable: nothing outside review mode", review.reachable(), nil)
+toggle()
+local reach = review.reachable()
+check("reachable: the branch's own commits, newest first", vim.tbl_map(subject, reach.list), { "p3", "p2", "p1" })
+check("reachable: and the whole branch", reach.whole, {
+  base = sh("git merge-base feature-p develop"), tip = sh("git rev-parse feature-p"), label = "develop...feature-p",
+})
+local msgs_before = #msgs
+local done = go(sh("git rev-parse feature-p~1"))
+check_has("pick: returns the routine line", done, "Commit review: feature-p~1 2/3  p2")
+check("pick: says nothing itself", #msgs, msgs_before)
+check("pick: at p2, detached", { subject(), on_branch() }, { "p2", "" })
+statusline_is("pick: statusline", "cR feature-p~1 2/3")
+base_is("pick: base is the parent", sh("git rev-parse HEAD^"))
+check("pick: the commit already under review", { review.go_to(sh("git rev-parse HEAD")) }, { nil, "Already reviewing this commit" })
+check("pick: not a commit under review", { review.go_to(sh("git rev-parse develop")) }, { nil, "Not one of the commits under review" })
+check("pick: a refusal says nothing itself either", #msgs, msgs_before)
+check("pick: refused, nothing moved", subject(), "p2")
+sh("echo dirt >> p2.txt")
+local _, why_not = review.go_to(sh("git rev-parse feature-p"))
+check_has("pick: ]v's guards", why_not, "p2.txt has uncommitted changes")
+sh("git checkout -- p2.txt")
+vim.cmd("silent! checktime")
+check_has("pick: the whole branch", go(nil, true), "Branch review: develop...feature-p")
+check("pick: whole branch, back on it", on_branch(), "feature-p")
+base_is("pick: whole branch, its base", sh("git merge-base feature-p develop"))
+check("pick: already the whole branch", { review.go_to(nil, true) }, { nil, "Already reviewing the whole branch" })
+toggle()
+
 -- Leaving is refused on a step's grounds, and works once they are cleared.
 toggle()
 step(1)
@@ -504,6 +546,7 @@ check("leave after a hand move: still there", { subject(), review.active() }, { 
 git_checkout("--detach develop~1")
 open("d1.txt")
 toggle()
+check("reachable on a trunk: the history from its tip", review.reachable(), { root = sh("git rev-parse --show-toplevel"), from = sh("git rev-parse develop"), label = "develop" })
 step(1)
 check_has("trunk walk forward", last_msg(), "Commit review: develop^..develop  d4")
 review.step(1)
@@ -516,12 +559,25 @@ review.step(-1)
 check_has("walk stops before the root", last_msg(), "root commit")
 toggle()
 
+-- A branch with nothing of its own against its base: its last commit, and
+-- the message says why, merged since or new alike.
+sh("git branch -q fresh develop~1")
+git_checkout("fresh")
+open("d1.txt")
+toggle()
+check_has("nothing of its own: says so", last_msg(), "fresh has no commits of its own against develop: its last commit only")
+check("nothing of its own: its last commit", review.kind(), "commit")
+toggle()
+git_checkout("master")
+sh("git branch -q -D fresh")
+
 -- A commit no branch has: only back.
 git_checkout("--detach feature-p")
 sh("echo o > o.txt && git add o.txt && git commit -q -m orphan")
 open("o.txt")
 toggle()
 check_has("orphan: labelled by sha", last_msg(), "Commit review: " .. sh("git rev-parse --short HEAD") .. "^..")
+check("reachable with no branch: the history from where review started", review.reachable(), { root = sh("git rev-parse --show-toplevel"), from = head(), label = sh("git rev-parse --short=7 HEAD") })
 review.step(1)
 check_has("orphan: no way forward", last_msg(), "git records no children")
 step(-1)

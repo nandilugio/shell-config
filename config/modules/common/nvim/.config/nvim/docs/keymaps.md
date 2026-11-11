@@ -116,6 +116,8 @@ credits tpope in the source.
 | `<leader>gl` | **L**ine history (`git log -L`) | 🟨 no convention exists; see research |
 | `<leader>gt` | Function history (**t**race) | 🟨 Magit's `magit-log-trace-definition`, the only tool with a default key for it |
 | `<leader>gf` | **F**ile history | 🟦 LazyVim's only use of `gf`; fzf-lua's picker, ours as fallback |
+| `<leader>gc` | **C**ommits, as a picker; `<CR>` goes there | 🟦 LazyVim's fzf and telescope extras (2026-11-10). In review mode the commits `]v`/`[v` walk plus the whole branch, and `<CR>` moves the review; elsewhere fzf-lua's checkout. No fallback: without fzf, `:!git log` |
+| `<leader>gi` | Commit **i**nfo: HEAD's message, files and patch, in a float | 🟨 no convention. The picker's preview is the same `git show --stat`, without the patch |
 | `<leader>gS`/`gR` | **S**tage / **R**eset buffer | 🟨 capitals of `gs`/`gr`, as gitsigns names them |
 | `<leader>gq` | Hunks to **q**uickfix | 🟨 `q` as in `<leader>xq` |
 | `<leader>gQ` | Every changed file's hunks to **q**uickfix | 🟨 capital = all files, as `gS`/`gR`. In review mode, the whole branch |

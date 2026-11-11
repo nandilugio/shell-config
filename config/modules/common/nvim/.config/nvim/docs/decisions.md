@@ -339,6 +339,31 @@ in the same place.
   highlight covers every decoration on the line in Neovim (drawline.c TODO),
   hiding the added words. Not repainted on GitSignsUpdate: that fires only
   when the counts change, and a toggle recomputes the hunks without it.
+- 2026-11-10, COMMITS: <leader>gi shows HEAD (the commit under review while
+  walking) in a float: `git show --stat --patch --first-parent` (as the signs
+  compare: a merge shows no patch otherwise). <leader>gc is fzf-lua's
+  git_commits as it comes, preview and keys included. In review mode it is
+  given two things: its list, what ]v [v walk plus the whole branch as a range
+  entry, titled ("Commits under review: develop...x", or on a trunk "History
+  back from x", the whole log); and <CR>, which goes there through the same
+  guarded move as a step (review.go_to, which returns what it has to say
+  rather than saying it: printed from a picker's action it is wiped as the
+  picker closes, so a refusal is shown as a dialog that waits for a key).
+  fzf-lua's ctrl-d is unbound there (fzf's own then: delete a character, or
+  close on an empty query): fzf-lua's opens its diff picker with this picker's
+  options, which list these commits. Outside review, <CR> stays fzf-lua's
+  confirmed checkout. Reworked 2026-11-12 in a review cycle, after own ctrl-d
+  and deferred-pick versions each drew new bugs: the standard picker, with
+  only what review mode needs.
+- A branch with no commits of its own against its base is reviewed as its
+  last commit, and entering says so. Merged since, or new with nothing
+  committed yet: the graph alone does not always tell, so it is not guessed
+  (finding a merged branch's fork point is TODO 33).
+- Considered and left: gitsigns' :Gitsigns diff panel (2026-09). Its --commit and range forms show read-only
+  revision copies, not the working tree review mode promises; its one-revision
+  form shows the real files but no message, opens a tab, and does not follow
+  ]v, so review mode would have to reopen it at every step. :Gitsigns show
+  remains for the full commit as a buffer.
 - Tested by lua/setup/review_test.lua against a repository it builds: the
   branch shapes, the walk, the guards, :Review, the fetch. Kept a module, not
   a local plugin: the seam is documented in the header, see there.

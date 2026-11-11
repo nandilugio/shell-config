@@ -193,7 +193,7 @@ local CONTRACT = {
       "setup", "register_ui_select", "files", "live_grep", "grep_cword", "oldfiles",
       "helptags", "keymaps", "diagnostics_document", "lsp_document_symbols",
       "lsp_live_workspace_symbols", "lsp_references", "builtin", "resume", "buffers",
-      "git_bcommits", "git_diff",
+      "git_bcommits", "git_commits", "git_diff",
     },
     commands = { "FzfLua" },
   },

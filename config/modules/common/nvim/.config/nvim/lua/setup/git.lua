@@ -370,6 +370,102 @@ function M.changed_files()
   vim.notify(("%d changed files in the argument list: ]a and [a walk them"):format(#files))
 end
 
+-- ── Commits ─────────────────────────────────────────────────────────────────
+-- <leader>gi shows a commit as `git show --stat --patch` prints it: header,
+-- message, the files with their counts, the patch. HEAD's, which is the
+-- commit under review while walking and the last commit otherwise, so it
+-- needs no notion of review mode. --first-parent, as the signs compare:
+-- without it a merge shows no patch at all, unless it had conflicts. The
+-- <leader>gc picker is fzf-lua's git_commits, its preview fzf-lua's own.
+
+-- fzf-lua's own line for git_commits, set here so the lists review mode makes
+-- look like the plain log.
+local LOG = [[git log --color --pretty=format:"%C(yellow)%h%Creset %Cgreen(%><(12)%cr%><|(12))%Creset %s %C(blue)<%an>%Creset"]]
+
+--- Shows a commit (HEAD by default) in a float: header, message, files, patch.
+--- @param rev? string
+function M.commit_info(rev)
+  local root = M.root()
+  if not root then return vim.notify("Not in a git repository", vim.log.levels.WARN) end
+  local res = vim.system({ "git", "-C", root, "show", "--stat", "--patch", "--first-parent", "--no-color", rev or "HEAD", "--" }, { text = true })
+    :wait()
+  if res.code ~= 0 then return vim.notify(vim.trim(res.stderr), vim.log.levels.WARN) end
+  local lines = vim.split(res.stdout, "\n", { trimempty = true })
+
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].filetype = "git" -- the diff colours, as in the history splits
+  vim.bo[buf].modifiable = false
+  vim.bo[buf].bufhidden = "wipe"
+  vim.keymap.set("n", "q", "<Cmd>close<CR>", { buffer = buf, nowait = true, desc = "Close" })
+
+  -- As the cheatsheet's float: centred, square, most of the screen.
+  local width = math.min(100, math.floor(vim.o.columns * 0.9))
+  local height = math.floor(vim.o.lines * 0.85)
+  local win = vim.api.nvim_open_win(buf, true, {
+    relative = "editor",
+    width = width,
+    height = height,
+    row = math.floor((vim.o.lines - height) / 2),
+    col = math.floor((vim.o.columns - width) / 2),
+    style = "minimal",
+    border = "single",
+    title = (" Commit %s "):format(M.short_rev(lines[1]:match("^commit (%x+)") or rev or "HEAD")),
+    title_pos = "center",
+  })
+  vim.wo[win].cursorline = true
+end
+
+--- The commits, as a picker whose Enter goes to the one picked. Elsewhere it
+--- is fzf-lua's git_commits as it comes: the log from HEAD, Enter a checkout,
+--- asked first. In review mode the list is where ]v and [v go -- a branch's
+--- own commits and the whole branch, or the history a trunk walk goes back
+--- through -- and Enter moves the review there, with ]v's checks.
+function M.commits()
+  local review = require("setup.review")
+  local reach = review.reachable()
+  -- The review's repository while there is one: its commits are the list.
+  local root = reach and reach.root or M.root()
+  if not root then return vim.notify("Not in a git repository", vim.log.levels.WARN) end
+  local fzf = require("setup.fzf")
+  if not reach then return fzf.git_commits({ cwd = root }) end
+
+  local opts = {
+    cwd = root,
+    actions = {
+      -- What a pick has to say, it says once the picker is gone, and a
+      -- refusal waits for a key: printed, it would be wiped as the picker
+      -- closes. The routine line is not missed: the statusline shows it.
+      enter = function(selected)
+        local rev = selected[1] and selected[1]:match("^%S+")
+        if not rev then return end
+        local _, why_not
+        if rev:find("..", 1, true) then _, why_not = review.go_to(nil, true) else _, why_not = review.go_to(rev) end
+        if why_not then vim.fn.confirm(why_not, "&OK", 1, "Warning") end
+      end,
+      -- fzf-lua's own opens its diff picker with this picker's options,
+      -- which would list these commits there.
+      ["ctrl-d"] = false,
+    },
+  }
+  if reach.list then
+    -- The whole branch as one entry, a range: its preview is then every
+    -- commit, newest first. Then its own commits, when it has any that are
+    -- not merges: with none to name, git log would list HEAD.
+    local w = reach.whole
+    local whole = ("\27[33m%s..%s\27[0m whole branch: %s"):format(M.short_rev(w.base), M.short_rev(w.tip), w.label)
+    opts.cmd = ("printf '%%s\\n' %s"):format(vim.fn.shellescape(whole))
+    if #reach.list > 0 then opts.cmd = ("%s; %s --no-walk=unsorted %s"):format(opts.cmd, LOG, table.concat(reach.list, " ")) end
+    opts.winopts = { title = (" Commits under review: %s "):format(w.label) }
+  else
+    -- Without the root, which has no parent to be reviewed against. Titled,
+    -- since a whole history in review mode looks like a list gone wrong.
+    opts.cmd = ("%s --first-parent --min-parents=1 %s"):format(LOG, reach.from)
+    opts.winopts = { title = (" History back from %s "):format(reach.label) }
+  end
+  fzf.git_commits(opts)
+end
+
 -- ── Staging ─────────────────────────────────────────────────────────────────
 -- Staging writes the index, which only makes sense while the hunks are
 -- measured against it. Against another base a hunk is that base's diff:
