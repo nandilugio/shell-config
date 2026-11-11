@@ -280,6 +280,19 @@ in the same place.
 - 2026-11-05, from the test suite: gitsigns' gitdir watcher can put an older
   base back after a checkout (TODO 29, upstream). keep_base re-applies the
   review's base on the buffer's GitSignsUpdate, once per buffer and base.
+  REWORKED 2026-11-11, from traces of a suite failing under load: that one
+  re-apply was spent by a second late writer, review's own overlapping
+  change_base calls (gitsigns orders no two passes over its buffers), and
+  leaving mid-walk had no keeper at all, so a buffer could stay on the
+  review's base in edit mode. Now set_base runs one pass at a time, latest
+  base only, and a pass is run again when a buffer is astray: on a base
+  asked for here earlier, up to three times per base asked for, in review
+  and after it. A base set by hand is no reason for a pass (the next pass
+  covers it all the same); a hand reset to the index in review is one, the
+  index being a base review asks for. Looked for at a pass's end, on
+  GitSignsUpdate, and 2s later, as the event only comes when a buffer's
+  counts change. One re-apply per review instead of one per buffer, each of
+  which re-based every buffer.
 - 2026-11-06, checkouts made safe, after a walk was left detached by quitting
   Neovim mid-review: the first checkout of a review asks; HEAD returns home on
   leaving AND on VimLeavePre; steps, leaving and the exit return are all

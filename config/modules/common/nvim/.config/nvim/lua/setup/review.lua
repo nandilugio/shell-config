@@ -301,12 +301,98 @@ local function detect_commit(root, branch)
   return s
 end
 
--- ── Apply ───────────────────────────────────────────────────────────────────
+-- ── The base ────────────────────────────────────────────────────────────────
+-- Review mode sets the base of every buffer, entering, stepping and leaving,
+-- and gitsigns can leave a buffer on an older one, in two ways:
+--
+--   - It applies a base to its buffers one after another, awaiting git for
+--     each, and nothing orders two such passes: started close together, the
+--     older can reach a buffer last. So one pass at a time here: a base asked
+--     for meanwhile waits for the pass to end and then runs, the latest only.
+--   - It watches .git/HEAD and, after a checkout, refreshes every attached
+--     buffer with the revision it had when the refresh began, writing it back
+--     when its git calls return. Nothing locks that against a base change, so
+--     a refresh in flight across one puts the old base back (TODO 29, an
+--     upstream bug). A step does both at once, and so does leaving mid-walk,
+--     which would leave a buffer on the review's base in edit mode.
+--
+-- The second cannot be prevented, only put right, by running the pass again
+-- when a buffer is astray: on a base asked for here earlier, which is all a
+-- late write can be. A base set by hand (:Gitsigns change_base) is someone's
+-- intent, and no reason for a pass; the next one, a step's say, covers it
+-- like any buffer. The index is a base asked for, on leaving, so a hand
+-- :Gitsigns reset_base in review reads as a late write and is put back:
+-- the index is edit mode's. Looked for when a pass ends, when gitsigns raises
+-- GitSignsUpdate, and once more a little later: the event comes only when a
+-- buffer's counts change, and a file that reads the same against both bases
+-- changes none. A few times per base asked for and no more, so a base that
+-- will not take cannot loop; the statusline's two-dot form then shows what
+-- is left. None of this ends with the review: the base asked for on leaving
+-- is the index.
+local CORRECTIONS = 3
+local RECHECK = 2000 -- ms after a pass: past gitsigns' refresh, on a slow repository too
+local INDEX = false -- G.base gives nil for the index, which cannot key a table
+local pass = { running = false, again = false, base = nil, left = 0, asked = { [INDEX] = true } }
 
-local function set_base(base)
-  local gs = require("gitsigns")
-  if base then gs.change_base(base, true) else gs.reset_base(true) end
+-- A buffer gitsigns holds, its file in the working tree, on an earlier base.
+-- A file absent from the tree stays on the index by design.
+local function astray(buf)
+  if not vim.api.nvim_buf_is_valid(buf) or not vim.b[buf].gitsigns_status_dict then return false end
+  local base = G.base(buf)
+  if base == pass.base or not pass.asked[base or INDEX] then return false end
+  local name = vim.api.nvim_buf_get_name(buf)
+  return name ~= "" and vim.uv.fs_stat(name) ~= nil
 end
+
+local recheck
+
+local function run_pass()
+  if pass.running then
+    pass.again = true
+    return
+  end
+  pass.running, pass.again = true, false
+  -- With a callback the pass's error comes here rather than being raised.
+  require("gitsigns").change_base(pass.base, true, vim.schedule_wrap(function(err)
+    pass.running = false
+    if err then vim.notify(tostring(err), vim.log.levels.WARN) end
+    if pass.again then return run_pass() end
+    -- A pass that failed is not run again for the same answer: gitsigns
+    -- stops at the first buffer it cannot give the base (one of another
+    -- repository, say), leaving the rest astray. After the line above: the
+    -- allowance is the base's asked for last, not a superseded pass's to end.
+    if err then pass.left = 0 end
+    recheck()
+    vim.defer_fn(recheck, RECHECK)
+  end))
+end
+
+-- Not while a pass runs: every buffer it has yet to reach is astray then,
+-- and the pass looks for itself when it ends.
+function recheck()
+  if pass.running or pass.left == 0 then return end
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if astray(buf) then
+      pass.left = pass.left - 1
+      return run_pass()
+    end
+  end
+end
+
+vim.api.nvim_create_autocmd("User", {
+  group = vim.api.nvim_create_augroup("review_base", { clear = true }),
+  pattern = "GitSignsUpdate",
+  callback = function() recheck() end,
+})
+
+--- Sets every buffer's base, and keeps it: a revision, or nil for the index.
+local function set_base(base)
+  pass.base, pass.left = base, CORRECTIONS
+  pass.asked[base or INDEX] = true
+  run_pass()
+end
+
+-- ── Apply ───────────────────────────────────────────────────────────────────
 
 -- Returns the type checker's report, for the caller's message.
 local function apply(preset, base)
@@ -321,37 +407,6 @@ end
 
 -- Every autocmd a review registers lives in this group, cleared on leaving.
 local group = vim.api.nvim_create_augroup("review", { clear = true })
-
--- ── Keeping the base ────────────────────────────────────────────────────────
--- gitsigns watches .git/HEAD and, after a checkout, refreshes every attached
--- buffer with the revision it had when the refresh began, writing it back
--- when its git calls return. Nothing locks that against change_base, so a
--- refresh still in flight from the previous step lands after the next step's
--- base change and puts the old base back: wrong hunks, and the statusline
--- falls to the two-dot form. Two quick steps, or slow git, is all it takes
--- (TODO 29, an upstream bug).
---
--- The refresh ends by raising GitSignsUpdate for the buffer, so that is where
--- to look: a buffer whose base is not the review's gets it again. Once per
--- buffer and base, so it cannot loop, and only for files in the working tree,
--- since gitsigns leaves a file absent from it on the index by design.
-
-local function keep_base(s)
-  local applied = {}
-  vim.api.nvim_create_autocmd("User", {
-    group = group,
-    pattern = "GitSignsUpdate",
-    callback = function(ev)
-      local buf = ev.data and ev.data.buffer
-      if not buf or state ~= s or G.base(buf) == s.base then return end
-      local key = buf .. ":" .. s.base
-      local name = vim.api.nvim_buf_get_name(buf)
-      if applied[key] or name == "" or not vim.uv.fs_stat(name) then return end
-      applied[key] = true
-      require("gitsigns").change_base(s.base, true)
-    end,
-  })
-end
 
 -- Cut to the width a message can take without the hit-enter prompt, which
 -- would swallow the key typed next. Only for the routine messages -- entering,
@@ -697,7 +752,6 @@ local function enter(ref)
   s.gitdir = gitdir
   state = s
   write_record(s)
-  keep_base(s)
   return_on_exit(s)
   local tc, tc_level = apply(PRESETS.review, s.base)
 

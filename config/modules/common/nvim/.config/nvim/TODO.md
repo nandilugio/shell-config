@@ -561,10 +561,13 @@ change_revision  d4 -> p2             step: base p2   now=p2
 refresh          started at d4 ...    now=d4          and again
 ```
 
-**Worked around** in `setup/review.lua` (`keep_base`): the refresh ends by
-raising `GitSignsUpdate` for the buffer, so on that event a buffer whose base
-is not the review's gets `change_base` again, once per buffer and base.
-Public API only, so it stays. Remove it when upstream fixes this.
+**Worked around** in `setup/review.lua` (The base): a buffer left on a base
+review asked for earlier has the base applied again, up to three times per
+base asked for, in review and after leaving it. Looked for when a pass ends,
+on `GitSignsUpdate`, and two seconds later, since the event only comes when a
+buffer's counts change. Public API only, so it stays. Remove the re-applying
+when upstream fixes this; the one-pass-at-a-time part answers a second race,
+between two `change_base` calls, and stays either way (2026-11-11).
 
 **Do:** file at lewis6991/gitsigns.nvim. Fix candidates upstream: re-read
 `self.revision` after the awaits in `refresh`, or take `Obj:lock` in both the

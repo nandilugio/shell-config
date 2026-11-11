@@ -182,6 +182,13 @@ local function statusline_is(name, want)
   check(name, statusline(), want)
 end
 
+-- The base gitsigns holds for the current buffer, awaited likewise: it is
+-- applied a buffer at a time, and put right again when gitsigns undoes it.
+local function base_is(name, want)
+  wait_for(function() return G.base(0) == want end)
+  check(name, G.base(0), want)
+end
+
 -- Enters or leaves, then waits for gitsigns to apply the base to the buffer.
 local function toggle()
   local want = not review.active()
@@ -260,10 +267,9 @@ end
 
 -- ── The base, kept ──────────────────────────────────────────────────────────
 -- gitsigns can put an older base back after a checkout (TODO 29). The race
--- itself cannot be staged on demand; the corrector can: a buffer whose base
--- went wrong gets the review's back on gitsigns' update event. (It does so
--- once per buffer and base; gitsigns' own updates land too, so that bound is
--- not observable here.)
+-- itself cannot be staged on demand; the corrector can: a buffer left on a
+-- base review asked for earlier gets the review's back on gitsigns' update
+-- event. More of it under "Keeping the base", in the walk.
 toggle()
 local entry = require("gitsigns.cache").cache[vim.api.nvim_get_current_buf()]
 local base = G.base(0)
@@ -308,6 +314,8 @@ statusline_is("walk 1/3: statusline", "cR feature-p~2 1/3")
 check_has("walk 1/3: message names the commit", last_msg(), "Commit review: feature-p~2 1/3  p1")
 check("walk 1/3: base is the parent", G.base(0), sh("git rev-parse HEAD^"))
 step(1)
+-- The first step whose base is not the branch's: the one gitsigns can undo.
+base_is("walk 2/3: base is the parent", sh("git rev-parse HEAD^"))
 step(1)
 check("first checkout: the walk asks only once", #asked, 2)
 check("walk 3/3: the tip, back on the branch", { subject(), on_branch() }, { "p3", "feature-p" })
@@ -320,11 +328,105 @@ step(-1)
 check("walk back from 0: the tip", subject(), "p3")
 step(-1)
 check("walk back: 2/3", subject(), "p2")
+base_is("walk back: 2/3, its base again on a second visit", sh("git rev-parse HEAD^"))
 -- Leaving mid-walk goes home.
 toggle()
 check("leave mid-walk: back on the branch", { on_branch(), review.active() }, { "feature-p", false })
 check_has("leave mid-walk: says so, with the command", last_msg(), "back on feature-p (`git switch feature-p`)")
 check("leave mid-walk: record gone", has_record(), false)
+
+-- gitsigns' refresh after that checkout can write the review's base back
+-- over the reset (TODO 29): put right in edit mode too. A wait, so that a
+-- late write has landed; without one this only checks the reset.
+vim.wait(500)
+base_is("leave mid-walk: the base is the index, and stays", nil)
+
+-- ── Keeping the base ────────────────────────────────────────────────────────
+-- gitsigns can put an older base back, and more than once (its refresh, an
+-- older change landing late): review asks for its base again, a few times
+-- per base asked for and no more. Late writes are made here by hand, on this
+-- buffer alone, as gitsigns leaves them; review's own asks are counted rather
+-- than read off the buffer, where gitsigns' refresh may put the right base
+-- back as well. `settled` waits out a base change: gitsigns records the base
+-- as its own only once every buffer has it.
+--
+-- This buffer is p1.txt: one added line against m2 and against d4, none
+-- against p1 or the index. A late write that changes those counts raises
+-- GitSignsUpdate; one that does not is only found by the later look.
+
+local gs = require("gitsigns")
+local function settled(base)
+  wait_for(function() return require("gitsigns.config").config.base == base and G.base(0) == base end)
+end
+local function counting(base)
+  local change_base, n = gs.change_base, 0
+  rawset(gs, "change_base", function(b, global, ...)
+    if global and b == base then n = n + 1 end
+    return change_base(b, global, ...)
+  end)
+  return function()
+    rawset(gs, "change_base", nil)
+    return n
+  end
+end
+local function put_back(base)
+  local landed = false
+  gs.change_base(base, false, function() landed = true end)
+  wait_for(function() return landed end)
+end
+
+-- A base asked for with no checkout, so nothing of gitsigns' is in flight and
+-- the allowance is whole: branch review, then :Review against another ref.
+toggle()
+review.review_against("master")
+local m2, d4, p1 = sh("git merge-base feature-p master"), sh("git merge-base feature-p develop"), sh("git rev-parse feature-p~2")
+settled(m2)
+local asks = counting(m2)
+for i = 1, 5 do
+  put_back(p1)
+  if i <= 2 then
+    base_is(("base put back, time %d: put right"):format(i), m2)
+  else
+    vim.wait(1000, function() return G.base(0) == m2 end, 50)
+  end
+end
+check("base put back five times: asked for again no more than three", asks() <= 3, true)
+-- One set by hand, which review never asked for, is nobody's late write.
+-- With a whole allowance again, or nothing would be asked whatever it was:
+-- another :Review, as above.
+review.review_against("develop")
+settled(d4)
+asks = counting(d4)
+put_back("HEAD~1")
+vim.wait(500)
+check("a base set by hand: left alone", asks(), 0)
+put_back(d4)
+
+-- After leaving too: the base asked for is the index.
+toggle()
+settled(nil)
+put_back(m2)
+base_is("review's base put back after leaving: the index again", nil)
+vim.wait(500) -- past the end of that pass, which looks for itself
+put_back(p1)
+base_is("put back with no change to the counts, so no event: found a little later", nil)
+asks = counting(nil)
+put_back("HEAD~1")
+vim.wait(500)
+check("a base set by hand in edit mode: left alone", asks(), 0)
+put_back(nil)
+
+-- Entering and three steps with no pause between: base changes asked for
+-- while one is being applied wait their turn, and the last one asked for is
+-- the one every buffer ends on. Its base is p2's, on no buffer since the walk.
+review.toggle()
+review.step(1)
+review.step(1)
+review.step(1)
+check("steps at once: at the tip", subject(), "p3")
+base_is("steps at once: the last base asked for is kept", sh("git rev-parse HEAD^"))
+statusline_is("steps at once: statusline", "cR feature-p 3/3")
+toggle()
 
 -- Leaving is refused on a step's grounds, and works once they are cleared.
 toggle()
