@@ -29,6 +29,13 @@ UTF-8, so nothing needs a patched Nerd Font.
 spent on keys that also work in Helix, Zed, VS Code and RubyMine — not on keys
 that only work here.
 
+**Stable and simple over complete.** Our own code follows the same rule as the
+plugins: the standard way first — Neovim's, git's, a plugin's documented
+options — and our own only when that cannot do it. A feature earns its code by
+being used often; a rare one is left to the tool that already has it, or left
+out. When a rare case and a simple design conflict, the simple design wins:
+what breaks quietly costs more than what is missing.
+
 ## Keys
 
 The whole scheme is one sentence:
