@@ -262,6 +262,7 @@ do
   local gc = require("gitsigns.config").config
   check("review: hunk details on", { gc.show_deleted, gc.word_diff, gc.current_line_blame }, { true, true, true })
   check("review: writes refused", { vim.o.write, (pcall(vim.cmd.write)) }, { false, false })
+  check("review: a reload is not undoable", vim.o.undoreload, 0)
   G.stage_hunk()
   check_has("review: staging refused", last_msg(), "Signs compare against develop...feature-p, not the index: staging is off")
   check("review: index untouched", sh("git diff --cached --name-only"), "")
@@ -274,6 +275,7 @@ do
   }, { true, false, false })
   local gc = require("gitsigns.config").config
   check("edit: hunk details off", { gc.show_deleted, gc.word_diff, gc.current_line_blame }, { false, false, false })
+  check("edit: a reload is undoable again, Neovim's default", vim.o.undoreload, 10000)
 end
 
 -- ── The base, kept ──────────────────────────────────────────────────────────

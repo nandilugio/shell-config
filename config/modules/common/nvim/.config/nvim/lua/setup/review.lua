@@ -13,6 +13,7 @@
 --   type checking basedpyright's "standard", not its stricter default
 --   hunk display  the inline diff (setup/git.lua), the cursor line's blame
 --   'write'       off, see PRESETS
+--   'undoreload'  off, see PRESETS
 --
 -- Nothing here knows about pull requests or any host: only local git. Two
 -- kinds, shown as bR and cR in the statusline: on a branch, branch review --
@@ -52,6 +53,7 @@ local PRESETS = {
     hunk_details = false,
     -- Edits are not dimmed, see review.write.
     write = true,
+    undoreload = 10000, -- Neovim's default, see review.undoreload
   },
   review = {
     diagnostics = { scope = "every line", severity = "errors only" },
@@ -66,6 +68,12 @@ local PRESETS = {
     -- nothing is saved. To run tests on an edit, :set write, deliberately.
     -- Quitting with such edits wants :qa!, since saving them is refused.
     write = false,
+    -- Each step checks out another commit, and Neovim reloads the open files.
+    -- Kept undoable, that reload let `u` past one's own edits bring back the
+    -- previous commit's text -- an edit, which then refused the next step,
+    -- and an empty buffer where that commit lacked the file (TODO 28). Off,
+    -- a reload clears the undo history instead.
+    undoreload = 0,
   },
 }
 
@@ -410,6 +418,7 @@ local function apply(preset, base)
   gs.toggle_current_line_blame(preset.hunk_details)
   require("setup.diagnostics").set(preset.diagnostics)
   vim.o.write = preset.write
+  vim.o.undoreload = preset.undoreload
   return require("setup.lsp").set_type_checking(preset.type_checking)
 end
 

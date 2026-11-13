@@ -509,7 +509,7 @@ own toggle.
 
 ---
 
-## 28. Undo emptied a buffer, during review mode (unexplained)
+## 28. ~~Undo emptied a buffer, during review mode~~ DONE 2026-11-12
 
 **Where:** unknown.
 
@@ -526,10 +526,17 @@ empty state if the buffer's history holds one, which happens when Neovim
 reloads a file mid-session (`'undoreload'` keeps the reload undoable) or when
 something fills a buffer that was created empty.
 
-**Do:** If it happens again, read `:messages` before quitting (a W11 "file has
-changed" or similar), note how the file was opened (`<leader>gD`, quickfix,
-mini.files, `:e`), and whether `<leader>gd` or `<leader>gR` were used on it.
-`:undolist` would also show whether a reload sits in the history.
+**Explained 2026-11-12,** reproduced by hand: each step or pick checks out
+another commit, and Neovim reloads the open files from disk, keeping each
+reload undoable (`'undoreload'`). Pressing `u` past one's own edits undoes
+that reload: the buffer goes back to the previous commit's text, which reads
+as an edit, so the next step or pick is refused for it. Where the earlier
+commit lacked the file, that text is empty.
+
+**Done:** review mode's preset sets `'undoreload'` to 0, back to Neovim's
+default in edit mode, so a checkout's reload clears the undo history instead
+of becoming a step in it. Probed on a file a step changes: `u` after the step
+no longer brings back the previous commit's text.
 
 ---
 

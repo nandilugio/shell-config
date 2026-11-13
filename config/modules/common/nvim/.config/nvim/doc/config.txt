@@ -157,6 +157,7 @@ place, so a setting changed by hand while reviewing is reset on leaving.
 	hunk display	off			inline diff, blame (see
 						|cheatsheet-toggles|)
 	'write'		on			off
+	'undoreload'	Neovim's default	off
 
 Writes are refused, edits are not. Change something and the language server
 sees it, while nothing is saved: in review the working tree is the change
