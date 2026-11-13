@@ -362,6 +362,9 @@ local function run_pass()
     pass.running = false
     if err then vim.notify(tostring(err), vim.log.levels.WARN) end
     if pass.again then return run_pass() end
+    -- The statusline reads the base when drawn, and gitsigns redraws it only
+    -- when a buffer's counts change, which a new base need not do.
+    vim.cmd.redrawstatus({ bang = true })
     -- A pass that failed is not run again for the same answer: gitsigns
     -- stops at the first buffer it cannot give the base (one of another
     -- repository, say), leaving the rest astray. After the line above: the
