@@ -47,6 +47,12 @@ The user may have access to production datastores, infrastructure configuration,
 
 Exception: session scratch files may be written to ~/claude-persistent-scratchpads/<session-id>/.
 
+### Working with git
+
+The user is responsible for the repository and wants to know exactly what happens in it, so they gatekeep every change to it, while the agent does most of the work: committing, rewriting history and pushing are all welcome when the user asks for them. Reading is always fine (status, log, diff, show, blame, the remotes). Before anything that writes (a commit, a stash, a rebase, a branch change, a push), propose the exact operation and what it touches, and act once the user agrees. Don't decide on the repository's state on your own.
+
+The user may be working on the same repository in parallel, committing or pushing, so look at its current state right before acting, and if it no longer matches what was agreed, stop and say so.
+
 # Coding Guidelines
 
 ## Research First

@@ -3,8 +3,6 @@ description: Review a change in rounds, fixing what it got wrong, until a round 
 ---
 Let's run a review cycle on the target change referenced below: repeated review rounds, each followed by verified fixes, until a round finds nothing worth fixing. The aim is a set of changes that is correct and makes sense as a whole, not a pile of patches. The fixes stay uncommitted for the whole cycle: at the end you offer them to me with the report, and they get committed only once I've approved them.
 
-Unless I say otherwise, assume the target is still private: history can be rewritten, and fixes are folded into the commits they belong to. If I say it's shared (or it has reviews that a rewrite would invalidate), fixes go in as new commits on top, and nothing already published is rewritten.
-
 **Phase 1 — Understand.** Resolve the target to something concrete: the branch or PR, its base, its commits, any branches stacked on it. Read the change and its commit messages fully. Then build the context a reviewer needs: the features involved and where they sit in the product, how they're implemented, and the main code paths and data flows the change touches. Draw on every source available: git history, project and dependency docs, your memories, the issue or PR tracker.
 
 **Phase 2 — Prepare.**
@@ -33,21 +31,22 @@ Unless I say otherwise, assume the target is still private: history can be rewri
 
 **Phase 4 — Report and offer the fixes.** Nothing is committed yet. Give me, briefly and ranked most to least important:
 - What each round found, tagged **[blocking]**, **[worth fixing]** or **[nit]**, and what was fixed, declined (and why), or asked.
-- The fixes themselves: the uncommitted diff, with a line per fix saying which commit it belongs to (private target) or how the new commits would be grouped (shared target).
+- The fixes themselves: the uncommitted diff, with a line per fix saying which commit it belongs to.
 - **Follow-ups**: the valuable changes the cycle deliberately left out (pre-existing issues, rare cases, cleanups), each with its size, risk and value, so they can be prioritized.
 - **A note for the PR**: a few lines on what was intentionally left untouched (pre-existing behaviour, decided trade-offs) and why, so reviewers don't rediscover it. Keep it short.
 - Updated drafts of the PR description and of any review replies the fixes affect.
+- **A commit plan** for what looks most plausible, with what it rests on (whether the commits are on a remote, whether there's a PR and whether it has reviews): which commits the fixes are folded into and the messages that change, or the new commits on top, grouped, with their messages.
 
-Then wait for my OK, or for adjustments. An adjustment that changes behaviour gets its own verification, and another round if it was large.
+Then wait for my OK on the plan, or my correction, in which case restate the plan before acting. Only that OK starts Phase 5. An adjustment that changes behaviour gets its own verification, and another round if it was large.
 
-**Phase 5 — Commit**, once I've approved:
-- **Private target (default).** Rewrite history once:
+**Phase 5 — Commit**, carrying out the agreed plan:
+- **Folding the fixes in.** Rewrite history once:
   - freeze the final state, staging files explicitly;
   - put each fix in the commit that introduced the code it fixes (fixup commits followed by a non-interactive autosquash rebase is usually the simplest route);
   - update any commit message whose claims the fixes changed;
   - keep authors and dates;
   - check that the rebuilt history ends in exactly the frozen state, with no stray files, that the tests the cycle touched pass at every rewritten commit, and that the relevant suite passes at the tip.
-- **Shared target.** Add the fixes as new commits on top, grouped so each reads as one change with its reason, and leave existing commits alone.
+- **Adding them on top.** Add the fixes as new commits on top, grouped so each reads as one change with its reason, and leave existing commits alone.
 - **Stacked branches.** Put each fix in the branch where its code originates, then bring the dependent branches up to date, and check their own changes came through unchanged.
 - Don't push, post or publish anything without my OK. When I give it for a rewritten branch, pin the force-push to the remote state you expect to replace.
 
