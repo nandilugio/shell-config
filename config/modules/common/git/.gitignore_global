@@ -21,3 +21,5 @@ pyrightconfig.json
 
 # ruby-lsp composed bundle (generated per project)
 .ruby-lsp/
+
+**/.claude/settings.local.json
