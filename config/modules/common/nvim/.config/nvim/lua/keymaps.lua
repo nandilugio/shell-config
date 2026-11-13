@@ -249,8 +249,8 @@ M.maps = {
   {
     "<leader>gD",
     function()
-      local git = require("setup.git")
-      require("setup.fzf").git_diff({ ref = git.base(0) or "", cwd = git.root() })
+      local root, base = require("setup.git").diff_target()
+      require("setup.fzf").git_diff({ ref = base or "", cwd = root })
     end,
     desc = "Diff: every changed file",
     needs = "fzf",

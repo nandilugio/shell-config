@@ -346,19 +346,30 @@ function M.root()
   return res.code == 0 and vim.trim(res.stdout) or nil
 end
 
+--- The repository and base the changed files are listed against: the
+--- review's while there is one, as every buffer of it compares against that
+--- and the current one may be a list or another repository's file; else the
+--- current buffer's. A nil base is the index.
+--- @return string? root
+--- @return string? base
+function M.diff_target()
+  local base, root = require("setup.review").base()
+  if root then return root, base end
+  return M.root(), M.base(0)
+end
+
 -- The files whose signs show something, against the same base: unstaged
 -- changes normally, the whole branch in review mode. <leader>gD prefers
 -- fzf-lua's git_diff, a picker with each file's diff as preview; this is the
 -- fallback where there is no fzf -- the argument list, which ]a and [a walk.
 -- Deleted files are left out: there is nothing to open.
 function M.changed_files()
-  local root = M.root()
+  local root, base = M.diff_target()
   if not root then
     vim.notify("Not in a git repository", vim.log.levels.WARN)
     return
   end
   local cmd = { "git", "-C", root, "diff", "--name-only", "--diff-filter=d" }
-  local base = M.base(0)
   if base then table.insert(cmd, base) end
   local res = vim.system(cmd, { text = true }):wait()
   local files = vim.split(res.stdout or "", "\n", { trimempty = true })

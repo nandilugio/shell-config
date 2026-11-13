@@ -345,7 +345,7 @@ end
 local CORRECTIONS = 3
 local RECHECK = 2000 -- ms after a pass: past gitsigns' refresh, on a slow repository too
 local INDEX = false -- G.base gives nil for the index, which cannot key a table
-local pass = { running = false, again = false, base = nil, left = 0, asked = { [INDEX] = true } }
+local pass = { running = false, again = false, base = nil, left = 0, asked = { [INDEX] = true }, done = nil }
 
 -- A buffer gitsigns holds, its file in the working tree, on an earlier base.
 -- A file absent from the tree stays on the index by design.
@@ -357,6 +357,25 @@ local function astray(buf)
   return name ~= "" and vim.uv.fs_stat(name) ~= nil
 end
 
+-- The base is gitsigns' global one, a commit of the repository under review,
+-- which another repository does not have: a buffer of one fails the pass
+-- that sets it, on some buffers or all. gitsigns already leaves such files
+-- opened during a review without signs, as it cannot attach them against
+-- the base, so the ones it holds go the same way: on entering, and before
+-- every pass, for one opened before gitsigns took the base as its default.
+-- Returns how many.
+local function detach_other_repositories(root)
+  local n = 0
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    local status = vim.b[buf].gitsigns_status_dict
+    if status and status.root ~= root then
+      require("gitsigns").detach(buf)
+      n = n + 1
+    end
+  end
+  return n
+end
+
 local recheck
 
 local function run_pass()
@@ -365,11 +384,15 @@ local function run_pass()
     return
   end
   pass.running, pass.again = true, false
+  if state then detach_other_repositories(state.root) end
   -- With a callback the pass's error comes here rather than being raised.
   require("gitsigns").change_base(pass.base, true, vim.schedule_wrap(function(err)
     pass.running = false
     if err then vim.notify(tostring(err), vim.log.levels.WARN) end
     if pass.again then return run_pass() end
+    local done = pass.done
+    pass.done = nil
+    if done and not err then done() end
     -- The statusline reads the base when drawn, and gitsigns redraws it only
     -- when a buffer's counts change, which a new base need not do.
     vim.cmd.redrawstatus({ bang = true })
@@ -402,18 +425,31 @@ vim.api.nvim_create_autocmd("User", {
 })
 
 --- Sets every buffer's base, and keeps it: a revision, or nil for the index.
-local function set_base(base)
-  pass.base, pass.left = base, CORRECTIONS
+--- done runs once the pass has set it, unless a newer base was asked meanwhile.
+local function set_base(base, done)
+  pass.base, pass.left, pass.done = base, CORRECTIONS, done
   pass.asked[base or INDEX] = true
   run_pass()
+end
+
+-- Back on the index, every file buffer gitsigns does not hold gets its
+-- signs again: the ones detached on entering, and the other repositories'
+-- files opened meanwhile. Not before: attaching takes the global base.
+local function attach_all()
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype == "" and vim.api.nvim_buf_get_name(buf) ~= ""
+      and not vim.b[buf].gitsigns_status_dict then
+      require("gitsigns").attach(buf)
+    end
+  end
 end
 
 -- ── Apply ───────────────────────────────────────────────────────────────────
 
 -- Returns the type checker's report, for the caller's message.
-local function apply(preset, base)
+local function apply(preset, base, done)
   local gs = require("gitsigns")
-  set_base(base)
+  set_base(base, done)
   G.inline_diff(preset.hunk_details)
   gs.toggle_current_line_blame(preset.hunk_details)
   require("setup.diagnostics").set(preset.diagnostics)
@@ -770,6 +806,7 @@ local function enter(ref)
   state = s
   write_record(s)
   return_on_exit(s)
+  local others = detach_other_repositories(root)
   local tc, tc_level = apply(PRESETS.review, s.base)
 
   -- The statusline already shows the range and the R, so when there is
@@ -785,6 +822,11 @@ local function enter(ref)
   end
   local _, dirty = git(root, { "status", "--porcelain", "--untracked-files=no" })
   if dirty ~= "" then table.insert(warnings, "uncommitted changes included") end
+  if others == 1 then
+    table.insert(warnings, "a buffer of another repository shows no signs until you leave")
+  elseif others > 1 then
+    table.insert(warnings, ("%d buffers of other repositories show no signs until you leave"):format(others))
+  end
   if #warnings > 0 then
     vim.notify(table.concat(warnings, "; "), vim.log.levels.WARN)
   else
@@ -924,7 +966,7 @@ local function leave()
   drop_record(s.root)
   state = nil
   vim.api.nvim_clear_autocmds({ group = group })
-  local tc, tc_level = apply(PRESETS.edit, nil)
+  local tc, tc_level = apply(PRESETS.edit, nil, attach_all)
   local warn = tc_level == vim.log.levels.WARN
   vim.notify(fit("Edit mode" .. note .. (warn and "; " .. tc or "")), warn and tc_level or nil)
 end
@@ -935,6 +977,15 @@ function M.active() return state ~= nil end
 
 --- "branch" or "commit" while reviewing, nil otherwise.
 function M.kind() return state and state.kind end
+
+--- The review's base and its repository, nil outside review mode: what every
+--- buffer of it compares against, whichever buffer is current.
+--- @return string? base
+--- @return string? root
+function M.base()
+  if not state then return nil end
+  return state.base, state.root
+end
 
 function M.toggle()
   if state then leave() else enter() end

@@ -359,6 +359,26 @@ in the same place.
   last commit, and entering says so. Merged since, or new with nothing
   committed yet: the graph alone does not always tell, so it is not guessed
   (finding a merged branch's fork point is TODO 33).
+- 2026-11-12, OTHER REPOSITORIES: the base is gitsigns' global one, a commit
+  of this repository. A buffer of another repository has no such commit:
+  open on entering, it made gitsigns' pass fail, leaving some buffers on the
+  base or none ("fatal: not a tree object"). gitsigns already leaves such
+  files opened during a review unattached (it attaches them against the
+  global base), so the ones open on entering are detached too, and said so,
+  and again before every pass: one opened while the first pass runs attaches
+  on the index, as gitsigns' default is set only when a pass ends. Leaving
+  attaches every file buffer once the index is the base again. Left open: a
+  file still attaching as review starts escapes the detach, so that pass can
+  fail; the next pass, a step or a toggle, puts it right. Closing it would
+  mean waiting on gitsigns' attaches.
+  Considered and left: driving gitsigns per buffer, so other repositories
+  keep their signs. It drops gitsigns' global default, so each file opened
+  would attach on the index and then be moved, and multiplies the pass
+  orderings the base keeper already has to put right.
+  Also: <leader>gD and its fallback list the review's files against its base
+  whichever buffer is current (git.diff_target); they read the current
+  buffer's, and a list or another repository's file gave the index or the
+  wrong repository.
 - Considered and left: gitsigns' :Gitsigns diff panel (2026-09). Its --commit and range forms show read-only
   revision copies, not the working tree review mode promises; its one-revision
   form shows the real files but no message, opens a tab, and does not follow

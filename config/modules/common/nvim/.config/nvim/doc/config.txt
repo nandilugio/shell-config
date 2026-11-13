@@ -175,6 +175,8 @@ LIMITS							*review-limits*
   forked off later, that can be the child rather than the parent; the label
   stays correct for the branch it names.
 - A file absent at a walked commit keeps its text in an open buffer.
+- One repository at a time: files of other repositories show no signs while
+  reviewing, and get them back when you leave.
 - The base shown in the statusline is read from gitsigns' internal cache.
   :checkhealth config warns if a gitsigns update moves it.
 

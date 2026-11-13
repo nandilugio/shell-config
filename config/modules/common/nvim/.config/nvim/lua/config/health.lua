@@ -176,7 +176,7 @@ local CONTRACT = {
       "setup", "change_base", "reset_base", "toggle_deleted", "toggle_word_diff", "get_hunks",
       "toggle_current_line_blame", "stage_hunk", "reset_hunk", "stage_buffer",
       "reset_buffer", "setqflist", "nav_hunk", "preview_hunk", "blame_line",
-      "diffthis", "select_hunk",
+      "diffthis", "select_hunk", "attach", "detach",
     },
     commands = { "Gitsigns" },
     highlights = {

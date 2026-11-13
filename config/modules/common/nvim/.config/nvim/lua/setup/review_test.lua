@@ -196,6 +196,17 @@ local function toggle()
   if want ~= review.active() then return end -- refused; the message says why
   local base = review.active() and review.kind() and true
   wait_for(function() return (G.base(0) ~= nil) == (base == true) end)
+  -- And gitsigns' default for buffers yet to attach, set when its pass ends:
+  -- a pass of the suite's own started before then could end after it.
+  wait_for(function() return require("gitsigns.config").config.base == (review.base()) end)
+end
+
+-- A base set by hand, as :Gitsigns change_base sets it, awaited for the same
+-- reason: nil is the index.
+local function hand_set(base)
+  local done = false
+  require("gitsigns").change_base(base, true, function() done = true end)
+  wait_for(function() return done end)
 end
 
 local function step(dir)
@@ -294,7 +305,7 @@ toggle()
 wait_for(function() return G.base(0) == nil end)
 
 -- A base set by hand reads with two dots: what `git diff HEAD~2` compares.
-require("gitsigns").change_base("HEAD~2", true)
+hand_set("HEAD~2")
 statusline_is("hand-set base: two dots", "HEAD~2..feature-p")
 G.stage_hunk()
 check_has("hand-set base: staging refused, naming it", last_msg(), "Signs compare against HEAD~2, not the index")
@@ -304,9 +315,53 @@ check("hand-set base: changed files against it", vim.tbl_map(function(f) return 
 -- :args edits its first file; back to the one the rest of the suite expects.
 vim.cmd("%argdelete")
 open("p1.txt")
-require("gitsigns").reset_base(true)
-wait_for(function() return G.base(0) == nil end)
+hand_set(nil)
 statusline_is("index again: plain", "feature-p")
+
+-- ── Other repositories ──────────────────────────────────────────────────────
+-- The base is a commit of this repository, which another one lacks: its
+-- buffers go without signs while reviewing, and get them back on leaving.
+-- And <leader>gD lists the review's files whichever buffer is current.
+local other = top .. "/other"
+vim.fn.mkdir(other, "p")
+sh("git init -q && echo o > o.txt && git add o.txt && git -c user.name=t -c user.email=t@t commit -qm o", other)
+vim.cmd.edit(other .. "/o.txt")
+local other_buf = vim.api.nvim_get_current_buf()
+assert(wait_for(function() return require("gitsigns.cache").cache[other_buf] ~= nil end), "gitsigns did not attach to o.txt")
+local review_buf = open("p1.txt")
+toggle()
+check("other repository: the review's buffer gets the base", G.base(review_buf), (review.base()))
+check("other repository: its buffer detached", vim.b[other_buf].gitsigns_status_dict, nil)
+check_has("other repository: said so", last_msg(), "a buffer of another repository shows no signs until you leave")
+local function changed_from(buf)
+  vim.api.nvim_set_current_buf(buf)
+  G.changed_files()
+  local files = vim.tbl_map(function(f) return vim.fs.basename(f) end, vim.fn.argv())
+  vim.cmd("%argdelete")
+  return files
+end
+check("changed files: the review's, from a buffer of no file", changed_from(vim.api.nvim_create_buf(true, true)), { "p1.txt", "p2.txt", "p3.txt" })
+check("changed files: the review's, from another repository's", changed_from(other_buf), { "p1.txt", "p2.txt", "p3.txt" })
+open("p1.txt")
+-- One opened while a pass runs, before gitsigns takes the base as its
+-- default, attaches on the index: as here, with the default set back for a
+-- moment. The next pass detaches it first rather than failing on it; a
+-- base switched to, here, which needs no checkout.
+local config = require("gitsigns.config").config
+local reviewing = config.base
+config.base = nil
+require("gitsigns").attach(other_buf)
+assert(wait_for(function() return require("gitsigns.cache").cache[other_buf] ~= nil end), "gitsigns did not attach to o.txt again")
+config.base = reviewing
+review.review_against("develop")
+wait_for(function() return vim.b[other_buf].gitsigns_status_dict == nil end)
+check("other repository: attached mid-review, detached by the next pass", vim.b[other_buf].gitsigns_status_dict, nil)
+wait_for(function() return G.base(review_buf) == (review.base()) end)
+check("other repository: that pass still sets the base", G.base(review_buf), (review.base()))
+toggle()
+wait_for(function() return vim.b[other_buf].gitsigns_status_dict ~= nil end)
+check("other repository: attached again on leaving, on the index", { vim.b[other_buf].gitsigns_status_dict ~= nil, G.base(other_buf) }, { true, nil })
+vim.cmd.bwipeout(other_buf)
 
 -- ── The walk ────────────────────────────────────────────────────────────────
 
