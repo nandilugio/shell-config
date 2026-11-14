@@ -64,6 +64,26 @@ M.labels = {
   { "zr", "Reveal one more level (fold less)" },
 }
 
+-- For <leader>oy oY: the buffer's path to the clipboard, saying what went.
+-- Outside a repository the short form is relative to the cwd. With a
+-- selection, its lines follow as path:12-30, and visual mode ends as y's does.
+local function copying_path(absolute, lines)
+  return function()
+    local file = vim.api.nvim_buf_get_name(0)
+    if file == "" then return vim.notify("No file in this buffer", vim.log.levels.WARN) end
+    local root = not absolute and vim.fs.root(0, ".git")
+    local text = absolute and file or (root and vim.fs.relpath(root, file)) or vim.fn.fnamemodify(file, ":.")
+    if lines then
+      local first, last = vim.fn.line("v"), vim.fn.line(".")
+      if first > last then first, last = last, first end
+      text = text .. ":" .. (first == last and first or first .. "-" .. last)
+      vim.cmd("normal! \27")
+    end
+    vim.fn.setreg("+", text)
+    vim.notify("Copied " .. text)
+  end
+end
+
 -- For the fold commands: an expr map that sets the window's fold column, then
 -- runs the built-in key, so counts and visual selections work unchanged.
 local function setting_foldcolumn(keys, width)
@@ -438,6 +458,13 @@ M.maps = {
     [[:%s/\s\+$//e<CR>:nohlsearch<CR>:echo "Cleared trailing whitespace"<CR>]],
     desc = "Clear trailing whitespace",
   },
+  -- The file's path, to paste into a review, a chat or a terminal: from the
+  -- repository root, the capital the whole path; on a selection, either one
+  -- with its lines.
+  { "<leader>oy", copying_path(false), desc = "Yank path from the repository root" },
+  { "<leader>oY", copying_path(true), desc = "Yank absolute path" },
+  { "<leader>oy", copying_path(false, true), desc = "Yank path with the selected lines", mode = "x" },
+  { "<leader>oY", copying_path(true, true), desc = "Yank absolute path with the selected lines", mode = "x" },
   -- vimwiki's <leader>w* are disabled in setup/wiki.lua (they collide with the
   -- window namespace); these are the ones worth keeping. The cheatsheet is
   -- <leader>?: help, not something of ours to reserve.

@@ -227,3 +227,6 @@ Caveat: JetBrains is the systematic outlier (`F2`=next error, `F7`/`F8`=step).
 2. vimwiki moved to `<leader>ow`, and its own `<leader>w*` mappings are
    suppressed via `vim.g.vimwiki_key_mappings = { global = 0 }`, which is what
    was quietly claiming the window namespace.
+3. Copying the file's path is `<leader>oy` / `oY` (2026-11-14). Spacemacs and Doom
+   put it under files (`SPC f y`), but here `f` is find, and conflating the two for
+   one feature was not worth it: custom functionality goes under `<leader>o`.

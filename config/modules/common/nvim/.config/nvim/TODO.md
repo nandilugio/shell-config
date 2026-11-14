@@ -645,24 +645,9 @@ guards section shrinks to.
 
 ---
 
-## 31. See and copy the current file's path
+## 31. ~~See and copy the current file's path~~ DONE 2026-11-14
 
-**Where:** nothing yet; a key or two, probably under `<leader>`.
-
-**Why:** Asked for 2026-11-10. The statusline shows the path relative to the
-cwd, which is not always the one wanted, and there is no quick way to copy
-any form of it. The IntelliJ family offers a "Copy Path/Reference" menu: the
-absolute path, the path from the content (repository) root, the file name,
-and a reference with the line number (`path:line`). Neovim has the pieces
-built in: `<C-g>` and `1<C-g>` show the name and the full path, and
-`:let @+ = expand('%:p')` (`:~:.` relative, `:t` the name) copies one form,
-with `line('.')` for the `path:line` reference; the repository-relative form
-needs `setup/git.lua`'s `root()`.
-
-**Do:** Decide which forms are worth a key (or one key opening a small menu
-through `vim.ui.select`, which the picker already serves), and where they go:
-`<leader>o` is ours, `<leader>f` is find. Copy to `+`, as `'clipboard'` is
-`unnamedplus` anyway, and say what was copied.
+`<leader>oy` copies the path from the repository root (from the cwd outside one), `<leader>oY` the absolute path, and either one on a selection adds its lines (`path:12-30`). Separate keys rather than a menu; under `<leader>o`, not `<leader>f`, which stays find.
 
 ---
 
