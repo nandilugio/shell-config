@@ -34,10 +34,14 @@ vim.o.clipboard = "unnamedplus"
 vim.o.mouse = "a"
 vim.o.confirm = true -- ask instead of failing on unsaved changes
 vim.o.virtualedit = "block"
+-- Indentation: the default, under each language's ftplugin and a project's
+-- .editorconfig; <leader>oi changes it for a buffer. 'softtabstop' follows
+-- 'shiftwidth', so Backspace removes what >> adds. A real tab shows 8 wide,
+-- as git, less and GitHub draw it (:help 'tabstop').
 vim.o.expandtab = true
 vim.o.shiftwidth = 2
-vim.o.softtabstop = 2
-vim.o.tabstop = 2
+vim.o.softtabstop = -1
+vim.o.tabstop = 8
 vim.o.fixendofline = false -- do not silently add a trailing newline
 -- 'whichwrap' is set by setup/training.lua, with the arrows it is about.
 

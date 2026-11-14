@@ -40,8 +40,11 @@ M.groups = {
   { "<leader>f", "find" },
   { "<leader>g", "git", mode = { "n", "x" } },
   { "<leader>u", "toggle (ui)" },
-  { "<leader>ug", "git" }, -- the only nested group: git has three of its own
+  { "<leader>ug", "git" }, -- nested: git has three of its own
   { "<leader>o", "own" }, -- reserved: no plugin or convention may claim it
+  { "<leader>oi", "indent" },
+  { "<leader>ois", "spaces" },
+  { "<leader>oit", "tabs" },
   { "<leader>x", "lists" },
   { "<LocalLeader>", "filetype" },
   { "<LocalLeader>p", "python" },
@@ -82,6 +85,40 @@ local function copying_path(absolute, lines)
     vim.fn.setreg("+", text)
     vim.notify("Copied " .. text)
   end
+end
+
+-- For <leader>ois oit: the buffer's indentation at one width. Spaces indent
+-- by 'shiftwidth', and Backspace removes as much; tabs are one per level,
+-- shown that wide.
+local function indenting(tabs, width)
+  return function()
+    if tabs then
+      vim.bo.expandtab, vim.bo.tabstop, vim.bo.shiftwidth, vim.bo.softtabstop = false, width, 0, 0
+      vim.notify(("Indent: tabs, shown %d wide"):format(width))
+    else
+      vim.bo.expandtab, vim.bo.shiftwidth, vim.bo.softtabstop = true, width, -1
+      vim.notify(("Indent: %d space%s"):format(width, width == 1 and "" or "s"))
+    end
+  end
+end
+
+-- For <leader>oic: each line's leading indentation rewritten to the buffer's
+-- setting, at the width it is shown, so nothing moves on screen. Only the
+-- indentation: :retab! would also turn the spaces inside a string or an
+-- aligned comment into tabs.
+local function converting_indent()
+  local ts, spaces = vim.bo.tabstop, vim.bo.expandtab
+  local changed = 0
+  for i, line in ipairs(vim.api.nvim_buf_get_lines(0, 0, -1, false)) do
+    local lead = line:match("^[ \t]*")
+    local width = vim.fn.strdisplaywidth(lead)
+    local new = spaces and (" "):rep(width) or ("\t"):rep(math.floor(width / ts)) .. (" "):rep(width % ts)
+    if new ~= lead then
+      vim.api.nvim_buf_set_text(0, i - 1, 0, i - 1, #lead, { new })
+      changed = changed + 1
+    end
+  end
+  vim.notify(("Indentation converted to %s on %d line%s"):format(spaces and "spaces" or "tabs", changed, changed == 1 and "" or "s"))
 end
 
 -- For the fold commands: an expr map that sets the window's fold column, then
@@ -465,6 +502,10 @@ M.maps = {
   { "<leader>oY", copying_path(true), desc = "Yank absolute path" },
   { "<leader>oy", copying_path(false, true), desc = "Yank path with the selected lines", mode = "x" },
   { "<leader>oY", copying_path(true, true), desc = "Yank absolute path with the selected lines", mode = "x" },
+  -- This buffer's indentation, by key rather than by option: ois{1-9} spaces,
+  -- oit{1-9} tabs at that width, 0 for 10 (added after this table, by a
+  -- loop), and oic to convert what is already there.
+  { "<leader>oic", converting_indent, desc = "Convert the indentation to the current setting" },
 
   -- ── Filetype actions: <LocalLeader> ───────────────────────────────────────
   -- Global rather than per-filetype, since setup/keymaps has no ft field. The
@@ -504,5 +545,13 @@ M.maps = {
   },
   { "<Esc><Esc>", "<C-\\><C-n>", desc = "Leave terminal mode", mode = "t" },
 }
+
+-- <leader>ois0-9 and oit0-9 (Own namespace, above): a key per width, 0 for
+-- 10 as on the number row, so which-key lists the ten under each prefix.
+for width = 1, 10 do
+  local key = width % 10
+  table.insert(M.maps, { "<leader>ois" .. key, indenting(false, width), desc = ("%d space%s"):format(width, width == 1 and "" or "s") })
+  table.insert(M.maps, { "<leader>oit" .. key, indenting(true, width), desc = ("Tabs, %d wide"):format(width) })
+end
 
 return M

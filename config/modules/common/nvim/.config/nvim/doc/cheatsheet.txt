@@ -389,5 +389,9 @@ OWN                                                          *cheatsheet-own*
 ox  strip trailing whitespace
 oy  copy the file's path from the repository root   oY  the absolute path
     On a selection, either one with its lines: path:12-30
+oi  this buffer's indentation, by key:
+    ois1..9  that many spaces          oit1..9  tabs, shown that wide
+             0 for 10, in both
+    oic      convert the existing indentation to it; nothing moves on screen
 
  vim:tw=78:ts=8:et:ft=help:norl:

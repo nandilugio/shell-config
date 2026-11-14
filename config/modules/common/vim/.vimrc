@@ -31,7 +31,7 @@ silent! set inccommand=split
 set hidden
 set confirm
 set virtualedit=block
-set expandtab shiftwidth=2 softtabstop=2 tabstop=2
+set expandtab shiftwidth=2 softtabstop=-1 tabstop=8
 silent! set nofixendofline
 set backspace=indent,eol,start
 set whichwrap+=<,>,[,]
@@ -132,6 +132,17 @@ nnoremap <leader>uz :let &foldcolumn = &foldcolumn ? 0 : 1<CR>
 
 " Own: <leader>o
 nnoremap <leader>ox :%s/\s\+$//e<CR>:nohlsearch<CR>:echo "Cleared trailing whitespace"<CR>
+" This buffer's indentation: ois{1-9} spaces, oit{1-9} tabs at that width,
+" 0 for 10; oic converts the leading indentation only, at its displayed width.
+for s:n in range(1, 10)
+  execute 'nnoremap <leader>ois' . s:n % 10 . ' :setlocal et sw=' . s:n . ' sts=-1<CR>'
+  execute 'nnoremap <leader>oit' . s:n % 10 . ' :setlocal noet ts=' . s:n . ' sw=0 sts=0<CR>'
+endfor
+function! s:Indent(lead) abort
+  let w = strdisplaywidth(a:lead)
+  return &expandtab ? repeat(' ', w) : repeat("\t", w / &tabstop) . repeat(' ', w % &tabstop)
+endfunction
+nnoremap <leader>oic :keeppatterns %s/^\s\+/\=<SID>Indent(submatch(0))/e<CR>
 
 " Neovim's own defaults that Vim lacks. Not <Esc> for :nohlsearch, as in
 " nvim: terminal Vim receives escape sequences at startup (the terminal's
