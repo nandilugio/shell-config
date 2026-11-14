@@ -40,7 +40,6 @@ Third-party checkouts go in `~/Projects/thirds/`, optional and skipped if missin
 
 ```sh
 git clone https://github.com/tmux-plugins/tmux-resurrect ~/Projects/thirds/tmux-resurrect
-git clone https://github.com/Morantron/tmux-fingers ~/Projects/thirds/tmux-fingers
 # docker-vackup, for bin-host's vackup wrapper
 ```
 

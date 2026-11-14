@@ -70,92 +70,30 @@ both modes.
 
 ---
 
-## 2. tmux-fingers is loaded from a path that does not exist
+## 2. ~~tmux-fingers is loaded from a path that does not exist~~ DROPPED 2026-11-14
 
-**Where:** `tmux.conf:288`
-
-```tmux
-if-shell 'test -f ~/Projects/thirds/tmux-fingers/tmux-fingers.tmux' 'run-shell ~/Projects/thirds/tmux-fingers/tmux-fingers.tmux'
-```
-
-**Why:** `~/Projects/thirds/` has `tmux-resurrect` but no `tmux-fingers`, so
-the `if-shell` is false and the line does nothing, silently. Pref `F` (its
-default trigger) is unbound on the live server.
-
-It has not worked for longer than that: `73534bc`'s message records that the
-old line tested `~/.tmux-plugins/` but ran `~/.tmux/plugins/`, "two paths that
-were never both present". The move fixed the path mismatch, but the plugin was
-never cloned to the new location. So it may not have been in use at all.
-
-**Do:** Decide whether it is wanted. If yes, clone it to
-`~/Projects/thirds/tmux-fingers` and check its README for the install step. If
-not, drop the line.
+It was never cloned to `~/Projects/thirds/tmux-fingers`, so the line did nothing, and before the move to `~/Projects/thirds` its old line tested one path and ran another (`73534bc`). Not used in practice: the line and the README's clone command are gone.
 
 ---
 
-## 3. 3.8 themes: decide whether to adopt them
+## 3. ~~3.8 themes: decide whether to adopt them~~ CLOSED 2026-11-14: kept pinned
 
-**Where:** `tmux.conf`, `set -sq theme terminal` (Appearance)
-
-**Why:** 3.8 added built-in light/dark themes for 256+ colour terminals, theme
-colour names for styles (`themeyellow`, `themeblack`, ...), and reports the
-terminal's theme to panes. The upgrade from 3.5a (2026-10-27) pinned
-`theme terminal` to keep the old colours and avoid that rabbit hole.
-
-**Do:** Try `detect` (the default) and see what changes: copy mode selection,
-choose-tree, menus, and whatever we don't style. Consider moving our own
-`colourNNN` styles to theme names, so tmux follows light/dark. Check that nvim
-and Claude Code still pick the right background.
+`set -sq theme terminal` keeps tmux's pre-3.8 colours. Adopting the themes (`detect`, theme colour names in our styles) would mean restyling for little gain.
 
 ---
 
-## 4. Default bindings added in 3.6-3.8: adopt, or keep ours
+## 4. ~~Default bindings added in 3.6-3.8: adopt, or keep ours~~ CLOSED 2026-11-14: ours kept
 
-**Why:** Leaning towards defaults is the goal, but not at the cost of muscle
-memory without a plan. Upgrading from 3.5a added these (none clash with ours):
-
-- `Pref Tab` / `Pref S-Tab`: `switch-mode`, fast window / session switcher in a
-  floating pane. Overlaps our `Pref s` (`choose-tree -O time`).
-- `Pref *`: new floating pane. `Pref @`: toggle a pane floating/tiled.
-- `Pref g`: key table to move/resize floating panes (arrows, `1-4` corners,
-  `0` fill, `M-` variants also resize).
-- `Pref T`: set the pane title (shown in our `pane-border-format`).
-- Mouse: Ctrl+drag creates a floating pane, Alt+drag on a pane or border moves
-  the pane, clicking the status line switches client (was `select-window`),
-  right-click on empty space opens the window menu. Copy-mode `r` is now
-  `refresh-now`.
-
-**Do:** Try them, decide which replace ours (and drop ours), and note any that
-should be unbound.
+None of 3.6-3.8's new defaults (`Pref Tab` switch-mode, floating panes on `Pref *` `@` `g`, `Pref T`, the mouse changes) clashes with ours, so they are there to try, and nothing needs deciding.
 
 ---
 
-## 5. New features (3.6-3.8) worth trying
+## 5. ~~New features (3.6-3.8) worth trying~~ CLOSED 2026-11-14: a wishlist
 
-- Floating and modal panes (`new-pane`), e.g. `Pref h` as a modal pane instead
-  of `display-popup`, or a scratch shell / Claude Code over nvim.
-- Copy mode: `copy-mode-line-numbers` (relative/hybrid),
-  `copy-mode-current-line-style`, auto refresh (`refresh-on`).
-- Hooks: OSC 133 events (`pane-command-finished`, needs the prompt to emit OSC
-  133) and monitor hooks (`set-hook -B`, e.g. on `pane_last_output_time`) to
-  flag a finished command or an idle Claude Code pane.
-- Auto-hiding `pane-scrollbars`, `focus-follows-mouse`, `remain-on-exit
-  failed-key`, `capture-pane -I` (timestamps per line).
-- Already on, for reference: synchronized output and OSC 9;4 progress bars are
-  forwarded to Ghostty (detected since 3.8).
+Floating panes, copy-mode line numbers, OSC 133 and monitor hooks, scrollbars: none is needed now. 3.8's release notes list them if one becomes so.
 
 ---
 
-## 6. Older tmux versions: best-effort compatibility
+## 6. ~~Older tmux versions: best-effort compatibility~~ MOVED 2026-11-14 to tmux.conf
 
-**Why:** The config targets the latest tmux (3.8 as of 2026-10-27) but should
-still load on older hosts. Current guards: `extended-keys` only from 3.6 (the
-paste bug), `set -sq theme` (unknown before 3.8), the session picker's sort
-order (`time` became `activity` in 3.7). The `xterm-ghostty:extkeys`
-terminal feature is redundant from 3.8 and only set on 3.6-3.7.
-
-**Do:** When adding options from new versions, use `set -q` or an `%if
-#{e|>=|f|0:#{s/[^0-9.]//:version},X}` guard. The `s///` strips suffixes like
-`3.7c` (otherwise the comparison is empty, i.e. false), and `|0` makes the
-result `0`/`1` (plain `f` gives `0.00`, which `#{&&:}` takes as true). Drop
-guards once older versions stop mattering.
+A rule rather than a task: how to guard an option from a newer version is now the comment heading `tmux.conf`.
