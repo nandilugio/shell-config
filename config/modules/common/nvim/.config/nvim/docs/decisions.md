@@ -352,7 +352,16 @@ in the same place.
   fzf-lua's ctrl-d is unbound there (fzf's own then: delete a character, or
   close on an empty query): fzf-lua's opens its diff picker with this picker's
   options, which list these commits. Outside review, <CR> stays fzf-lua's
-  confirmed checkout. Reworked 2026-11-12 in a review cycle, after own ctrl-d
+  confirmed checkout. 2026-11-13: likewise <leader>gD's ctrl-q in review
+  (git.diff_picker), which opens fzf-lua's own commits picker, Enter a
+  checkout; unbound in the hunks picker its ctrl-d opens too, as fzf-lua
+  hands that the same options. Checked every path then: no key of ours
+  reaches a git write in review but these. fzf-lua's generic doors do
+  (<leader>f?, <leader>f. resuming a picker opened before, :FzfLua git_*:
+  commits, tags and reflog check out, branches switch, status stages and
+  resets, stash applies): left as fzf-lua's, since what they do is done by
+  hand, and review mode's guards catch it at the next step or leave (HEAD
+  moved, changes in the tree). Reworked 2026-11-12 in a review cycle, after own ctrl-d
   and deferred-pick versions each drew new bugs: the standard picker, with
   only what review mode needs.
 - A branch with no commits of its own against its base is reviewed as its

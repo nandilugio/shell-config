@@ -244,14 +244,10 @@ M.maps = {
   { "<leader>gq", function() require("gitsigns").setqflist() end, desc = "Hunks to quickfix", needs = "mod:gitsigns" },
   { "<leader>gQ", function() require("gitsigns").setqflist("all") end, desc = "All files' hunks to quickfix", needs = "mod:gitsigns" },
   -- The changed files themselves, against the signs' base: capital of gd, as
-  -- "the diff, every file". An empty ref is the index, which is what the signs
-  -- show; fzf-lua's own default would be HEAD.
+  -- "the diff, every file".
   {
     "<leader>gD",
-    function()
-      local root, base = require("setup.git").diff_target()
-      require("setup.fzf").git_diff({ ref = base or "", cwd = root })
-    end,
+    function() require("setup.git").diff_picker() end,
     desc = "Diff: every changed file",
     needs = "fzf",
     fallback = function() require("setup.git").changed_files() end,

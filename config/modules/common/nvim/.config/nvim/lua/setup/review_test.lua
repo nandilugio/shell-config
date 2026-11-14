@@ -342,6 +342,19 @@ local function changed_from(buf)
 end
 check("changed files: the review's, from a buffer of no file", changed_from(vim.api.nvim_create_buf(true, true)), { "p1.txt", "p2.txt", "p3.txt" })
 check("changed files: the review's, from another repository's", changed_from(other_buf), { "p1.txt", "p2.txt", "p3.txt" })
+-- <leader>gD's picker: fzf-lua's git_diff, given the review's base, and in
+-- review mode without ctrl-q, which leads to a checkout behind its back.
+local fzf = require("setup.fzf")
+local function picker_opts()
+  local got
+  rawset(fzf, "git_diff", function(opts) got = opts end)
+  G.diff_picker()
+  rawset(fzf, "git_diff", nil)
+  return got
+end
+local opts = picker_opts()
+check("diff picker: the review's base", opts.ref, (review.base()))
+check("diff picker: no ctrl-q in review", opts.actions, { ["ctrl-q"] = false })
 open("p1.txt")
 -- One opened while a pass runs, before gitsigns takes the base as its
 -- default, attaches on the index: as here, with the default set back for a
@@ -361,6 +374,7 @@ check("other repository: that pass still sets the base", G.base(review_buf), (re
 toggle()
 wait_for(function() return vim.b[other_buf].gitsigns_status_dict ~= nil end)
 check("other repository: attached again on leaving, on the index", { vim.b[other_buf].gitsigns_status_dict ~= nil, G.base(other_buf) }, { true, nil })
+check("diff picker: fzf-lua's own keys outside review", picker_opts().actions, nil)
 vim.cmd.bwipeout(other_buf)
 
 -- ── The walk ────────────────────────────────────────────────────────────────

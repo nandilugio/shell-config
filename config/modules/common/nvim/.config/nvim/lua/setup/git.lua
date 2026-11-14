@@ -358,6 +358,18 @@ function M.diff_target()
   return M.root(), M.base(0)
 end
 
+--- The changed files as fzf-lua's git_diff picker, each file's diff as its
+--- preview, against diff_target. An empty ref is the index, as the signs
+--- show; fzf-lua's own default would be HEAD. In review mode without ctrl-q:
+--- fzf-lua's opens its own commits picker, whose Enter checks out behind the
+--- review's back. The review's commits are <leader>gc.
+function M.diff_picker()
+  local root, base = M.diff_target()
+  local opts = { ref = base or "", cwd = root }
+  if require("setup.review").active() then opts.actions = { ["ctrl-q"] = false } end
+  require("setup.fzf").git_diff(opts)
+end
+
 -- The files whose signs show something, against the same base: unstaged
 -- changes normally, the whole branch in review mode. <leader>gD prefers
 -- fzf-lua's git_diff, a picker with each file's diff as preview; this is the
