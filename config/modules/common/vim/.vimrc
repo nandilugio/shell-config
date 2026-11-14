@@ -81,7 +81,6 @@ silent! packadd comment
 nnoremap <leader><leader> :buffer<Space>
 nnoremap <leader>ff :find<Space>
 nnoremap <leader>fg :grep<Space>
-nnoremap <leader>/ :grep<Space>
 nnoremap <leader>fw :grep <C-r><C-w><CR>
 nnoremap <leader>fr :browse oldfiles<CR>
 nnoremap <leader>fh :help<Space>
@@ -97,7 +96,6 @@ nnoremap <C-k> <C-w><C-k>
 nnoremap <C-l> <C-w><C-l>
 nnoremap <leader>- :split<CR>
 nnoremap <leader>\| :vsplit<CR>
-nnoremap <leader>bd :bdelete<CR>
 
 " Arrows by screen line, j and k by line; d<Down> is charwise, dj linewise.
 noremap <Down> g<Down>
