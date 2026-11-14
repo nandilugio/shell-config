@@ -538,3 +538,8 @@ made to build on one another:
   Backspace removing 2 after :set sw=4), 'tabstop' 8 (Vim's advice: a tab is
   drawn as git, less and GitHub draw it). The cost: go and make indent 8
   wide on screen until oit4.
+- The same day: <leader>of picks the buffer's filetype (fzf-lua's filetypes
+  picker; :set filetype= with Tab completion without it) and <leader>om sets
+  markdown, used for notes. A new unnamed buffer stays without a filetype:
+  markdown by default would misread pasted logs, JSON or SQL (_ and * as
+  emphasis, # as a heading, pipes as a table), and no other editor does it.

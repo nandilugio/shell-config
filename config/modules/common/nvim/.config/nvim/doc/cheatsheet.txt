@@ -393,5 +393,6 @@ oi  this buffer's indentation, by key:
     ois1..9  that many spaces          oit1..9  tabs, shown that wide
              0 for 10, in both
     oic      convert the existing indentation to it; nothing moves on screen
+of  pick this buffer's filetype         om  markdown
 
  vim:tw=78:ts=8:et:ft=help:norl:

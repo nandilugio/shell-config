@@ -506,6 +506,16 @@ M.maps = {
   -- oit{1-9} tabs at that width, 0 for 10 (added after this table, by a
   -- loop), and oic to convert what is already there.
   { "<leader>oic", converting_indent, desc = "Convert the indentation to the current setting" },
+  -- This buffer's filetype: any, through the picker, or markdown directly,
+  -- for notes written in a buffer that has no name yet.
+  {
+    "<leader>of",
+    function() require("setup.fzf").filetypes() end,
+    desc = "Filetype",
+    needs = "fzf",
+    fallback = ":set filetype=",
+  },
+  { "<leader>om", "<Cmd>set filetype=markdown<CR>", desc = "Markdown filetype" },
 
   -- ── Filetype actions: <LocalLeader> ───────────────────────────────────────
   -- Global rather than per-filetype, since setup/keymaps has no ft field. The

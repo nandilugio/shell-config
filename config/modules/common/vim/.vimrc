@@ -143,6 +143,9 @@ function! s:Indent(lead) abort
   return &expandtab ? repeat(' ', w) : repeat("\t", w / &tabstop) . repeat(' ', w % &tabstop)
 endfunction
 nnoremap <leader>oic :keeppatterns %s/^\s\+/\=<SID>Indent(submatch(0))/e<CR>
+" This buffer's filetype: any, Tab completing the name, or markdown.
+nnoremap <leader>of :set filetype=
+nnoremap <leader>om :set filetype=markdown<CR>
 
 " Neovim's own defaults that Vim lacks. Not <Esc> for :nohlsearch, as in
 " nvim: terminal Vim receives escape sequences at startup (the terminal's
