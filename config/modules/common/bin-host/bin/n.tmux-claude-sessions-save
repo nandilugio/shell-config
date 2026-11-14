@@ -3,8 +3,11 @@
 #
 # Run as tmux-resurrect's post-save-layout hook. Claude records no tty or pid
 # in its transcripts, so the pane->session link only exists while the process
-# is alive: we read CLAUDE_CODE_SESSION_ID from each live process's
-# environment and join to panes on tty.
+# is alive. Claude Code keeps a record of each running process,
+# ~/.claude/sessions/<pid>.json, whose sessionId follows /resume and /branch;
+# we take the pid's tty from ps and join to panes on it. The record is Claude
+# Code's own, not a documented interface: if it changes, nothing is mapped and
+# a restore types nothing. Needs jq.
 #
 # Writes "<session>:<window>.<pane>\t<session-id>\t<cwd>" beside the state file.
 #
@@ -18,26 +21,17 @@ if [ -z "$resurrect_file" ]; then
 	exit 1
 fi
 
-# Process environment, one VAR=value per line. Empty if unreadable.
-process_env() {
-	local pid="$1"
-	case "$(uname -s)" in
-		Darwin) ps -p "$pid" -Eww -o command= 2>/dev/null | tr ' ' '\n' ;;
-		Linux)  tr '\0' '\n' < "/proc/$pid/environ" 2>/dev/null ;;
-	esac
-}
-
-# "<tty> <session-id>" for every live Claude process.
+# "<tty> <session-id>" for every live Claude process. A record whose pid is
+# gone, or now another program's (left by a crash), is skipped.
 claude_sessions_by_tty() {
-	local pid sid tty
-	while read -r pid; do
-		[ -n "$pid" ] || continue
-		sid="$(process_env "$pid" | grep -m1 '^CLAUDE_CODE_SESSION_ID=' | cut -d= -f2-)"
-		[ -n "$sid" ] || continue
-		tty="$(ps -p "$pid" -o tty= 2>/dev/null | tr -d ' ')"
-		[ -n "$tty" ] && [ "$tty" != "??" ] || continue
+	local record pid sid tty comm
+	for record in "$HOME"/.claude/sessions/*.json; do
+		[ -f "$record" ] || continue
+		read -r pid sid < <(jq -r '"\(.pid // "") \(.sessionId // "")"' "$record" 2>/dev/null) || continue
+		read -r tty comm < <(ps -p "$pid" -o tty=,comm= 2>/dev/null) || continue
+		[ "${comm##*/}" = claude ] && [ -n "$sid" ] && [ "$tty" != "??" ] || continue
 		printf '%s %s\n' "$tty" "$sid"
-	done < <(pgrep -u "$USER" -f 'claude|node' 2>/dev/null)
+	done
 }
 
 map_file="$(dirname "$resurrect_file")/claude_sessions.txt"

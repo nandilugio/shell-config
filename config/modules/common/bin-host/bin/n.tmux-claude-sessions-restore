@@ -49,10 +49,8 @@ while IFS=$'\t' read -r pane_id sid pane_path; do
 		continue
 	fi
 
-	# The session id comes from the process environment, which holds the id
-	# Claude was LAUNCHED with - not the conversation currently loaded. A
-	# resumed or forked session therefore maps to an id with no transcript.
-	# Fall back to Claude's own picker, scoped to the pane's directory.
+	# An id with no transcript (gone, or a session that never saved one)
+	# falls back to Claude's own picker, scoped to the pane's directory.
 	if [ -n "$(find "$HOME/.claude/projects" -name "$sid.jsonl" -print -quit 2>/dev/null)" ]; then
 		resume_cmd="claude --resume $sid"
 	else
@@ -72,6 +70,7 @@ if [ "$restored" -gt 0 ]; then
 	msg="Claude resume: $restored pane(s)"
 	[ "$stale" -gt 0 ] && msg="$msg, $stale via picker (id had no transcript)"
 	[ "$skipped" -gt 0 ] && msg="$msg, $skipped skipped (pane moved)"
-	tmux display-message "$msg"
+	# After a moment: resurrect shows its own message right after this hook.
+	{ sleep 1; tmux display-message "$msg"; } >/dev/null 2>&1 &
 fi
 exit 0
