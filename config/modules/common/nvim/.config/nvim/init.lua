@@ -33,13 +33,9 @@ require("setup.fzf") -- defines the loader only; the plugin is set up on first u
 require("setup.git")
 require("setup.help") -- the cheatsheet, and q in help windows
 require("setup.review") -- for :Review; does nothing until asked
-require("setup.wiki")
 
 -- Local plugins, structured so they could move to their own repos unchanged —
--- hence the filetype list passed in rather than assumed. vimwiki is markdown to
--- treesitter but is written rather than read, and inline padding shifts the real
--- columns. mdheading takes the same list for consistency, though its colouring
--- would be harmless in notes.
+-- hence the filetype list passed in rather than assumed.
 require("mdtable").setup({ filetypes = { "markdown" } })
 require("mdheading").setup({ filetypes = { "markdown" } })
 

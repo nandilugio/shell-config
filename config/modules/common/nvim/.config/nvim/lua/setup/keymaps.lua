@@ -11,7 +11,6 @@ local spec = require("keymaps")
 -- The prefix says what kind, so the check never guesses:
 --   "fzf"               an executable on PATH
 --   "mod:gitsigns"      a Lua module
---   "cmd:VimwikiIndex"  an Ex command (Vimscript plugins define no module)
 
 local cache = {}
 
@@ -21,8 +20,6 @@ local function available(needs)
     local kind, name = needs:match("^(%a+):(.+)$")
     if kind == "mod" then
       cache[needs] = (pcall(require, name))
-    elseif kind == "cmd" then
-      cache[needs] = vim.fn.exists(":" .. name) == 2
     else
       cache[needs] = vim.fn.executable(needs) == 1
     end
@@ -100,26 +97,7 @@ function M.del(entries)
   end
 end
 
--- Vimscript plugins source their plugin/ files only after init.lua returns, so
--- a "cmd:" requirement cannot be judged yet. Those wait; the rest apply now so
--- they work in the first buffer.
-local deferred = {}
-for _, m in ipairs(spec.maps) do
-  if m.needs and m.needs:match("^cmd:") then
-    table.insert(deferred, m)
-  else
-    apply(m)
-  end
-end
-
-if #deferred > 0 then
-  vim.api.nvim_create_autocmd("VimEnter", {
-    once = true,
-    callback = function()
-      for _, m in ipairs(deferred) do apply(m) end
-    end,
-  })
-end
+for _, m in ipairs(spec.maps) do apply(m) end
 
 -- ── Relabel Neovim's own mappings ───────────────────────────────────────────
 -- What the label set is for: which-key is the first place to look for a
@@ -234,7 +212,7 @@ end, { desc = "List keymaps disabled by missing dependencies" })
 
 -- ── Overrides ───────────────────────────────────────────────────────────────
 -- Plugins map keys of their own, and a Vimscript plugin can quietly claim a
--- whole namespace (vimwiki takes <leader>w unless told otherwise). A mapping
+-- whole namespace (vimwiki took <leader>w unless told otherwise). A mapping
 -- is ours while the one on its key still carries our description: maparg()
 -- is asked per key, so Vim does the spelling (<S-h> is H, <LocalLeader>t is
 -- ,t) rather than this file guessing it. Buffer-local mappings win over

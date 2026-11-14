@@ -11,7 +11,7 @@ research-plugins.md · research-keybindings.md
   degradation. Same keys, less power.
 - tmux is the base of the workflow, but must NOT be a hard dependency of the nvim config.
 
-## FINAL PLUGIN LIST — 8 (from 24), then 7 (lazydev dropped 2026-11-04, see below)
+## FINAL PLUGIN LIST — 8 (from 24), then 7 (lazydev dropped 2026-11-04, see below), then 6 (vimwiki dropped 2026-11-14: not used)
 1. nvim-lspconfig   — DATA ONLY (415 server configs). Never require() it.
 2. nvim-treesitter  — `main` branch (master is frozen/0.11-scoped). Needs tree-sitter-cli.
 3. gitsigns.nvim    — zero deps; ambient git layer (signs, ]c/[c, stage hunk, blame)
@@ -19,7 +19,7 @@ research-plugins.md · research-keybindings.md
 5. mini.files       — file browser (standalone repo, NOT the mini.nvim monorepo)
 6. lazydev.nvim     — lua_ls knows the nvim API (user edits nvim config)
 7. which-key.nvim   — KEEP: user is deliberately relearning a new scheme; 7 commits/yr
-8. vimwiki          — personal notes
+8. vimwiki          — personal notes. DROPPED 2026-11-14: not used
 
 ## DROPPED (16)
 mason.nvim, mason-lspconfig, mason-tool-installer  -> uv/brew/gem + vim.lsp.enable()

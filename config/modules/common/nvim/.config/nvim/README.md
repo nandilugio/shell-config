@@ -91,7 +91,6 @@ thing:
 | `fzf-lua` | wraps the `fzf` binary; no build step, no dependencies |
 | `mini.files` | file browser as an editable buffer |
 | `which-key` | shows what a prefix contains |
-| `vimwiki` | notes |
 
 Two are local rather than installed, both display layers over markdown that
 leave the file alone:

@@ -8,7 +8,7 @@
 --             swallow the space typed into it.
 --
 --   needs     what `rhs` depends on: a bare name is an executable on PATH,
---             "mod:x" a Lua module, "cmd:X" an Ex command.
+--             "mod:x" a Lua module.
 --             When missing, `fallback` is used instead; with no fallback the
 --             mapping is skipped entirely. This is what lets the config work on
 --             a bare server with nothing installed.
@@ -465,12 +465,6 @@ M.maps = {
   { "<leader>oY", copying_path(true), desc = "Yank absolute path" },
   { "<leader>oy", copying_path(false, true), desc = "Yank path with the selected lines", mode = "x" },
   { "<leader>oY", copying_path(true, true), desc = "Yank absolute path with the selected lines", mode = "x" },
-  -- vimwiki's <leader>w* are disabled in setup/wiki.lua (they collide with the
-  -- window namespace); these are the ones worth keeping. The cheatsheet is
-  -- <leader>?: help, not something of ours to reserve.
-  { "<leader>ow", "<Cmd>VimwikiIndex<CR>", desc = "Wiki index", needs = "cmd:VimwikiIndex" },
-  { "<leader>od", "<Cmd>VimwikiMakeDiaryNote<CR>", desc = "Wiki diary today", needs = "cmd:VimwikiMakeDiaryNote" },
-  { "<leader>oD", "<Cmd>VimwikiDiaryIndex<CR>", desc = "Wiki diary index", needs = "cmd:VimwikiDiaryIndex" },
 
   -- ── Filetype actions: <LocalLeader> ───────────────────────────────────────
   -- Global rather than per-filetype, since setup/keymaps has no ft field. The

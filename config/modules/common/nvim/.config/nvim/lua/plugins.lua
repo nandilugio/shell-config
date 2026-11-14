@@ -18,9 +18,6 @@ local specs = {
 
   -- File browser as an editable buffer. Pure Lua.
   gh("nvim-mini/mini.files"),
-
-  -- Notes.
-  gh("vimwiki/vimwiki"),
 }
 
 -- Parsers must be compiled, so this needs a toolchain.

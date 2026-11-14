@@ -52,7 +52,7 @@ alias g=git
 alias lg='git fetch && lazygit'
 export LG_CONFIG_FILE=~/.config/lazygit/config.yml  # macOS would default to ~/Library/Application Support
 alias ttofu='tofu workspace show; read -n 1; tofu'
-alias notes='pushd ~/notes && git pull; nvim -c VimwikiIndex; git add .; git commit -am wip && git push; popd'
+alias notes='pushd ~/notes && git pull; nvim index.md; git add .; git commit -am wip && git push; popd'
 
 # Readline's editing keys in vi insert mode, as in bash, psql, python and fzf's
 # prompt; Esc still leads to vi's normal mode. Words are zsh's (WORDCHARS), so

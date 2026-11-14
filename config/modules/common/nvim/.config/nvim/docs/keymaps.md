@@ -200,7 +200,7 @@ Caveat: JetBrains is the systematic outlier (`F2`=next error, `F7`/`F8`=step).
 |---|---|---|
 | `<leader>o` | **Yours alone** | 🟨 Spacemacs' best convention: guaranteed never to collide |
 | `<leader>?` | The cheatsheet | 🟨 `?` is help in every pager. Was `<leader>oh`; help is not something of mine to reserve |
-| `<LocalLeader>`=`,` | Filetype-specific | 🟨 Spacemacs `SPC m`. Home for Ruby/markdown/vimwiki keys. First occupant: `,t` align markdown table |
+| `<LocalLeader>`=`,` | Filetype-specific | 🟨 Spacemacs `SPC m`. Home for Ruby/markdown keys. First occupant: `,t` align markdown table |
 | `-` | **leave free** | 🟨 nvim 0.13's builtin explorer claims it (guards politely) |
 | `g`+new letters | **don't extend** | ⚠️ crowded with real vim commands |
 
@@ -226,7 +226,7 @@ Caveat: JetBrains is the systematic outlier (`F2`=next error, `F7`/`F8`=step).
 1. `<leader>s` -> `<leader>f` — cut clean, no transition alias.
 2. vimwiki moved to `<leader>ow`, and its own `<leader>w*` mappings are
    suppressed via `vim.g.vimwiki_key_mappings = { global = 0 }`, which is what
-   was quietly claiming the window namespace.
+   was quietly claiming the window namespace. Dropped with vimwiki 2026-11-14.
 3. Copying the file's path is `<leader>oy` / `oY` (2026-11-14). Spacemacs and Doom
    put it under files (`SPC f y`), but here `f` is find, and conflating the two for
    one feature was not worth it: custom functionality goes under `<leader>o`.

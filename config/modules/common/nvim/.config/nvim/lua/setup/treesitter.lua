@@ -44,8 +44,6 @@ if #missing > 0 then
   end
 end
 
-vim.treesitter.language.register("markdown", "vimwiki")
-
 local function start(buf)
   local lang = vim.treesitter.language.get_lang(vim.bo[buf].filetype)
   if not lang or not installed[lang] then return end
