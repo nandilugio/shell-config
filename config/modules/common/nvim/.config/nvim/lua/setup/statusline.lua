@@ -75,9 +75,14 @@ local MODES = {
   t = { "TERMINAL", "StatuslineTerminal" },
 }
 
+-- A star after the mode while training mode (setup/training.lua) has other
+-- editors' keys off: the same key then does something else, so it shows.
 function M.mode()
   local m = MODES[vim.api.nvim_get_mode().mode:sub(1, 1)] or { "?", "StatuslineNormal" }
-  return ("%%#%s# %s %%*"):format(m[2], m[1])
+  local training = package.loaded["setup.training"]
+  -- Not a table while the module is still loading.
+  local star = type(training) == "table" and training.on() and "*" or ""
+  return ("%%#%s# %s%s %%*"):format(m[2], m[1], star)
 end
 
 -- gitsigns opens a historical revision as gitsigns://<gitdir>//<rev>:<relpath>

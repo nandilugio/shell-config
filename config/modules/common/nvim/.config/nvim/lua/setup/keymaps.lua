@@ -1,6 +1,7 @@
--- Applies lua/keymaps.lua. The only place mappings are created, and so the
--- place that knows which ones exist: overridden() reports those a plugin has
--- since replaced, for :KeymapAudit and :checkhealth config.
+-- Applies lua/keymaps.lua, and the presets setup/training.lua hands it. The
+-- only place mappings are created, and so the place that knows which ones
+-- exist: overridden() reports those a plugin has since replaced, for
+-- :KeymapAudit and :checkhealth config.
 
 local M = {}
 
@@ -54,7 +55,12 @@ M.with_mnemonic = with_mnemonic
 -- ── Apply ───────────────────────────────────────────────────────────────────
 
 local skipped = {}
-local created = {} -- { lhs, mode, desc } of the entries that became mappings
+-- The entries that became mappings, one per mode and key: { lhs, mode, desc }.
+-- Keyed, so an entry set again (setup/training.lua swaps its presets) replaces
+-- the record rather than leaving a stale one behind.
+local created = {}
+
+local function modes_of(m) return type(m.mode) == "table" and m.mode or { m.mode or "n" } end
 
 local function apply(m)
   local rhs = m[2]
@@ -67,7 +73,31 @@ local function apply(m)
   end
   local desc = with_mnemonic(m[1], m.desc)
   vim.keymap.set(m.mode or "n", m[1], rhs, { desc = desc, silent = true, expr = m.expr })
-  table.insert(created, { lhs = m[1], mode = m.mode, desc = desc })
+  for _, mode in ipairs(modes_of(m)) do
+    created[mode .. " " .. m[1]] = { lhs = m[1], mode = mode, desc = desc }
+  end
+end
+
+--- Applies entries shaped as in keymaps.lua, for modules that define keys of
+--- their own at runtime (setup/training.lua).
+--- @param entries table[]
+function M.set(entries)
+  for _, m in ipairs(entries) do apply(m) end
+end
+
+--- Removes the mappings these entries created, and only those: a key in the
+--- list that holds someone else's mapping, or none, is left as it is.
+--- @param entries table[]
+function M.del(entries)
+  for _, m in ipairs(entries) do
+    for _, mode in ipairs(modes_of(m)) do
+      local key = mode .. " " .. m[1]
+      if created[key] then
+        pcall(vim.keymap.del, mode, m[1])
+        created[key] = nil
+      end
+    end
+  end
 end
 
 -- Vimscript plugins source their plugin/ files only after init.lua returns, so
@@ -215,16 +245,15 @@ end, { desc = "List keymaps disabled by missing dependencies" })
 --- @return string[] buflocal  the same, for THIS buffer's own mappings
 function M.overridden()
   local global, buflocal = {}, {}
-  for _, m in ipairs(created) do
-    local modes = type(m.mode) == "table" and m.mode or { m.mode or "n" }
-    for _, mode in ipairs(modes) do
-      local cur = vim.fn.maparg(m.lhs, mode, false, true)
-      if cur.desc ~= m.desc then
-        local line = ("%s %s: now %s, ours %q"):format(mode, m.lhs, cur.lhs and ("%q"):format(cur.desc or "") or "unmapped", m.desc)
-        table.insert(cur.buffer == 1 and buflocal or global, line)
-      end
+  for _, m in pairs(created) do
+    local cur = vim.fn.maparg(m.lhs, m.mode, false, true)
+    if cur.desc ~= m.desc then
+      local line = ("%s %s: now %s, ours %q"):format(m.mode, m.lhs, cur.lhs and ("%q"):format(cur.desc or "") or "unmapped", m.desc)
+      table.insert(cur.buffer == 1 and buflocal or global, line)
     end
   end
+  table.sort(global)
+  table.sort(buflocal)
   return global, buflocal
 end
 
@@ -235,8 +264,8 @@ vim.api.nvim_create_user_command("KeymapAudit", function()
   -- Leader mappings nobody here defined: a plugin's own. nvim_get_keymap()
   -- reports lhs with <leader> expanded, so match the key itself.
   local ours = {}
-  for _, m in ipairs(spec.maps) do
-    ours[(m[1]:gsub("<[Ll]eader>", vim.g.mapleader or "\\"))] = true
+  for _, m in pairs(created) do
+    ours[(m.lhs:gsub("<[Ll]eader>", vim.g.mapleader or "\\"))] = true
   end
   local foreign = {}
   for _, mode in ipairs({ "n", "x", "o", "i", "t" }) do
@@ -264,12 +293,17 @@ end, { desc = "Report keymap conflicts with plugins" })
 local function read_presets()
   local ok, presets = pcall(require, "which-key.plugins.presets")
   if not ok or type(presets) ~= "table" then return {} end
+  -- keymaps.lua's own wording replaces a preset's, rather than adding a second
+  -- label for the key (which-key would report the pair as duplicates).
+  local own = {}
+  for _, l in ipairs(spec.labels) do own[l[1]] = l[2] end
   local out = {}
   for _, set in pairs(presets) do
     if type(set) == "table" and set.preset then
       for _, item in ipairs(set) do
         if type(item) == "table" and type(item[1]) == "string" and type(item.desc) == "string" then
-          table.insert(out, { item[1], desc = with_mnemonic(item[1], item.desc), mode = set.mode })
+          local desc = (set.mode or "n") == "n" and own[item[1]] or item.desc
+          table.insert(out, { item[1], desc = with_mnemonic(item[1], desc), mode = set.mode })
         end
       end
     end

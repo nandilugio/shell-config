@@ -496,3 +496,28 @@ made to build on one another:
   written for :map rather than a popup: the bracket family (":cnext"), the
   ":help Y-default" shape, the long diagnostic and gx sentences. The policy
   for the label set is at the top of the block in setup/keymaps.lua.
+
+### Training mode (2026-11-14) — setup/training.lua, <leader>ut
+- Other editors' keys stay, by default: arrows by screen line, Left/Right
+  across line ends ('whichwrap'), Tab/S-Tab indenting a selection (>gv),
+  <C-Space> and Enter in completion, and <leader>- / <leader>| (tmux's split
+  keys). They sit on keys Vim leaves idle or that Vim users do not lean on.
+- Training mode is for discipline: those keys, plus Home/End, PgUp/PgDn and
+  the Shift-arrows (Vim's own, but duplicates of 0 $ <C-f> <C-b> w b), say
+  what Vim uses instead and do nothing else. A hint, not a dead key: the
+  message is what teaches. Arrows Vim itself uses widely stay (command-line
+  history, the completion menu, terminal mode).
+- Two complete presets, as review mode: compat at startup, strict on the
+  toggle, each writing every key and 'whichwrap', so the way back is exact
+  (training_test.lua checks it against a snapshot). One owner per setting:
+  training and review own disjoint sets, so they switch in any order.
+- The definitions live in the module, not split between keymaps.lua and
+  options.lua; keymaps.lua points there. setup/keymaps.lua applies them, so
+  labels, :KeymapAudit and :checkhealth config cover them; its record of
+  what it created is now one per mode and key, which a swap can replace.
+- Session only, off at start. A * after the statusline's mode while on.
+- Considered and left out: a nudge after repeated hjkl (what hardtime.nvim
+  does), too much for what it buys; the mouse, which would hand the wheel
+  to tmux.
+- The same day: zr is labelled through which-key (keymaps.lua M.labels,
+  replacing the preset's wording) instead of mapped to itself.

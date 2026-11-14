@@ -55,6 +55,15 @@ M.groups = {
   { "<C-w>", "window" },
 }
 
+-- Labels for Vim's own normal-mode keys where which-key's wording does not
+-- read as this scheme does. They replace that wording, and map nothing.
+--
+--   { lhs, label }
+M.labels = {
+  -- Beside zm "Mask one more level (fold more)" (M.maps, Folds).
+  { "zr", "Reveal one more level (fold less)" },
+}
+
 -- For the fold commands: an expr map that sets the window's fold column, then
 -- runs the built-in key, so counts and visual selections work unchanged.
 local function setting_foldcolumn(keys, width)
@@ -341,6 +350,8 @@ M.maps = {
   -- Many settings at once, as two presets (setup/review.lua). Capital R:
   -- <leader>ur is relative numbers.
   { "<leader>uR", function() require("setup.review").toggle() end, desc = "Review mode", needs = "mod:gitsigns" },
+  -- Other editors' keys off, hinting at Vim's own (setup/training.lua).
+  { "<leader>ut", function() require("setup.training").toggle() end, desc = "Training mode: Vim's keys only" },
   -- Git's own toggles, nested because <leader>u's single letters are spoken
   -- for (ud diagnostics, uw wrap, ub background).
   -- The inline diff: removed lines, word diff and line backgrounds as one, as
@@ -367,37 +378,13 @@ M.maps = {
   { "<C-j>", "<C-w><C-j>", desc = "Window down" },
   { "<C-k>", "<C-w><C-k>", desc = "Window up" },
   { "<C-l>", "<C-w><C-l>", desc = "Window right" },
-  -- tmux's mnemonic: | is a vertical divider, - a horizontal one.
-  { "<leader>-", "<Cmd>split<CR>", desc = "Split below" },
-  { "<leader>|", "<Cmd>vsplit<CR>", desc = "Split right" },
+  -- <leader>- and <leader>| (split, as in tmux) are in setup/training.lua: a
+  -- second path to <C-w>s and <C-w>v, which training mode teaches instead.
 
-  -- ── Arrows ────────────────────────────────────────────────────────────────
-  -- Arrows move by screen line, as in other editors; j and k stay Vim's,
-  -- by line. In every mode, so an operator takes the arrow's meaning too:
-  -- d<Down> deletes to the same column a screen line down, dj whole lines.
-  -- options.lua's 'whichwrap' lets <Left> and <Right> cross line ends.
-  { "<Down>", "g<Down>", desc = "Down a screen line", mode = { "n", "x", "o" } },
-  { "<Up>", "g<Up>", desc = "Up a screen line", mode = { "n", "x", "o" } },
-  -- A Select mode map would type the g over the selection: <C-g> runs the
-  -- motion in Visual mode and comes back.
-  { "<Down>", "<C-g>g<Down><C-g>", desc = "Down a screen line", mode = "s" },
-  { "<Up>", "<C-g>g<Up><C-g>", desc = "Up a screen line", mode = "s" },
-  -- The completion menu keeps its own <Down> and <Up>. <C-\><C-o> rather than
-  -- <C-o>, which would pull the cursor back off the end of the line.
-  {
-    "<Down>",
-    function() return vim.fn.pumvisible() == 1 and "<Down>" or "<C-\\><C-o>g<Down>" end,
-    desc = "Down a screen line, or the next completion",
-    mode = "i",
-    expr = true,
-  },
-  {
-    "<Up>",
-    function() return vim.fn.pumvisible() == 1 and "<Up>" or "<C-\\><C-o>g<Up>" end,
-    desc = "Up a screen line, or the previous completion",
-    mode = "i",
-    expr = true,
-  },
+  -- ── Other editors' keys ───────────────────────────────────────────────────
+  -- Arrows by screen line, Tab indenting a selection, Enter accepting a
+  -- completion, <C-Space>: setup/training.lua, as the compat preset of
+  -- training mode (<leader>ut), which swaps them for hints at Vim's own.
 
   -- ── Lists: <leader>x ──────────────────────────────────────────────────────
   -- Vim's list of places: :make, :grep and the pickers all fill it, ]q / [q
@@ -422,11 +409,6 @@ M.maps = {
   { "<leader>=", function() vim.lsp.buf.format({ timeout_ms = 2000 }) end, desc = "Format buffer" },
   -- format() takes the selection by itself in visual mode.
   { "<leader>=", function() vim.lsp.buf.format({ timeout_ms = 2000 }) end, desc = "Format selection", mode = "x" },
-  -- As in other editors, keeping the selection so the key can be pressed
-  -- again. Visual only: Tab is CTRL-I (jump forward) in normal mode, and
-  -- Select mode's Tab jumps between snippet placeholders.
-  { "<Tab>", ">gv", desc = "Indent selection", mode = "x" },
-  { "<S-Tab>", "<gv", desc = "Dedent selection", mode = "x" },
 
   -- ── Folds: z ──────────────────────────────────────────────────────────────
   -- The built-ins, showing the fold column (off by default) once something is
@@ -443,8 +425,7 @@ M.maps = {
   { "zM", setting_foldcolumn("zM", 1), desc = "Mask all", expr = true },
   { "zR", setting_foldcolumn("zR", 0), desc = "Reveal all", expr = true },
   { "zn", setting_foldcolumn("zn", 0), desc = "No folding (zN restores)", expr = true },
-  -- Mapped to itself only for the label; the column stays as it is.
-  { "zr", "zr", desc = "Reveal one more level (fold less)" },
+  -- zr keeps the column as it is, so it is not mapped: M.labels names it.
   -- Ours, beside the native keys rather than over one (zs is sideways
   -- scroll): the fold and everything inside it, so zo then opens one level
   -- at a time. setup/folds.lua says why Vim's own zC does not.

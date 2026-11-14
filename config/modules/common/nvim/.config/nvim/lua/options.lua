@@ -39,9 +39,7 @@ vim.o.shiftwidth = 2
 vim.o.softtabstop = 2
 vim.o.tabstop = 2
 vim.o.fixendofline = false -- do not silently add a trailing newline
--- The arrows cross line ends, as in other editors; h and l stay on the line.
--- keymaps.lua says why the arrows and hjkl differ.
-vim.opt.whichwrap:append("<,>,[,]")
+-- 'whichwrap' is set by setup/training.lua, with the arrows it is about.
 
 -- Appearance
 vim.o.number = true
@@ -89,10 +87,9 @@ vim.o.autocomplete = false
 vim.o.complete = ".,w,b,u,o"
 vim.o.completeopt = "menu,menuone,popup,noselect,fuzzy"
 
--- The cross-editor key, but many terminals never send it — it is the NUL byte,
--- which readline, some tmux configs and macOS input switching all eat. Nothing
--- depends on it working; <C-n> always arrives.
-vim.keymap.set("i", "<C-Space>", "<C-n>", { desc = "Completion menu" })
+-- Other editors' completion keys, <C-Space> to open the menu and Enter to
+-- accept, are setup/training.lua's: its compat preset has them, training mode
+-- hints at <C-n> and <C-y> instead.
 
 -- Esc with the menu open would keep what is selected, turning a glance at the
 -- list into an edit you did not ask for. <C-e> restores what you typed; a
@@ -100,14 +97,6 @@ vim.keymap.set("i", "<C-Space>", "<C-n>", { desc = "Completion menu" })
 vim.keymap.set("i", "<Esc>", function()
   return vim.fn.complete_info({ "selected" }).selected ~= -1 and "<C-e>" or "<Esc>"
 end, { expr = true, desc = "Dismiss completion, else leave insert mode" })
-
--- Accepts only once something is selected, so the popup never changes what
--- ordinary typing does: Enter still gives a newline unless you moved to a
--- candidate. Every other editor accepts on Enter, so the habit stays portable.
--- <C-y> accepts regardless, <C-e> dismisses.
-vim.keymap.set("i", "<CR>", function()
-  return vim.fn.complete_info({ "selected" }).selected ~= -1 and "<C-y>" or "<CR>"
-end, { expr = true, desc = "Accept selected completion, else newline" })
 
 -- Folds via treesitter, all open on entry.
 vim.o.foldmethod = "expr"

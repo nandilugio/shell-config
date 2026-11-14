@@ -366,6 +366,9 @@ um markdown table alignment (on by default for markdown)
 uH markdown heading colours (on by default for markdown)
 uz fold column (see |cheatsheet-folds|)
 uR review mode (see |cheatsheet-review|)
+ut training mode: other editors' keys (arrows, Home/End, PgUp/PgDn, Tab on
+    a selection, Enter and <C-Space> in completion, <leader>- |) hint at
+    Vim's own instead. A * after the mode while on. |training-mode|
 ua autosave: writes on leaving insert or the buffer, off by default
 ug* git: ugd inline diff (removed lines, changed words, lines on green, as
     in review) · ugb cursor-line blame

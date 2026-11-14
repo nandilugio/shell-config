@@ -44,6 +44,7 @@ require("mdtable").setup({ filetypes = { "markdown" } })
 require("mdheading").setup({ filetypes = { "markdown" } })
 
 require("setup.keymaps")
+require("setup.training") -- other editors' keys, as training mode's compat preset
 
 -- :help for this config's own features (doc/config.txt) and the cheatsheet
 -- (doc/cheatsheet.txt). The tags file is generated, so not in git; rebuilt

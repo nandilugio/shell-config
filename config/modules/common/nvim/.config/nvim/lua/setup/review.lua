@@ -46,6 +46,8 @@ local M = {}
 
 local G = require("setup.git")
 
+-- Each setting here has one owner, review mode: training mode
+-- (setup/training.lua) owns a disjoint set, so the two switch in any order.
 local PRESETS = {
   edit = {
     diagnostics = { scope = "current line", severity = "all" },

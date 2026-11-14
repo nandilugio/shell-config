@@ -165,8 +165,8 @@ Tradeoff: faster to type, invisible to which-key. `<leader>u` optimizes discover
 | Key | Action | Why |
 |---|---|---|
 | `<C-h/j/k/l>` | Focus window | 🟦 all four distros. **Pairs with tmux `M-hjkl` panes** = clean 2-level hierarchy |
-| `<leader>-` | Split horizontal | 🟨 **matches tmux `bind -`**; `-` = horizontal divider |
-| `<leader>|` | Split vertical | 🟨 **matches tmux `bind |`**; `|` = vertical divider |
+| `<leader>-` | Split horizontal | 🟨 **matches tmux `bind -`**; `-` = horizontal divider. Since 2026-11-14 in training mode's compat preset (`setup/training.lua`): a second path to `<C-w>s`, which training mode teaches |
+| `<leader>|` | Split vertical | 🟨 **matches tmux `bind |`**; `|` = vertical divider. Likewise, for `<C-w>v` |
 | `<C-w>…` | Window namespace | ⬛ untouched — Helix copies it verbatim from vim |
 | ~~`<S-h>`/`<S-l>`~~ | — | Dropped 2026-11-06: LazyVim-only, and they are `H`/`L`, count-taking motions the cheatsheet teaches. `]b`/`[b` (core) and `<leader><leader>` cover it |
 | ~~`<leader>bd`~~ | — | Dropped 2026-11-06: a namespace holding one key, for `:bd`; `]b`/`[b` and `<leader><leader>` do the buffer work |

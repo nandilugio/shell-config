@@ -109,6 +109,7 @@ list in. Each has its own `README.md` and `DESIGN.md`.
     nvim -l lua/mdheading/test.lua
     nvim -l lua/setup/review_test.lua # review mode's, against a repository it builds
     nvim -l lua/setup/folds_test.lua  # zS, on nested folds it builds
+    nvim -l lua/setup/training_test.lua # training mode, there and back
     nvim -l lua/config/health_test.lua # :checkhealth config, failing on any error
 
 ### Not installed, and why

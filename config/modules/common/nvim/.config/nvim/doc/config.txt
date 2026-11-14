@@ -5,6 +5,7 @@ How the features this config adds behave, for when the cheatsheet
 docs/decisions.md, next to this file's directory.
 
 1. Review mode				|review-mode|
+2. Training mode			|training-mode|
 
 ==============================================================================
 1. Review mode						*review-mode*
@@ -179,5 +180,40 @@ LIMITS							*review-limits*
   reviewing, and get them back when you leave.
 - The base shown in the statusline is read from gitsigns' internal cache.
   :checkhealth config warns if a gitsigns update moves it.
+
+==============================================================================
+2. Training mode					*training-mode*
+
+Other editors' keys, switched off for practising Vim's own until they are the
+habit. Each one, pressed, says what Vim uses instead and does nothing else:
+the mode is kept, so insert stays insert and a selection stays selected, and
+an operator waiting for its motion (d<Down>) is cancelled.
+
+<leader>ut		Toggle training mode. Off when Neovim starts.
+
+While on, the statusline shows a * after the mode: >
+	NORMAL*
+<
+What it switches, off and on:
+
+	key			off (compat)		on (training) ~
+	<Up> <Down>		by screen line		k j, gk gj
+	<Left> <Right>		cross line ends		h l, b w
+	<S-arrows>		pages and words		<C-b> <C-f>, b w
+	<PageUp> <PageDown>	pages			<C-b> <C-f>, <C-u> <C-d>
+	<Home> <End>		line start and end	0 ^ $, or I A
+	<Tab> <S-Tab>		indent the selection	> < then .
+	<leader>- <leader>|	split			<C-w>s <C-w>v
+	<C-Space>		opens completion	<C-n>
+	<CR>			accepts a selected	<C-y>; a newline
+				completion		otherwise, as ever
+
+The arrows hint in normal, visual, select, operator-pending and insert mode.
+Arrows Vim itself uses stay as they are in both: the command line's history,
+the completion menu, terminal mode.
+
+Training mode and review mode switch independently, in any order: each owns
+its own settings and leaves the other's alone. Leaving training mode puts
+every key above back as it was before.
 
  vim:tw=78:ts=8:noet:ft=help:norl:
