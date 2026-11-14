@@ -1,6 +1,7 @@
 macos-option-as-alt = true
 
-# Attach every new surface to the 'main' tmux session, creating it if needed.
+# Attach every new surface to the tmux session used most recently, or a new
+# one when there is none (see the script).
 # The PATH prefix is needed because tmux is Homebrew-only and not on the
 # default PATH. Mirrors the previous iTerm launch command.
 command = /bin/sh -c 'PATH=/opt/homebrew/bin:$PATH ~/bin/n.tmux-new-terminal-window'

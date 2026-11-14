@@ -90,8 +90,8 @@ start-at-login = true
 
     # See: https://nikitabobko.github.io/AeroSpace/goodies#open-a-new-window-with-applescript
     alt-cmd-enter = '''exec-and-forget osascript -e '
-        tell application "iTerm"
-            create window with default profile
+        tell application "Ghostty"
+            new window
             activate
         end tell'
     '''

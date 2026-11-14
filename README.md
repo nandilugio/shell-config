@@ -58,7 +58,7 @@ After `git pull`:
 
 **vim.** `.vimrc` is the nvim keymap scheme's built-in subset for a box with only Vim: curl the one file, no plugins, no network. Kept in sync by hand with `nvim/lua/keymaps.lua` (see the nvim README).
 
-**Ghostty** opens every window into the `main` tmux session (`n.tmux-new-terminal-window`).
+**Ghostty** opens every window into the tmux session used most recently, or a new one when there is none (`n.tmux-new-terminal-window`).
 
 **Claude Code.** `AGENTS.md` is shared by Claude (`~/.claude/CLAUDE.md`) and opencode. The statusline needs a `statusLine` entry in `~/.claude/settings.json` (see the script's header). Claude Code resolves `~/.claude/CLAUDE.md` and `commands` at session start and removes them if their targets move while a session runs: relink with no session open.
 

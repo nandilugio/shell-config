@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Terminal launch command for iTerm and Ghostty (see their configs).
+# Ghostty's launch command (see its config).
 #
 # Attaches to the session used most recently rather than a fixed name, so a new
 # window resumes wherever the last one left off. Only when the server has no
@@ -10,8 +10,8 @@
 # a target sigil (`%` pane, `$` session), so the name is split off on a tab and
 # passed as `=name`, which forces an exact match instead.
 #
-# No `set -e`: if attaching fails the terminal must still end up with a shell
-# rather than a window that closes instantly.
+# If tmux fails to start or attach, the window doesn't just vanish: Ghostty
+# reports a command that exits within 250 ms (abnormal-command-exit-runtime).
 
 last=$(tmux list-sessions -F '#{session_last_attached}	#{session_name}' 2>/dev/null \
   | sort -rn | head -1 | cut -f2-)
