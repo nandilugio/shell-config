@@ -7,9 +7,8 @@
 # libpq (psql, etc.) from Homebrew
 [ -d /opt/homebrew/opt/libpq/bin ] && export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 
-# FZF (brew): its own completion and key bindings. The ~/.fzf checkout the old
-# vimrc's vim-plug used to install is gone.
-command -v fzf >/dev/null && source <(fzf --zsh)
+# FZF (brew). Its completion and key bindings are loaded at the first prompt,
+# with the line-editing keys at the end of this file.
 export FZF_DEFAULT_COMMAND="find . -type f -not -path '*/\.git/*'"
 
 # Perl (and therefore pgtap, etc.)
@@ -54,4 +53,27 @@ alias lg='git fetch && lazygit'
 export LG_CONFIG_FILE=~/.config/lazygit/config.yml  # macOS would default to ~/Library/Application Support
 alias ttofu='tofu workspace show; read -n 1; tofu'
 alias notes='pushd ~/notes && git pull; nvim -c VimwikiIndex; git add .; git commit -am wip && git push; popd'
+
+# Readline's editing keys in vi insert mode, as in bash, psql, python and fzf's
+# prompt; Esc still leads to vi's normal mode. Words are zsh's (WORDCHARS), so
+# C-w takes one path component where bash's takes the whole argument.
+# Bound at the first prompt: this file runs from .zprofile, before .zshrc loads
+# prezto, whose editor module resets every keymap (bindkey -d). fzf's widgets
+# (C-r history, C-t files, M-c cd, ** completion) likewise.
+autoload -Uz add-zsh-hook
+_n_line_keys() {
+  add-zsh-hook -d precmd _n_line_keys
+  local key widget
+  for key widget in \
+    '^B' backward-char  '^F' forward-char \
+    '^[b' emacs-backward-word  '^[f' emacs-forward-word \
+    '^A' beginning-of-line  '^E' end-of-line \
+    '^W' backward-kill-word  '^[^?' backward-kill-word  '^U' backward-kill-line \
+    '^[d' kill-word  '^K' kill-line \
+    '^Y' yank \
+    '^P' history-substring-search-up  '^N' history-substring-search-down
+  do bindkey -M viins "$key" "$widget"; done
+  command -v fzf >/dev/null && source <(fzf --zsh)
+}
+add-zsh-hook precmd _n_line_keys
 
