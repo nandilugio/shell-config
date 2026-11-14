@@ -38,56 +38,9 @@ No collision: `<leader>` is pressed deliberately and disambiguates `<leader>gr` 
 
 ---
 
-## 5. Review `undofile` and swap settings
+## 5. ~~Review `undofile` and swap settings~~ DECIDED 2026-11-14: Neovim's defaults
 
-**Where:** `lua/options.lua` — `undofile` is present but commented out:
-
-```lua
--- Undo history is deliberately not persisted.
--- vim.o.undofile = true
-```
-
-Swap is untouched entirely, so it is stock Neovim: swap on, in
-`~/.local/state/nvim/swap/`.
-
-**Why:** Prompted 2026-09-16 by an "ATTENTION / found a swap file" warning on
-opening a big file. The current state is a deliberate choice (the comment says
-so) but worth re-deciding as a pair, because together they are the whole
-crash-recovery story:
-
-- With `undofile` off, undo history dies with the session. After a crash,
-  the swap file is the *only* recovery path — and recovering from swap is
-  clumsy, especially in a large file where the changed lines must be found
-  by diffing.
-- With `undofile` on, `~/.local/state/nvim/undo/` persists undo across
-  sessions, so `u` still works after reopening. It also writes a file per
-  edited file, which is the cost.
-
-Note the config's autosave (`setup/autosave.lua`) is **off by default**, so
-there is no background write covering for either.
-
-**Do:** Decide whether persistent undo is wanted, and whether swap should stay
-default. Options, roughly:
-
-1. Leave as is — accept that a crash means swap recovery or nothing.
-2. `vim.o.undofile = true` — cheap, survives reopen, no prompt on open.
-3. Keep swap but move/raise `updatetime` awareness, or disable swap in favour
-   of undofile + autosave.
-
-Recovery recipe, for whenever the prompt appears again (recovery does not
-delete the swap — it will prompt again until deleted):
-
-```vim
-:e <file>              " choose (r)ecover
-:w /tmp/recovered
-:e!                    " reload on-disk version
-:diffsplit /tmp/recovered
-```
-
-Then `]c` / `[c` walk the differing hunks. Statusline shows `[+]` (`%m`,
-`statusline.lua:285`) when the recovered buffer really does differ from disk —
-if it is absent, the swap held nothing newer. Clean up with
-`:call delete(swapname('%'))`.
+Swap on, `undofile` off, as Neovim ships them. Autosave is off, so the swap file is the only crash recovery, and it is also the lock that tells a second Neovim the file is open (0.10+ opens it anyway, with W325, while that Neovim runs). Persistent undo would keep every edited file's history, deleted text included, indefinitely, for a `u` after reopening that is rarely wanted. The "found a swap file" prompt only appears when the Neovim that wrote it died with unsaved edits (on a fatal signal it deletes the swap files of written buffers, `ml_close_notmod()` in `main.c`): a crash, a closed pane, `tmux kill-server`, a reboot. `nvim -r` lists the leftovers, `:help recovery` says how to get their edits back. The README's tmux restart now says to write first.
 
 ---
 

@@ -50,7 +50,7 @@ After `git pull`:
 
 - **Links.** Most modules are linked as whole directories (`~/.config/nvim`, `~/.config/tmux`), so a pull is live at once. Re-run `install <target>` when a target gains a module, or a module gains a path outside such a directory, like a new script in `bin`. A removed one leaves a broken link to delete.
 - **nvim plugins** follow the committed lockfile: see [its README](config/modules/common/nvim/.config/nvim/README.md#setting-up-elsewhere).
-- **tmux** keeps the binary and config it started with. `prefix r` reloads the config; after a version bump, restart it: save (`prefix C-s`), `tmux kill-server`, reopen the terminal, restore (`prefix C-r`). Homebrew is shared by a Mac's users, so another user's `brew upgrade` is a version bump too.
+- **tmux** keeps the binary and config it started with. `prefix r` reloads the config; after a version bump, restart it: write what nvim has open (`:wa`; a Neovim the server takes down leaves its swap file behind, and the next open asks about it), save (`prefix C-s`), `tmux kill-server`, reopen the terminal, restore (`prefix C-r`). Homebrew is shared by a Mac's users, so another user's `brew upgrade` is a version bump too.
 - **Per user, not shared:** language servers (`uv tool`, `gem`), prezto, `~/.zshrc`. A second user on the same machine installs its own.
 
 ## Notes
