@@ -62,38 +62,9 @@ Settled by `<leader>gB`: `D` in the blame panel opens the commit under the curso
 
 ---
 
-## 9. No way back to the working tree after `r` / `R` in the blame window
+## 9. ~~No way back to the working tree after `r` / `R` in the blame window~~ CLOSED 2026-11-14: lived with
 
-**Where:** behaviour of `:Gitsigns blame` (see item 6), nothing in this config.
-
-**Why:** `r` (reblame at commit) and `R` (reblame at commit **parent**) do more
-than move the blame panel — `reblame()` (`actions/blame.lua:279-305`) quits the
-blame split, then **replaces the main window's buffer** with
-`gitsigns://<gitdir>//<sha>:<relpath>`, the file at that revision, and reopens
-blame against it.
-
-Consequences:
-
-- After a few presses you are reading a historical revision, not your file.
-- Closing the blame window does **not** return you — the main window is still
-  on the old revision.
-- The way back is `<C-o>` (jumplist) or `:edit <path>`. gitsigns ships no
-  "return to work tree" command. Fugitive does: `gq` in its blame window
-  ("close blame, then |:Gedit| to return to work tree version").
-- The buffers are `bufhidden = 'wipe'` so they do not accumulate, but nothing
-  on screen says you are in one — the statusline shows the ordinary path.
-
-Worth noting `r` is safer than tpope's warning suggests: it takes the sha from
-the blame entry under the cursor and clamps the cursor to the new file length,
-rather than blindly blaming a parent. `R` (the `^` parent jump) is where drift
-can still bite.
-
-**Do:** Two candidates, neither urgent:
-
-1. A marker in the statusline for `gitsigns://` buffers — see item 10.
-2. A "back to working tree" binding, e.g. under `<leader>o`, that re-edits the
-   real path. Only worth it if the jumplist turns out to be insufficient in
-   practice.
+`<C-o>` goes back, and since item 10 the statusline reads `path[sha]` on a revision, so it is never mistaken for the file. A "back to the working tree" key would duplicate the jumplist. The analysis of `reblame()` is in this file's history before 2026-11-14.
 
 ---
 
@@ -313,61 +284,9 @@ Folds section in the cheatsheet with the mask/reveal mnemonic and the `'foldleve
 
 ---
 
-## 21. Learn more about `gO`
+## 21. ~~Learn more about `gO`~~ CLOSED 2026-11-14: lived with
 
-**Where:** nothing in this config yet. Core's markdown ftplugin maps `gO` to
-`vim.treesitter._headings.show_toc()` (`$VIMRUNTIME/ftplugin/markdown.lua:3`),
-which puts the headings in the **location list** and opens it.
-
-**Why:** Came up 2026-09-28 while trying it. It is a quickfix window
-underneath, and that shows as soon as it is resized:
-
-- Each line is really `/full/path/file.md|<lnum>| <heading>`. `syntax/qf.lua`
-  conceals everything up to the second `| ` (`conceallevel=3`), but wrapping and
-  horizontal scrolling still count the hidden text. Hence wrapping far short of
-  the border, blank rows with a long path, and `h` / `l` / `zl` appearing dead
-  under `nowrap` — they are moving through the invisible path.
-- The indent is non-breaking spaces placed *after* the hidden prefix, because
-  quickfix trims ordinary leading whitespace (`treesitter/_headings.lua:98`). So
-  `breakindent` sees no indent, and `'listchars'` (`nbsp:␣`) draws it as `␣`.
-
-**Works today:** `:setlocal nowrap`, then `$` / `0` to see the end of a heading
-and come back. `<C-w>L` moves it to the right, `<C-w>|` widens it.
-
-**To learn:**
-
-- `]]` / `[[` — the same ftplugin maps them to next / previous section.
-- `gO` elsewhere: help, man (`lua/man.lua:878` uses the same `qf_toc` trick),
-  `checkhealth`. Do they share these quirks?
-- Location-list behaviour that applies here: one list per window, `<CR>` jumps,
-  `:lclose`. The list is a snapshot, filled once, so re-run `gO` after
-  adding headings (not yet checked).
-
-**Fix, prototyped and tested 2026-09-28** (not applied): a
-`'quickfixtextfunc'` that, for outline lists only, displays just the heading
-with real spaces. Hidden prefix gone, so wrapping, `breakindent` and `h` / `l`
-all behave, and `<CR>` still jumps to the right line.
-
-```lua
-function _G.toc_qftf(info)
-  local what = { id = info.id, items = 1, title = 1 }
-  local list = info.quickfix == 1 and vim.fn.getqflist(what) or vim.fn.getloclist(info.winid, what)
-  if not (list.title or ""):match("Table of contents") then return {} end -- {} = default format
-  local out = {}
-  for i = info.start_idx, info.end_idx do
-    out[#out + 1] = (list.items[i].text:gsub("\194\160", " "))
-  end
-  return out
-end
-vim.o.quickfixtextfunc = "v:lua.toc_qftf"
-```
-
-Plus `linebreak` and `breakindentopt=shift:2` in that window. Open decisions:
-where it lives (a `setup/outline.lua` with a `FileType qf` autocmd, or
-`options.lua`); whether to match the same titles as `syntax/qf.lua`
-(`TOC`, `Table of contents`) so man pages benefit; and `conceallevel=0` there,
-since the conceal regex would still hide the start of a heading containing two
-`|`, e.g. `## a | b | c`.
+`gO` is Neovim's (Vim's for help and man; 0.11+ for markdown and LSP symbols), and in markdown it lists the headings in a location list. That list is quickfix underneath: each line hides `path|lnum|` before the heading, so wrapping and `h` / `l` count the invisible text, and the indent is non-breaking spaces that `'listchars'` shows as `␣`. Upstream's recent changes polished this design (`fix(gO): use non-breaking space`, 2025-05) and nothing after 0.12.6 touches it. A `'quickfixtextfunc'` showing only the heading was prototyped and worked, but it is our code for a cosmetic quirk, so not applied: `:setlocal nowrap` tames the window. The prototype is in this file's history before 2026-11-14.
 
 ---
 
@@ -387,36 +306,9 @@ the fold one level, insides reset.
 
 ---
 
-## 24. Pickers are full-size however few items they list
+## 24. ~~Pickers are full-size however few items they list~~ CLOSED 2026-11-14: lived with
 
-**Where:** `lua/setup/fzf.lua:41` (`fzf.register_ui_select()`)
-
-**Why:** Every `vim.ui.select` opens at the picker's 85% × 85%, so `,pt`'s six
-modes sit in a window meant for a file search. `register_ui_select` also takes
-a function of `(ui_opts, items)` returning opts
-(`providers/ui_select.lua:103-113`), and in fzf-lua a size above 1 is lines
-rather than a fraction (`win.lua:568`).
-
-**Decided (2026-09-30):** size every `vim.ui.select` to its items, rather than
-only `,pt` through a `kind` of its own, and leave code actions alone: they
-show a diff preview.
-
-```lua
-fzf.register_ui_select(function(ui_opts, items)
-  if ui_opts.kind == "codeaction" then return {} end
-  return { winopts = { height = math.min(#items + 4, 0.85 * vim.o.lines), width = 0.4 } }
-end)
-```
-
-The `+ 4` (border, prompt, info line) is a guess.
-
-**Related, done 2026-11-06:** fzf-lua only took over `vim.ui.select` once a
-picker had loaded it, so `,pt` before any picker showed nvim's own numbered
-list. `setup/fzf.lua` now stands in for `vim.ui.select` until the first call,
-which loads the plugin and hands over: the same lazy trick as the pickers.
-
-**Do:** Apply it, then check the `+ 4` by capturing the window in a scratch
-tmux pane, with and without the `default-title` border title.
+Every `vim.ui.select` opens at the picker's 85% × 85%, so `,pt`'s six modes sit in a window meant for a file search. Sizing it to the items was decided 2026-09-30 and sketched (a function passed to `register_ui_select`), but the large window costs nothing but looks, so it stays as fzf-lua draws it. The sketch is in this file's history before 2026-11-14.
 
 ---
 
@@ -432,33 +324,9 @@ All five are `"x"`; `gs`/`gr`/`=` have selection entries, the hunk ones passing 
 
 ---
 
-## 27. Review mode's hunk display is noisy
+## 27. ~~Review mode's hunk display is noisy~~ CLOSED 2026-11-14: kept as is
 
-**Where:** `lua/setup/review.lua`, `PRESETS.review.hunk_details`.
-
-**Why:** Found 2026-11-05 trying review mode. Entering it switches on three of
-gitsigns' displays at once: deleted lines (as virtual lines), word diff and
-the cursor line's blame. Together they are a lot on screen, especially on a
-branch with many hunks.
-
-**Do:** Try review with each on its own and decide which earn a place in the
-preset. Each already has its own toggle (`<leader>ugd`, `ugw`, `ugb`), so
-whatever the preset leaves off is one key away. `hunk_details` is a single
-flag today; splitting it is a three-line change in `apply()`.
-
-**Partly done 2026-11-06:** most of the noise was styling, not the number of
-displays. Deleted lines used `DiffDelete` (bright foreground, bold) and word
-diff used reverse video, both overriding the syntax colours gitsigns already
-captures for the old text. Now backgrounds only, derived from the scheme in
-`setup/git.lua`: deleted lines on dark red, removed words on a stronger red,
-added words on green, syntax colours showing through. Still open: whether
-the cursor line's blame belongs in the preset.
-
-**Changed 2026-11-10:** deleted lines and word diff are no longer separate:
-with the new line backgrounds they make one display, the inline diff
-(`setup/git.lua`, `<leader>ugd`; `ugw` is gone), since apart they only made
-half a diff. So the question above is now inline diff and blame, each with its
-own toggle.
+Review mode turns on the inline diff (removed lines, word diff and green added lines, one display since 2026-11-10) and the cursor line's blame, together. Most of the noise was styling, fixed 2026-11-06 with backgrounds derived from the scheme (`setup/git.lua`). Whether blame belongs in the preset was left open, then kept: `<leader>ugb` turns it off within a review.
 
 ---
 
@@ -604,45 +472,12 @@ guards section shrinks to.
 
 ---
 
-## 32. A red sign on the inline diff's removed lines
+## 32. ~~A red sign on the inline diff's removed lines~~ CLOSED 2026-11-14: not worth the code
 
-**Where:** `lua/setup/git.lua`, the inline diff; gitsigns' `deleted_preview.lua`
-(`build_prefix`).
-
-**Why:** Asked for 2026-11-10. Added and changed lines carry their `+` / `~`
-sign; the removed lines shown above a change carry none, so the red lines read
-as text rather than as the old side of the change. They are gitsigns' virtual
-lines, which have no sign column: gitsigns fills the gutter itself, blanks
-where the signs go and the old line numbers after them (`build_prefix`), and
-offers no option for a sign there. With a custom `'statuscolumn'` it evaluates
-that per virtual line instead, which could draw one, but this config has none.
-
-**Do:** Find the smallest way in: a gitsigns option or upstream request, a
-`'statuscolumn'` (a large change for one sign), or our own virtual lines
-replacing `show_deleted` (the most code). Then pick the character: `~` as the
-change's own sign in red, or `-` as diffs print a removed line.
+The removed lines are gitsigns' virtual lines, which have no sign column, and gitsigns offers no option for a sign there (`deleted_preview.lua`, `build_prefix`). Drawing one would need a `'statuscolumn'` or our own virtual lines in place of `show_deleted`: real code for one character. The red background already marks them as the old side.
 
 ---
 
-## 33. Review mode: find a merged branch's fork point by itself
+## 33. ~~Review mode: find a merged branch's fork point by itself~~ CLOSED 2026-11-14: not needed so far
 
-**Where:** `lua/setup/review.lua`, `conventional_base` and `detect_branch`.
-
-**Why:** Found 2026-11-10, reviewing BI-21372-guarantee-ui in the monorepo
-after #12508 and then the branch itself were merged into develop. Every base
-candidate's merge-base with a merged branch is the branch's tip, so there is
-"nothing to compare", and review falls back to the last commit (it now says
-so). The fork point is still in the graph
-when the branch was merged with a merge commit: walking the tip's
-first-parent chain, the first commit also on the base's first-parent line is
-where it forked (8bd16b6 there, leaving the branch's one commit). The same
-idea as mhagger's git-when-merged, and as `nearer_forks` here. It cannot work
-after a fast-forward, which leaves nothing to tell the branch's commits from
-the base's; squash and rebase merges already work, as their originals never
-enter the base.
-
-**Do:** Only if reviewing merged branches turns out to be common. When a
-candidate already holds the tip, use that fork point instead of giving up,
-and label the review in two-dot notation (`8bd16b6..feature`), since the
-merge-base is no longer what it is reviewed against. Tests: a merge-commit
-merge, a fast-forward, a trunk inside another trunk (master in develop).
+A branch already merged with a merge commit has every base candidate's merge-base at its tip, so review falls back to its last commit and says so. The fork point is still findable by walking the tip's first-parent chain to the base's first-parent line (as git-when-merged does), but reviewing merged branches has not been common enough to earn the code. The design and the test cases are in this file's history before 2026-11-14.
