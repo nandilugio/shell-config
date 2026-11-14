@@ -3,7 +3,7 @@
 "
 " The keys are the Neovim config's (config/modules/common/nvim, see its
 " cheatsheet), on the subset Vim has without plugins: leader and the find,
-" git, toggle, lists and own namespaces, windows, folds, completion. No LSP,
+" git, toggle, lists and own namespaces, windows, arrows, folds, completion. No LSP,
 " so gd, gr* and the F-keys stay as Vim ships them; no gitsigns, so <leader>g
 " is empty. Kept in sync BY HAND: when a key moves in nvim's lua/keymaps.lua,
 " move it here too. Everything version-dependent is behind a guard, so this
@@ -34,6 +34,7 @@ set virtualedit=block
 set expandtab shiftwidth=2 softtabstop=2 tabstop=2
 silent! set nofixendofline
 set backspace=indent,eol,start
+set whichwrap+=<,>,[,]
 if has('clipboard') | set clipboard^=unnamedplus | endif
 set mouse=a
 
@@ -97,6 +98,18 @@ nnoremap <C-l> <C-w><C-l>
 nnoremap <leader>- :split<CR>
 nnoremap <leader>\| :vsplit<CR>
 nnoremap <leader>bd :bdelete<CR>
+
+" Arrows by screen line, j and k by line; d<Down> is charwise, dj linewise.
+noremap <Down> g<Down>
+noremap <Up> g<Up>
+snoremap <Down> <C-g>g<Down><C-g>
+snoremap <Up> <C-g>g<Up><C-g>
+inoremap <expr> <Down> pumvisible() ? "\<Down>" : "\<C-\>\<C-o>g\<Down>"
+inoremap <expr> <Up> pumvisible() ? "\<Up>" : "\<C-\>\<C-o>g\<Up>"
+
+" Indent and dedent the selection, keeping it.
+xnoremap <Tab> >gv
+xnoremap <S-Tab> <gv
 
 " Lists: [ back, ] forward, capital = first or last. Neovim has these
 " built in; Vim does not.

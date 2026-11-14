@@ -39,6 +39,9 @@ vim.o.shiftwidth = 2
 vim.o.softtabstop = 2
 vim.o.tabstop = 2
 vim.o.fixendofline = false -- do not silently add a trailing newline
+-- The arrows cross line ends, as in other editors; h and l stay on the line.
+-- keymaps.lua says why the arrows and hjkl differ.
+vim.opt.whichwrap:append("<,>,[,]")
 
 -- Appearance
 vim.o.number = true

@@ -371,6 +371,34 @@ M.maps = {
   { "<leader>-", "<Cmd>split<CR>", desc = "Split below" },
   { "<leader>|", "<Cmd>vsplit<CR>", desc = "Split right" },
 
+  -- ── Arrows ────────────────────────────────────────────────────────────────
+  -- Arrows move by screen line, as in other editors; j and k stay Vim's,
+  -- by line. In every mode, so an operator takes the arrow's meaning too:
+  -- d<Down> deletes to the same column a screen line down, dj whole lines.
+  -- options.lua's 'whichwrap' lets <Left> and <Right> cross line ends.
+  { "<Down>", "g<Down>", desc = "Down a screen line", mode = { "n", "x", "o" } },
+  { "<Up>", "g<Up>", desc = "Up a screen line", mode = { "n", "x", "o" } },
+  -- A Select mode map would type the g over the selection: <C-g> runs the
+  -- motion in Visual mode and comes back.
+  { "<Down>", "<C-g>g<Down><C-g>", desc = "Down a screen line", mode = "s" },
+  { "<Up>", "<C-g>g<Up><C-g>", desc = "Up a screen line", mode = "s" },
+  -- The completion menu keeps its own <Down> and <Up>. <C-\><C-o> rather than
+  -- <C-o>, which would pull the cursor back off the end of the line.
+  {
+    "<Down>",
+    function() return vim.fn.pumvisible() == 1 and "<Down>" or "<C-\\><C-o>g<Down>" end,
+    desc = "Down a screen line, or the next completion",
+    mode = "i",
+    expr = true,
+  },
+  {
+    "<Up>",
+    function() return vim.fn.pumvisible() == 1 and "<Up>" or "<C-\\><C-o>g<Up>" end,
+    desc = "Up a screen line, or the previous completion",
+    mode = "i",
+    expr = true,
+  },
+
   -- ── Lists: <leader>x ──────────────────────────────────────────────────────
   -- Vim's list of places: :make, :grep and the pickers all fill it, ]q / [q
   -- walk it. The location list is the same, scoped to one window.
@@ -394,6 +422,11 @@ M.maps = {
   { "<leader>=", function() vim.lsp.buf.format({ timeout_ms = 2000 }) end, desc = "Format buffer" },
   -- format() takes the selection by itself in visual mode.
   { "<leader>=", function() vim.lsp.buf.format({ timeout_ms = 2000 }) end, desc = "Format selection", mode = "x" },
+  -- As in other editors, keeping the selection so the key can be pressed
+  -- again. Visual only: Tab is CTRL-I (jump forward) in normal mode, and
+  -- Select mode's Tab jumps between snippet placeholders.
+  { "<Tab>", ">gv", desc = "Indent selection", mode = "x" },
+  { "<S-Tab>", "<gv", desc = "Dedent selection", mode = "x" },
 
   -- ── Folds: z ──────────────────────────────────────────────────────────────
   -- The built-ins, showing the fold column (off by default) once something is
