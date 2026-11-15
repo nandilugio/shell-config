@@ -1,6 +1,7 @@
 -- Built on 0.12's default (filename, %m %r, busy spinner, diagnostic counts,
 -- ruler), adding a mode block, git branch and hunk counts, the language
--- servers' progress and names, filetype, and a warning on unusual encodings.
+-- servers' progress and names, filetype, a warning on unusual encodings, and
+-- a > when this Neovim listens where another program can find it.
 --
 -- Identity left, state right, as lualine and VS Code do:
 --
@@ -74,6 +75,19 @@ local MODES = {
   c = { "COMMAND", "StatuslineCommand" },
   t = { "TERMINAL", "StatuslineTerminal" },
 }
+
+-- A > before everything while this Neovim listens on an address of its own
+-- (--listen, serverstart()), as one shared with an agent does: /n-nvim's
+-- ~/.cache/nvim/claude/<session-id>.sock. Every Neovim also listens on an
+-- automatic address under stdpath("run"), which nothing else is told about.
+-- Plain ASCII: arrows such as ⇄ and ↔ were drawn wider than their cell.
+function M.listening()
+  local run = vim.fn.stdpath("run")
+  for _, addr in ipairs(vim.fn.serverlist()) do
+    if not vim.startswith(addr, run) then return "%#StatuslineReplace#>%*" end
+  end
+  return ""
+end
 
 -- A star after the mode while training mode (setup/training.lua) has other
 -- editors' keys off: the same key then does something else, so it shows.
@@ -350,6 +364,7 @@ local DIAGNOSTICS = "%{% luaeval('(package.loaded[\"vim.diagnostic\"] "
 
 function M.render()
   return table.concat({
+    M.listening(),
     M.mode(),
     M.review(),
     M.recording(),
