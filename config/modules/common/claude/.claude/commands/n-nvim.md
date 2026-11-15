@@ -8,7 +8,7 @@ sock=~/.cache/nvim/claude/$CLAUDE_CODE_SESSION_ID.sock
 if nvim --server "$sock" --remote-expr 1 >/dev/null 2>&1; then
   echo "Already running: $sock"
 else
-  mkdir -p "${sock%/*}" && rm -f "$sock" && echo "nvim --listen $sock"
+  mkdir -p -m 700 "${sock%/*}" && rm -f "$sock" && echo "nvim --listen $sock"
 fi
 ```
 
