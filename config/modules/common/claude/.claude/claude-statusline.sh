@@ -12,27 +12,49 @@
 #       "hideVimModeIndicator": true,
 #       "refreshInterval": 60
 #     }
-# Requires: bash 3.2+, jq, git >= 2.15
+# Requires: bash 3.2+, jq, git >= 2.15; tmux when run inside it
 
 # No globbing anywhere; keeps unquoted expansions (path splitting) literal.
 set -f
 
-# The bracketed line (brackets included, vim prefix excluded) is kept within
-# max_width visible chars by walking the reduction ladder near the bottom.
-max_width=${CLAUDE_MAX_STATUSLINE_WIDTH:-80}
+# The whole line (vim prefix included) is kept within max_width visible chars
+# by walking the reduction ladder near the bottom. Inside tmux it follows the
+# pane, less the 4 columns Claude Code pads the line with (observed, not
+# documented: a 97-column pane showed at most 93).
+max_width=${CLAUDE_MAX_STATUSLINE_WIDTH:-}
+if [ -z "$max_width" ] && [ -n "${TMUX_PANE:-}" ]; then
+    pane_width=$(tmux display -p -t "$TMUX_PANE" '#{pane_width}' 2>/dev/null)
+    case "$pane_width" in
+        ''|*[!0-9]*) ;;
+        *) max_width=$(( pane_width - 4 )) ;;
+    esac
+fi
+max_width=${max_width:-90}
 
 # Percentages at or above this never drop from the ladder (orange and red
 # bands): a hot value is worth showing even over shorter segments.
-HOT_PCT=75
+HOT_PCT=70
 
-# Colors
+# Theme colors: the terminal's palette.
 DARK_GRAY=$'\033[90m'
-GRAY=$'\033[38;5;245m'
 CYAN=$'\033[36m'
 YELLOW=$'\033[33m'
-ORANGE=$'\033[38;5;208m'
-RED=$'\033[31m'
-PINK=$'\033[38;5;218m'
+
+# Pure's git colors (prompt_pure_colors_default): its two 256-color values
+# fixed, its named ones from the theme, as Pure does.
+PURE_GIT_BRANCH=$'\033[38;5;242m'
+PURE_GIT_DIRTY=$'\033[38;5;218m'
+PURE_GIT_ACTION=$YELLOW
+PURE_GIT_ARROW=$CYAN
+
+# Heat of values (percentages, effort), cool to hot. Fixed, so the gradient
+# doesn't depend on the theme; picked close to Tango Dark's yellow and red.
+HEAT_GRAY=$'\033[38;5;242m'
+HEAT_YELLOW=$'\033[38;5;178m'
+HEAT_ORANGE=$'\033[38;5;208m'
+HEAT_RED=$'\033[38;5;160m'
+
+BOLD=$'\033[1m'
 RESET=$'\033[0m'
 
 # Single jq call: extract all needed fields at once, one per line.
@@ -46,7 +68,6 @@ RESET=$'\033[0m'
     IFS= read -r five_hour_reset
     IFS= read -r seven_day
     IFS= read -r seven_day_reset
-    IFS= read -r cost
     IFS= read -r vim_mode
 } <<<"$(
     jq -r '
@@ -58,7 +79,6 @@ RESET=$'\033[0m'
         (.rate_limits.five_hour.resets_at // ""),
         (.rate_limits.seven_day.used_percentage // ""),
         (.rate_limits.seven_day.resets_at // ""),
-        (.cost.total_cost_usd // ""),
         (.vim.mode // "")
     '
 )"
@@ -166,14 +186,14 @@ read_git_segment() {
     fi
 
     local suffix="" suffix_len=0
-    [ -n "$dirty" ] && { suffix+="${PINK}${dirty}${RESET}"; suffix_len=$((suffix_len + 1)); }
-    [ -n "$action" ] && { suffix+="${GRAY} ${action}${RESET}"; suffix_len=$((suffix_len + 1 + ${#action})); }
-    [ -n "$arrows" ] && { suffix+="${CYAN} ${arrows}${RESET}"; suffix_len=$((suffix_len + 1 + ${#arrows})); }
+    [ -n "$dirty" ] && { suffix+="${PURE_GIT_DIRTY}${dirty}${RESET}"; suffix_len=$((suffix_len + 1)); }
+    [ -n "$action" ] && { suffix+="${PURE_GIT_ACTION} ${action}${RESET}"; suffix_len=$((suffix_len + 1 + ${#action})); }
+    [ -n "$arrows" ] && { suffix+="${PURE_GIT_ARROW} ${arrows}${RESET}"; suffix_len=$((suffix_len + 1 + ${#arrows})); }
 
-    GIT_TEXT="${GRAY}${branch}${RESET}${suffix}"
+    GIT_TEXT="${PURE_GIT_BRANCH}${branch}${RESET}${suffix}"
     GIT_LEN=$(( ${#branch} + suffix_len ))
     if [ "${#branch}" -gt 17 ]; then
-        GIT_TEXT_SHORT="${GRAY}${branch:0:8}${DARK_GRAY}…${GRAY}${branch: -8}${RESET}${suffix}"
+        GIT_TEXT_SHORT="${PURE_GIT_BRANCH}${branch:0:8}${DARK_GRAY}…${PURE_GIT_BRANCH}${branch: -8}${RESET}${suffix}"
         GIT_LEN_SHORT=$(( 17 + suffix_len ))
     else
         GIT_TEXT_SHORT="$GIT_TEXT"
@@ -196,13 +216,13 @@ fmt_epoch() {
 usage_color() {
     local used="$1"
     if [ "$used" -lt 50 ]; then
-        REPLY="$GRAY"
-    elif [ "$used" -lt 75 ]; then
-        REPLY="$YELLOW"
+        REPLY="$HEAT_GRAY"
+    elif [ "$used" -lt "$HOT_PCT" ]; then
+        REPLY="$HEAT_YELLOW"
     elif [ "$used" -lt 90 ]; then
-        REPLY="$ORANGE"
+        REPLY="$HEAT_ORANGE"
     else
-        REPLY="$RED"
+        REPLY="$HEAT_RED"
     fi
 }
 
@@ -210,10 +230,10 @@ usage_color() {
 # Result in REPLY.
 effort_color() {
     case "$1" in
-        high)  REPLY="$YELLOW" ;;
-        xhigh) REPLY="$ORANGE" ;;
-        max)   REPLY="$RED" ;;
-        *)     REPLY="$GRAY" ;;
+        high)  REPLY="$HEAT_YELLOW" ;;
+        xhigh) REPLY="$HEAT_ORANGE" ;;
+        max)   REPLY="$HEAT_RED" ;;
+        *)     REPLY="$HEAT_GRAY" ;;
     esac
 }
 
@@ -312,7 +332,7 @@ if [ -n "$GIT_TEXT" ]; then
     idx_git=$LAST_IDX
 fi
 
-add_seg "${#model}" "${YELLOW}${model}${RESET}"
+add_seg "${#model}" "${CYAN}${model}${RESET}"
 idx_model=$LAST_IDX
 
 # Effort always truncated to 2 chars (lo/me/hi/xh/ma); the color carries it.
@@ -330,59 +350,41 @@ add_usage_seg "c" "$context_used"
 add_usage_seg "h" "$five_hour" "$five_hour_reset" "%H:%M"
 add_usage_seg "w" "$seven_day" "$seven_day_reset" "%a"
 
-# Session cost, truncated to cents. String math instead of printf %.2f:
-# float printf mis-parses dot decimals under comma-decimal locales.
-idx_cost=-1
-case "$cost" in
-    # scientific notation passes through jq (e.g. 1.23E-7) and would mis-split;
-    # it only appears below one micro-dollar, so it truncates to zero anyway.
-    *[eE]*) cost="0" ;;
-esac
-cost_int="${cost%%[.,]*}"
-case "$cost_int" in
-    ''|*[!0-9]*) ;;
-    *)
-        cost_frac="${cost#"$cost_int"}"
-        cost_frac="${cost_frac#[.,]}00"
-        add_seg $(( ${#cost_int} + 4 )) "${GRAY}\$${cost_int}.${cost_frac:0:2}${RESET}"
-        idx_cost=$LAST_IDX
-        ;;
-esac
-
-# Visible width: brackets + segments + one pipe between each pair.
+# Visible width: vim prefix and its space + brackets + segments + one pipe
+# between each pair.
 total=$(( 2 + ${#seg_texts[@]} - 1 ))
+[ -n "$vim_mode" ] && total=$(( total + ${#vim_mode} + 2 ))
 for len in "${seg_lens[@]}"; do
     total=$(( total + len ))
 done
 
 # Reduction ladder, applied in order until the line fits max_width:
-# drop cost -> path fish-2 -> fish-1 -> short model -> short branch ->
-# drop effort -> model -> percentages coolest-first (hot ones pinned, see
-# HOT_PCT). Overflow is accepted if the floor still doesn't fit.
+# path fish-2 -> fish-1 -> short model -> short branch -> drop effort ->
+# model -> percentages coolest-first (hot ones pinned, see HOT_PCT).
+# Overflow is accepted if the floor still doesn't fit.
 step=0
-while [ "$total" -gt "$max_width" ] && [ "$step" -lt 10 ]; do
+while [ "$total" -gt "$max_width" ] && [ "$step" -lt 9 ]; do
     case "$step" in
-        0) drop_seg "$idx_cost" ;;
-        1) swap_path 2 ;;
-        2) swap_path 1 ;;
-        3)
+        0) swap_path 2 ;;
+        1) swap_path 1 ;;
+        2)
             abbrev_model
             if [ "${#MODEL_SHORT}" -lt "${seg_lens[idx_model]}" ]; then
                 total=$(( total - seg_lens[idx_model] + ${#MODEL_SHORT} ))
                 seg_lens[$idx_model]=${#MODEL_SHORT}
-                seg_texts[$idx_model]="${YELLOW}${MODEL_SHORT}${RESET}"
+                seg_texts[$idx_model]="${CYAN}${MODEL_SHORT}${RESET}"
             fi
             ;;
-        4)
+        3)
             if [ "$idx_git" -ge 0 ] && [ "$GIT_LEN_SHORT" -lt "$GIT_LEN" ]; then
                 total=$(( total - seg_lens[idx_git] + GIT_LEN_SHORT ))
                 seg_lens[$idx_git]=$GIT_LEN_SHORT
                 seg_texts[$idx_git]="$GIT_TEXT_SHORT"
             fi
             ;;
-        5) drop_seg "$idx_effort" ;;
-        6) drop_seg "$idx_model" ;;
-        7|8|9) drop_coolest_pct ;;
+        4) drop_seg "$idx_effort" ;;
+        5) drop_seg "$idx_model" ;;
+        6|7|8) drop_coolest_pct ;;
     esac
     step=$(( step + 1 ))
 done
@@ -402,7 +404,7 @@ bracketed="${DARK_GRAY}[${RESET}${line}${DARK_GRAY}]${RESET}"
 
 # Payload sends the mode already uppercase ("INSERT", "NORMAL", ...).
 if [ -n "$vim_mode" ]; then
-    printf "%s-- %s --%s  %s" "$DARK_GRAY" "$vim_mode" "$RESET" "$bracketed"
+    printf "%s%s%s  %s" "$BOLD$DARK_GRAY" "$vim_mode" "$RESET" "$bracketed"
 else
     printf "%s" "$bracketed"
 fi
