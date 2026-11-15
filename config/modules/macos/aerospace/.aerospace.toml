@@ -1,3 +1,8 @@
+# Version 2: only workspaces listed in persistent-workspaces outlive their last
+# window, and none are, so an empty one goes away and prev/next skip it. A key
+# still creates its workspace on demand.
+config-version = 2
+
 start-at-login = true
 # on-focus-changed = ['move-mouse window-lazy-center']
 # on-focused-monitor-changed = ['move-mouse monitor-lazy-center']

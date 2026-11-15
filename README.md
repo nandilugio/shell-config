@@ -69,7 +69,10 @@ After `git pull`:
 ```sh
 defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false   # key repeat instead of accents
 defaults write com.apple.Finder AppleShowAllFiles true && killall Finder
+brew install --cask nikitabobko/tap/aerospace                        # window manager
 ```
+
+AeroSpace has no updater of its own: `brew upgrade --cask aerospace`, then restart it (`pkill -x AeroSpace; open -a AeroSpace`), since the running one keeps the old version and the new `aerospace` command refuses to talk to it.
 
 - System Settings > Keyboard > Keyboard Shortcuts > Input Sources: unbind Ctrl+Space (nvim's completion docs).
 - SSH keys in the keychain: [how](https://apple.stackexchange.com/questions/48502/how-can-i-permanently-add-my-ssh-private-key-to-keychain-so-it-is-automatically).
