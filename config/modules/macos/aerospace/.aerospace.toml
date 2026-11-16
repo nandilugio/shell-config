@@ -1,7 +1,11 @@
 # Version 2: only workspaces listed in persistent-workspaces outlive their last
-# window, and none are, so an empty one goes away and prev/next skip it. A key
-# still creates its workspace on demand.
+# window, so an empty one goes away and prev/next skip it. A key still creates
+# its workspace on demand.
 config-version = 2
+
+# At startup a monitor shows a workspace that already exists on it, or else a
+# new one named "1", which no key reaches. m0 is the one that exists.
+persistent-workspaces = ['m0']
 
 start-at-login = true
 # on-focus-changed = ['move-mouse window-lazy-center']
