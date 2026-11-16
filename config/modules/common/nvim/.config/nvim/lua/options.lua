@@ -133,7 +133,7 @@ if vim.fn.executable("rg") == 1 then
   vim.o.grepformat = "%f:%l:%c:%m"
 end
 
--- Swap and undo files are Neovim's defaults, on purpose (TODO.md item 5): a
+-- Swap and undo files are Neovim's defaults, on purpose: a
 -- swap file recovers a crash, and 'undofile' stays off, since it would keep
 -- every edited file's history, deleted text included, indefinitely.
 

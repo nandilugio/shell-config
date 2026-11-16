@@ -14,6 +14,7 @@ config/                   everything deployable
 ├── targets/              macos  linux  cayo: one <group>/<module> per line
 └── install               install [-D] <target>
 extras/macos/             app settings copied by hand (see below)
+TODO.md                   open items, by module
 ```
 
 `install <target>` links the target's modules into `$HOME` (`-D` unlinks). It dry-runs first, so a conflict changes nothing, and keeps `~/bin`, `~/.config`, `~/.claude`, `~/.config/opencode` and `~/.config/lazygit` real directories: tools write state there that must stay out of the repo.

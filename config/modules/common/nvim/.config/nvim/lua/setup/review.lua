@@ -73,7 +73,7 @@ local PRESETS = {
     -- Each step checks out another commit, and Neovim reloads the open files.
     -- Kept undoable, that reload let `u` past one's own edits bring back the
     -- previous commit's text -- an edit, which then refused the next step,
-    -- and an empty buffer where that commit lacked the file (TODO 28). Off,
+    -- and an empty buffer where that commit lacked the file. Off,
     -- a reload clears the undo history instead.
     undoreload = 0,
   },
@@ -264,7 +264,7 @@ local function detect_branch(root, branch, ref)
     -- Nothing of its own against the base: its last commit is reviewed
     -- instead, and the caller says why, as that need not be what was meant.
     -- Merged since, or new with nothing committed yet, the graph alone does
-    -- not always tell (TODO 33), so it is not guessed at. A trunk in another
+    -- not always tell, so it is not guessed at. A trunk in another
     -- trunk (master in develop) just commits there: not news.
     if not ref then return nil, nil, not vim.tbl_contains(trunk_names(root), branch) and s.name or true end
     return nil, ("%s is already in %s: nothing to review"):format(branch, s.name)
@@ -327,8 +327,8 @@ end
 --   - It watches .git/HEAD and, after a checkout, refreshes every attached
 --     buffer with the revision it had when the refresh began, writing it back
 --     when its git calls return. Nothing locks that against a base change, so
---     a refresh in flight across one puts the old base back (TODO 29, an
---     upstream bug). A step does both at once, and so does leaving mid-walk,
+--     a refresh in flight across one puts the old base back (an upstream
+--     bug). A step does both at once, and so does leaving mid-walk,
 --     which would leave a buffer on the review's base in edit mode.
 --
 -- The second cannot be prevented, only put right, by running the pass again

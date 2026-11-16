@@ -290,7 +290,7 @@ do
 end
 
 -- ── The base, kept ──────────────────────────────────────────────────────────
--- gitsigns can put an older base back after a checkout (TODO 29). The race
+-- gitsigns can put an older base back after a checkout (upstream). The race
 -- itself cannot be staged on demand; the corrector can: a buffer left on a
 -- base review asked for earlier gets the review's back on gitsigns' update
 -- event. More of it under "Keeping the base", in the walk.
@@ -418,7 +418,7 @@ check_has("leave mid-walk: says so, with the command", last_msg(), "back on feat
 check("leave mid-walk: record gone", has_record(), false)
 
 -- gitsigns' refresh after that checkout can write the review's base back
--- over the reset (TODO 29): put right in edit mode too. A wait, so that a
+-- over the reset (upstream): put right in edit mode too. A wait, so that a
 -- late write has landed; without one this only checks the reset.
 vim.wait(500)
 base_is("leave mid-walk: the base is the index, and stays", nil)

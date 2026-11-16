@@ -298,7 +298,7 @@ M.maps = {
   { "<leader>gd", function() require("gitsigns").diffthis() end, desc = "Diff this", needs = "mod:gitsigns" },
   -- The side panel: every line's commit, scroll-bound to the buffer. Capital
   -- pairs with gb, the single-line float. Inside it, r and R walk back through
-  -- history -- see TODO 14, they throw across a rename.
+  -- history -- though they throw across a rename of the file (upstream bug).
   { "<leader>gB", "<Cmd>Gitsigns blame<CR>", desc = "Blame file", needs = "mod:gitsigns" },
   -- Capitals of the hunk actions, meaning "all of them", as gitsigns names
   -- them: stage_hunk/stage_buffer, reset_hunk/reset_buffer.

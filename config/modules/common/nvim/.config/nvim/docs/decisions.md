@@ -278,7 +278,7 @@ in the same place.
   and :Review @{u} says it explicitly.
 - Messages fit v:echospace: longer raises hit-enter, which ate the next keys.
 - 2026-11-05, from the test suite: gitsigns' gitdir watcher can put an older
-  base back after a checkout (TODO 29, upstream). keep_base re-applies the
+  base back after a checkout (upstream). keep_base re-applies the
   review's base on the buffer's GitSignsUpdate, once per buffer and base.
   REWORKED 2026-11-11, from traces of a suite failing under load: that one
   re-apply was spent by a second late writer, review's own overlapping
@@ -366,8 +366,9 @@ in the same place.
   only what review mode needs.
 - A branch with no commits of its own against its base is reviewed as its
   last commit, and entering says so. Merged since, or new with nothing
-  committed yet: the graph alone does not always tell, so it is not guessed
-  (finding a merged branch's fork point is TODO 33).
+  committed yet: the graph alone does not always tell, so it is not guessed.
+  A merged branch's fork point could be found by walking first parents, as
+  git-when-merged does; not needed so far (2026-11-14).
 - 2026-11-12, OTHER REPOSITORIES: the base is gitsigns' global one, a commit
   of this repository. A buffer of another repository has no such commit:
   open on entering, it made gitsigns' pass fail, leaving some buffers on the
@@ -434,7 +435,7 @@ vim.pack with one that names nothing.
 - The winbar is decided per window on BufWinEnter and attach/detach, not set
   once at attach: a window moving to a plain file lost the band, one coming to
   a code file without a split had none.
-- vim.ui.select loads fzf-lua on first use (TODO 24's "left as is").
+- vim.ui.select loads fzf-lua on first use.
 - nvim-treesitter's get_installed() without an argument is parsers plus
   queries; asked for "parsers".
 - Clipboard, considered and LEFT: 'clipboard' set to unnamedplus disables

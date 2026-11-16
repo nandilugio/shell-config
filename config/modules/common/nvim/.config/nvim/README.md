@@ -152,7 +152,6 @@ lua/mdtable/          local plugin: markdown tables, with its own README + DESIG
 lua/mdheading/        local plugin: markdown heading depth, likewise
 doc/cheatsheet.txt    key reference, as help: <leader>? or :help cheatsheet
 doc/config.txt        :help for what the config adds (:help config.txt)
-TODO.md               known gaps and decisions not yet taken
 docs/                 why it is built this way
 ```
 
