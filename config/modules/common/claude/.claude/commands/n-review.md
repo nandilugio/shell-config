@@ -11,21 +11,22 @@ Let's contextualize and investigate the target code change referenced below.
 
 Be extensive here: this phase is for you, not for the output. Ask me whenever the investigation needs something outside your reach (a query against a production datastore, infrastructure config, env vars, a private dashboard, missing product context, etc.), and do it before producing the output. I can run it for you. Don't substitute a guess.
 
-**Phase 3 — Describe**
-First, describe the target's context. Describe the change against what it replaces: what was there before, what changes and what stays, so the difference is visible without having to reconstruct the old state. Use the comparison where it carries meaning, mostly for users and their flows, and keep it light where it would only add noise. Structure your explanation from the outside in:
-1. **Who it's for and why.** Identify who the change affects: end users (customers, ...), internal users (support, ops, ...), or developers and agents working with a tool or the codebase itself. From their point of view, explain what problem it addresses, how they deal with it today, and what changes for them.
-2. **Background.** The domain and operational knowledge needed to follow the rest: what the surrounding systems are and do, where their inputs and configuration come from, and the concepts and terms the explanation relies on, introduced before they're used. Describe what things are and do, not how the code implements them: keep code internals for the Implementation section.
-3. **User flows.** The flows the change touches, framed by the goals users pursue through them: what they need before starting (knowledge, data, access, setup), what they do and with what (screens, files, commands, APIs), what each of those is for and what it acts on, what they get as a result, and what happens when something goes wrong or their case isn't covered. Compare with how they reach those goals today, and say why the new way is better, or where it isn't. Schematize the flows if it helps.
-4. **Implementation.** How the target is built and how the pieces fit together, structured so it's easy to use as a walkthrough of the code.
+**Phase 3 — Describe**, in two parts.
+
+**The context**: the part of the product the change touches, as it works today, from the outside in:
+1. **Product context.** Where the change sits in the product as a whole: the features or areas involved, the people they serve (end users (customers, ...), internal users (support, ops, ...), or developers and agents working with a tool or the codebase itself), and what those people need from them. Its centre is the user flows: how users reach their goals today, with what they need before starting (knowledge, data, access, setup), what they do and with what (screens, files, commands, APIs), what each of those is for and what it acts on, what they get as a result, and what happens when something goes wrong or their case isn't covered. Schematize them if it helps. Before the flows, introduce the domain and operational background they rely on: what the surrounding systems are and do, where their inputs and configuration come from, and the concepts and terms used. Describe what things are and do, not how the code implements them.
+2. **Implementation.** How that area is built today and how the pieces fit together, structured so it's easy to use as a walkthrough of the code.
     - Schematize the relevant section of the domain model as expressed in the code.
     - Describe the main code pieces involved (classes, modules, scripts, config, etc.), the intent of each, and how they cooperate.
     - Schematize the main code paths and data flows.
 
+When the change adds something new rather than modifying what exists, the context is how people manage without it, and most of the implementation belongs to the change.
+
+**The change itself**, grounded in that context: what it changes for those people and their flows, what stays, and why it's better, or where it isn't. Describe the new or changed flows with the same detail as today's: what people need before starting, what they do and with what, what they get, and what happens when something goes wrong. Then how it's built: the new and changed pieces, the intent of each, and how they plug into the existing ones. Schematize the new flows and code paths where they differ from today's.
+
 For every mechanism, explain what it's for and how it behaves, not only what it's called. Use terms consistently and pin down what each reference means (which machine, which file, which value), so the explanation is self-contained and unambiguous. Keep facts apart from inferences.
 
 Before writing, ask yourself the questions a newcomer in the affected user's role would ask to understand and use this change, and make sure the description answers them.
-
-Then, describe **the target itself**, thoroughly and grounded in the context above: what it is, what it does or changes, and why it matters.
 
 This description is what I read *before* looking at the diff myself, so that reading the code afterwards is easy. Give me the broad picture and the map, not a line-by-line re-narration of the diff.
 
